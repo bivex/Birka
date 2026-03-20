@@ -17,6 +17,7 @@ from birka.presentation.media_table_model import MediaTableModel
 from birka.presentation.pagination_proxy import PaginationProxyModel
 from birka.presentation.rename_dialog import RenameCoordinator
 from birka.presentation.waveform_widget import WaveformWidget
+from birka.presentation.zarr_library_view import ZarrLibraryView
 
 
 class LibraryTab(QtWidgets.QWidget):
@@ -34,6 +35,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._items: List[MediaItem] = []
         self._item_by_path: dict[str, MediaItem] = {}
         self._selection_connected = False
+        self._zarr_view: ZarrLibraryView | None = None
 
         self._player = QtMultimedia.QMediaPlayer(self)
         self._audio_output = QtMultimedia.QAudioOutput(self)
@@ -53,6 +55,8 @@ class LibraryTab(QtWidgets.QWidget):
         self._table.resizeColumnsToContents()
         self._update_page_label()
         self._update_count_label()
+        if self._zarr_view is not None:
+            self._zarr_view.set_items(self._items)
         if self._selection_connected:
             try:
                 self._table.selectionModel().selectionChanged.disconnect(self._on_selection_changed)
@@ -150,14 +154,27 @@ class LibraryTab(QtWidgets.QWidget):
         pager_row.addWidget(QtWidgets.QLabel("Page size", self))
         pager_row.addWidget(self._page_size)
 
+        list_page = QtWidgets.QWidget(self)
+        list_layout = QtWidgets.QVBoxLayout(list_page)
+        list_layout.addWidget(self._search)
+        list_layout.addLayout(rename_row)
+        list_layout.addWidget(self._table)
+        list_layout.addWidget(self._waveform)
+        list_layout.addLayout(controls_row)
+        list_layout.addLayout(tags_row)
+        list_layout.addLayout(pager_row)
+
+        self._zarr_view = ZarrLibraryView(self.root, [], self)
+        tree_page = QtWidgets.QWidget(self)
+        tree_layout = QtWidgets.QVBoxLayout(tree_page)
+        tree_layout.addWidget(self._zarr_view)
+
+        self._tabs = QtWidgets.QTabWidget(self)
+        self._tabs.addTab(list_page, "List")
+        self._tabs.addTab(tree_page, "Tree")
+
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(self._search)
-        layout.addLayout(rename_row)
-        layout.addWidget(self._table)
-        layout.addWidget(self._waveform)
-        layout.addLayout(controls_row)
-        layout.addLayout(tags_row)
-        layout.addLayout(pager_row)
+        layout.addWidget(self._tabs)
 
     def _on_selection_changed(self) -> None:
         item = self._first_selected_item()
