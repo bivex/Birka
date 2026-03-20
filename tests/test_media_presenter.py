@@ -17,11 +17,13 @@ class MediaPresenterTests(unittest.TestCase):
 
         rows = presenter.to_rows([item])
 
+        self.assertEqual(rows[0].path, "/tmp/clip.wav")
         self.assertEqual(rows[0].media_type, "Audio")
         self.assertEqual(rows[0].bpm, "120.0")
         self.assertEqual(rows[0].key, "C#m")
         self.assertEqual(rows[0].duration, "01:05")
         self.assertEqual(rows[0].rating, "5")
+        self.assertEqual(rows[0].tags, "")
 
     def test_maps_midi_item(self) -> None:
         item = MidiItem(
@@ -33,6 +35,8 @@ class MediaPresenterTests(unittest.TestCase):
 
         rows = presenter.to_rows([item])
 
+        self.assertEqual(rows[0].path, "/tmp/pattern.mid")
         self.assertEqual(rows[0].media_type, "MIDI")
         self.assertEqual(rows[0].bpm, "90.0")
         self.assertEqual(rows[0].key, "Am")
+        self.assertEqual(rows[0].tags, "")

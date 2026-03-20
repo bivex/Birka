@@ -22,6 +22,7 @@ htmlcov/
 
 # App data
 /data/library/
+/data/user_metadata.json
 
 # IDE
 .vscode/

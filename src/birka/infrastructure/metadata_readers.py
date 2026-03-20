@@ -27,6 +27,10 @@ def _read_wav(path: Path) -> AudioItem:
         channels = wav.getnchannels()
     duration = frames / rate if rate else 0.0
     bpm, key = _extract_bpm_key_from_wav(path)
+    if bpm is None or key is None:
+        fallback_bpm, fallback_key = _extract_bpm_key_from_name(path.stem)
+        bpm = bpm if bpm is not None else fallback_bpm
+        key = key if key is not None else fallback_key
     metadata = AudioMetadata(
         duration_seconds=duration,
         sample_rate_hz=rate,
@@ -40,6 +44,10 @@ def _read_wav(path: Path) -> AudioItem:
 def _read_midi(path: Path) -> MidiItem:
     data = path.read_bytes()
     ticks_per_beat, track_count, bpm, key = _parse_midi(data)
+    if bpm is None or key is None:
+        fallback_bpm, fallback_key = _extract_bpm_key_from_name(path.stem)
+        bpm = bpm if bpm is not None else fallback_bpm
+        key = key if key is not None else fallback_key
     metadata = None
     if ticks_per_beat is not None and track_count is not None:
         metadata = MidiMetadata(ticks_per_beat=ticks_per_beat, track_count=track_count, bpm=bpm, key=key)
@@ -154,6 +162,14 @@ def _extract_bpm_key_from_wav(path: Path) -> tuple[Optional[float], Optional[str
     text = combined.decode("utf-8", errors="ignore")
     bpm_match = re.search(r"BPM\s*[:=]\s*([0-9]+(?:\.[0-9]+)?)", text, re.IGNORECASE)
     key_match = re.search(r"KEY\s*[:=]\s*([A-Ga-g](?:#|b)?(?:m|maj|min)?)", text)
+    bpm = float(bpm_match.group(1)) if bpm_match else None
+    key = key_match.group(1) if key_match else None
+    return bpm, key
+
+
+def _extract_bpm_key_from_name(stem: str) -> tuple[Optional[float], Optional[str]]:
+    bpm_match = re.search(r"(?:^|\D)(\d{2,3})(?:bpm)?(?:\D|$)", stem, re.IGNORECASE)
+    key_match = re.search(r"(?:^|\W)([A-Ga-g](?:#|b)?(?:m|maj|min)?)(?:\W|$)", stem)
     bpm = float(bpm_match.group(1)) if bpm_match else None
     key = key_match.group(1) if key_match else None
     return bpm, key

@@ -14,17 +14,17 @@ class MediaTableModelTests(unittest.TestCase):
 
     def test_model_exposes_rows_and_columns(self) -> None:
         rows = [
-            MediaRow(name="clip.wav", media_type="Audio", bpm="", key="", duration="00:01", rating=""),
-            MediaRow(name="pattern.mid", media_type="MIDI", bpm="120", key="Am", duration="", rating=""),
+            MediaRow(path="/tmp/clip.wav", name="clip.wav", media_type="Audio", bpm="", key="", duration="00:01", rating="", tags=""),
+            MediaRow(path="/tmp/pattern.mid", name="pattern.mid", media_type="MIDI", bpm="120", key="Am", duration="", rating="", tags=""),
         ]
         model = MediaTableModel(rows)
 
         self.assertEqual(model.rowCount(), 2)
-        self.assertEqual(model.columnCount(), 6)
+        self.assertEqual(model.columnCount(), 7)
 
     def test_model_formats_cells(self) -> None:
         rows = [
-            MediaRow(name="clip.wav", media_type="Audio", bpm="120.0", key="C#m", duration="01:05", rating="4")
+            MediaRow(path="/tmp/clip.wav", name="clip.wav", media_type="Audio", bpm="120.0", key="C#m", duration="01:05", rating="4", tags=""),
         ]
         model = MediaTableModel(rows)
         index_duration = model.index(0, 4)
@@ -37,8 +37,8 @@ class MediaTableModelTests(unittest.TestCase):
 
     def test_model_filters_rows(self) -> None:
         rows = [
-            MediaRow(name="kick.wav", media_type="Audio", bpm="128", key="C", duration="00:01", rating=""),
-            MediaRow(name="snare.wav", media_type="Audio", bpm="90", key="D", duration="00:01", rating=""),
+            MediaRow(path="/tmp/kick.wav", name="kick.wav", media_type="Audio", bpm="128", key="C", duration="00:01", rating="", tags=""),
+            MediaRow(path="/tmp/snare.wav", name="snare.wav", media_type="Audio", bpm="90", key="D", duration="00:01", rating="", tags=""),
         ]
         model = MediaTableModel(rows)
 

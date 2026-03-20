@@ -36,6 +36,7 @@ class MediaItem:
     path: Path
     name: str
     rating: Optional[Rating] = None
+    tags: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

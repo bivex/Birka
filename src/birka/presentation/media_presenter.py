@@ -8,12 +8,14 @@ from birka.domain.media import AudioItem, MediaItem, MidiItem
 
 @dataclass(frozen=True)
 class MediaRow:
+    path: str
     name: str
     media_type: str
     bpm: str
     key: str
     duration: str
     rating: str
+    tags: str
 
 
 class MediaPresenter:
@@ -25,30 +27,36 @@ class MediaPresenter:
             metadata = item.metadata
             duration = _format_duration(metadata.duration_seconds) if metadata else ""
             return MediaRow(
+                path=str(item.path),
                 name=item.name,
                 media_type="Audio",
                 bpm=_format_optional(metadata.bpm) if metadata else "",
                 key=_format_optional(metadata.key) if metadata else "",
                 duration=duration,
                 rating=_format_rating(item),
+                tags=_format_tags(item),
             )
         if isinstance(item, MidiItem):
             metadata = item.metadata
             return MediaRow(
+                path=str(item.path),
                 name=item.name,
                 media_type="MIDI",
                 bpm=_format_optional(metadata.bpm) if metadata else "",
                 key=_format_optional(metadata.key) if metadata else "",
                 duration="",
                 rating=_format_rating(item),
+                tags=_format_tags(item),
             )
         return MediaRow(
+            path=str(item.path),
             name=item.name,
             media_type="Unknown",
             bpm="",
             key="",
             duration="",
             rating=_format_rating(item),
+            tags=_format_tags(item),
         )
 
 
@@ -70,3 +78,9 @@ def _format_rating(item: MediaItem) -> str:
     if item.rating is None:
         return ""
     return str(item.rating.value)
+
+
+def _format_tags(item: MediaItem) -> str:
+    if not item.tags:
+        return ""
+    return ", ".join(item.tags)
