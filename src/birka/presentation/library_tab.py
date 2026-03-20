@@ -52,6 +52,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._table.setModel(self._pager)
         self._table.resizeColumnsToContents()
         self._update_page_label()
+        self._update_count_label()
         if self._selection_connected:
             try:
                 self._table.selectionModel().selectionChanged.disconnect(self._on_selection_changed)
@@ -66,6 +67,8 @@ class LibraryTab(QtWidgets.QWidget):
         self._filter.setFilterCaseSensitivity(QtCore.Qt.CaseSensitivity.CaseInsensitive)
         self._filter.modelReset.connect(self._update_page_label)
         self._filter.layoutChanged.connect(self._update_page_label)
+        self._filter.modelReset.connect(self._update_count_label)
+        self._filter.layoutChanged.connect(self._update_count_label)
         self._pager = PaginationProxyModel(page_size=50, parent=self)
         self._pager.setSourceModel(self._filter)
 
@@ -128,6 +131,7 @@ class LibraryTab(QtWidgets.QWidget):
         tags_row.addWidget(self._delete_button)
 
         pager_row = QtWidgets.QHBoxLayout()
+        self._count_label = QtWidgets.QLabel("Files: 0", self)
         self._page_label = QtWidgets.QLabel("Page 1/1", self)
         self._page_size = QtWidgets.QComboBox(self)
         for size in (25, 50, 100, 200):
@@ -140,6 +144,7 @@ class LibraryTab(QtWidgets.QWidget):
         next_button.clicked.connect(self._next_page)
         pager_row.addWidget(prev_button)
         pager_row.addWidget(next_button)
+        pager_row.addWidget(self._count_label)
         pager_row.addWidget(self._page_label)
         pager_row.addStretch(1)
         pager_row.addWidget(QtWidgets.QLabel("Page size", self))
@@ -279,3 +284,7 @@ class LibraryTab(QtWidgets.QWidget):
         current = self._pager.page_index() + 1
         total = self._pager.page_count()
         self._page_label.setText(f"Page {current}/{total}")
+
+    def _update_count_label(self) -> None:
+        total = self._filter.rowCount()
+        self._count_label.setText(f"Files: {total}")
