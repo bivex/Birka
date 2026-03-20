@@ -80,6 +80,19 @@ class LibraryTab(QtWidgets.QWidget):
         self._search.setPlaceholderText("Search by name, type, BPM, key, tags...")
         self._search.textChanged.connect(self._filter.setFilterFixedString)
 
+        self._bpm_min = QtWidgets.QSpinBox(self)
+        self._bpm_min.setRange(0, 400)
+        self._bpm_min.setPrefix("BPM min: ")
+        self._bpm_min.valueChanged.connect(self._apply_meta_filters)
+        self._bpm_max = QtWidgets.QSpinBox(self)
+        self._bpm_max.setRange(0, 400)
+        self._bpm_max.setPrefix("BPM max: ")
+        self._bpm_max.setValue(400)
+        self._bpm_max.valueChanged.connect(self._apply_meta_filters)
+        self._key_filter = QtWidgets.QLineEdit(self)
+        self._key_filter.setPlaceholderText("Key (e.g., C#m)")
+        self._key_filter.textChanged.connect(self._apply_meta_filters)
+
         self._table = QtWidgets.QTableView(self)
         self._table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
         self._table.setAlternatingRowColors(True)
@@ -160,7 +173,14 @@ class LibraryTab(QtWidgets.QWidget):
 
         list_page = QtWidgets.QWidget(self)
         list_layout = QtWidgets.QVBoxLayout(list_page)
+        filter_row = QtWidgets.QHBoxLayout()
+        filter_row.addWidget(self._bpm_min)
+        filter_row.addWidget(self._bpm_max)
+        filter_row.addWidget(self._key_filter)
+        filter_row.addStretch(1)
+
         list_layout.addWidget(self._search)
+        list_layout.addLayout(filter_row)
         list_layout.addLayout(rename_row)
         list_layout.addWidget(self._table)
         list_layout.addWidget(self._waveform)
@@ -341,6 +361,37 @@ class LibraryTab(QtWidgets.QWidget):
     def _update_count_label(self) -> None:
         total = self._filter.rowCount()
         self._count_label.setText(f"Files: {total}")
+
+    def _apply_meta_filters(self) -> None:
+        bpm_min = self._bpm_min.value()
+        bpm_max = self._bpm_max.value()
+        key = self._key_filter.text().strip().lower()
+        rules = _FilterRules(bpm_min=bpm_min, bpm_max=bpm_max, key=key)
+        self._filter.setFilterRegularExpression(_build_filter_regex(rules))
+
+
+class _FilterRules:
+    def __init__(self, bpm_min: int, bpm_max: int, key: str) -> None:
+        self.bpm_min = bpm_min
+        self.bpm_max = bpm_max
+        self.key = key
+
+
+def _build_filter_regex(rules: _FilterRules) -> QtCore.QRegularExpression:
+    bpm_pattern = _bpm_regex(rules.bpm_min, rules.bpm_max)
+    key_pattern = rules.key if rules.key else r"[A-Ga-g]"
+    pattern = rf"(?i)(?=.*{bpm_pattern})(?=.*{key_pattern}).*"
+    return QtCore.QRegularExpression(pattern)
+
+
+def _bpm_regex(bpm_min: int, bpm_max: int) -> str:
+    if bpm_min <= 0 and bpm_max >= 400:
+        return r"\b\d{2,3}\b"
+    candidates = []
+    for bpm in range(bpm_min, bpm_max + 1):
+        candidates.append(str(bpm))
+    joined = "|".join(candidates)
+    return rf"\b({joined})\b"
 
     def _build_sort_path(self, item: MediaItem) -> Path:
         base = self.root
