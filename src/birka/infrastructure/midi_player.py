@@ -63,6 +63,7 @@ def _find_soundfont() -> Optional[Path]:
     if env and Path(env).exists():
         return Path(env)
     candidates = [
+        Path("/Volumes/External/Code/Birka/data/FluidR3_GM.sf2"),
         Path("/opt/homebrew/share/soundfonts/FluidR3_GM.sf2"),
         Path("/opt/homebrew/share/soundfonts/default.sf2"),
         Path("/usr/local/share/soundfonts/FluidR3_GM.sf2"),
