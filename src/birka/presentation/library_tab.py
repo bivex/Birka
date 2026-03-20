@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List
 
-from PyQt6 import QtCore, QtMultimedia, QtWidgets
+from PyQt6 import QtCore, QtGui, QtMultimedia, QtWidgets
 
 from birka.application.load_library import LoadLibrary
 from birka.application.user_metadata import UserMetadata, UserMetadataStore
@@ -39,6 +39,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._audio_output = QtMultimedia.QAudioOutput(self)
         self._player.setAudioOutput(self._audio_output)
         self._midi_player = MidiPlayer()
+        self._midi_available = self._midi_player.is_available()
 
         self._build_ui()
         self.reload()
@@ -88,6 +89,9 @@ class LibraryTab(QtWidgets.QWidget):
         controls_row = QtWidgets.QHBoxLayout()
         controls_row.addWidget(play_button)
         controls_row.addWidget(stop_button)
+        self._midi_status = QtWidgets.QLabel(self)
+        self._midi_status.setText(self._midi_status_text())
+        controls_row.addWidget(self._midi_status)
         controls_row.addStretch(1)
 
         self._template_input = QtWidgets.QLineEdit(self)
@@ -96,7 +100,11 @@ class LibraryTab(QtWidgets.QWidget):
         rename_button = QtWidgets.QPushButton("Preview Rename", self)
         rename_button.clicked.connect(self._preview_rename)
 
+        open_button = QtWidgets.QPushButton("Open Library", self)
+        open_button.clicked.connect(self._open_library)
+
         rename_row = QtWidgets.QHBoxLayout()
+        rename_row.addWidget(open_button)
         rename_row.addWidget(self._template_input)
         rename_row.addWidget(rename_button)
 
@@ -170,6 +178,7 @@ class LibraryTab(QtWidgets.QWidget):
             QtWidgets.QMessageBox.information(self, "Play", "Select a file first.")
             return
         if item.path.suffix.lower() in {".mid", ".midi"}:
+            print(f"[UI] MIDI play for {item.path}")
             if not self._midi_player.play(item.path):
                 QtWidgets.QMessageBox.information(
                     self,
@@ -216,9 +225,15 @@ class LibraryTab(QtWidgets.QWidget):
             self._metadata_store.save(item.path, UserMetadata(rating=rating, tags=tags))
         self.reload()
 
+    def _open_library(self) -> None:
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(self.root)))
+
     def _stop_playback(self) -> None:
         self._player.stop()
         self._midi_player.stop()
+
+    def _midi_status_text(self) -> str:
+        return "MIDI: available" if self._midi_available else "MIDI: not installed"
 
     def _delete_selected(self) -> None:
         items = self._selected_items()

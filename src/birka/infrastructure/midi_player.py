@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -13,20 +15,64 @@ class MidiPlayer:
     def play(self, path: Path) -> bool:
         self.stop()
         command = _select_player_command(path)
+        print(f"[MIDI] play request: path={path} command={command}")
         if command is None:
             return False
-        self._process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self._process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        print(f"[MIDI] started pid={self._process.pid}")
+        time.sleep(0.15)
+        if self._process.poll() is not None:
+            stdout, stderr = self._process.communicate(timeout=2)
+            if stdout:
+                print(f"[MIDI] stdout: {stdout}")
+            if stderr:
+                print(f"[MIDI] stderr: {stderr}")
+            self._process = None
+            return False
         return True
 
     def stop(self) -> None:
         if self._process and self._process.poll() is None:
+            print(f"[MIDI] stopping pid={self._process.pid}")
             self._process.terminate()
+            stdout, stderr = self._process.communicate(timeout=2)
+            if stdout:
+                print(f"[MIDI] stdout: {stdout}")
+            if stderr:
+                print(f"[MIDI] stderr: {stderr}")
         self._process = None
+
+    def is_available(self) -> bool:
+        return _select_player_command(Path("test.mid")) is not None
 
 
 def _select_player_command(path: Path) -> Optional[list[str]]:
     if shutil.which("timidity"):
         return ["timidity", "-id", str(path)]
     if shutil.which("fluidsynth"):
-        return ["fluidsynth", "-i", str(path)]
+        soundfont = _find_soundfont()
+        if soundfont is None:
+            print("[MIDI] fluidsynth found but no soundfont available.")
+            return None
+        return ["fluidsynth", "-i", "-ni", str(soundfont), str(path)]
+    return None
+
+
+def _find_soundfont() -> Optional[Path]:
+    env = os.environ.get("BIRKA_SOUNDFONT")
+    if env and Path(env).exists():
+        return Path(env)
+    candidates = [
+        Path("/opt/homebrew/share/soundfonts/FluidR3_GM.sf2"),
+        Path("/opt/homebrew/share/soundfonts/default.sf2"),
+        Path("/usr/local/share/soundfonts/FluidR3_GM.sf2"),
+        Path("/usr/local/share/soundfonts/default.sf2"),
+    ]
+    for path in candidates:
+        if path.exists():
+            return path
+    for base in [Path("/opt/homebrew/share/soundfonts"), Path("/usr/local/share/soundfonts")]:
+        if base.exists():
+            for sf2 in base.glob("*.sf2"):
+                return sf2
     return None
