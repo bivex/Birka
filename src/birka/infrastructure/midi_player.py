@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Optional
@@ -54,7 +55,11 @@ def _select_player_command(path: Path) -> Optional[list[str]]:
         if soundfont is None:
             print("[MIDI] fluidsynth found but no soundfont available.")
             return None
-        return ["fluidsynth", "-i", "-ni", str(soundfont), str(path)]
+        command = ["fluidsynth", "-i", "-ni", "-g", "0.8", str(soundfont), str(path)]
+        if sys.platform == "darwin":
+            command.insert(1, "-a")
+            command.insert(2, "coreaudio")
+        return command
     return None
 
 

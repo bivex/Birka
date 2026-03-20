@@ -52,8 +52,10 @@ def build_midi(path: Path, bpm: float, key_signature: str) -> None:
     tempo = int(60_000_000 / bpm)
     tempo_event = b"\x00\xFF\x51\x03" + tempo.to_bytes(3, "big")
     key_event = b"\x00\xFF\x59\x02" + _encode_key_signature(key_signature)
+    note_on = b"\x00\x90\x3C\x64"
+    note_off = b"\x83\x60\x80\x3C\x00"
     end_event = b"\x00\xFF\x2F\x00"
-    track_data = tempo_event + key_event + end_event
+    track_data = tempo_event + key_event + note_on + note_off + end_event
     header = b"MThd" + struct.pack(">IHHH", 6, 1, 1, ticks_per_beat)
     track = b"MTrk" + struct.pack(">I", len(track_data)) + track_data
     path.write_bytes(header + track)
