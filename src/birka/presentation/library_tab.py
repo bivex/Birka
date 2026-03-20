@@ -112,8 +112,10 @@ class LibraryTab(QtWidgets.QWidget):
         tags_row.addWidget(self._rating_combo)
         tags_row.addWidget(apply_button)
 
-        delete_button = QtWidgets.QPushButton("Delete Selected", self)
-        delete_button.clicked.connect(self._delete_selected)
+        self._delete_button = QtWidgets.QPushButton("Delete Selected", self)
+        self._delete_button.setShortcut("Delete")
+        self._delete_button.clicked.connect(self._delete_selected)
+        tags_row.addWidget(self._delete_button)
 
         pager_row = QtWidgets.QHBoxLayout()
         self._page_label = QtWidgets.QLabel("Page 1/1", self)
@@ -140,7 +142,6 @@ class LibraryTab(QtWidgets.QWidget):
         layout.addWidget(self._waveform)
         layout.addLayout(controls_row)
         layout.addLayout(tags_row)
-        layout.addWidget(delete_button)
         layout.addLayout(pager_row)
 
     def _on_selection_changed(self) -> None:
