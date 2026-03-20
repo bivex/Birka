@@ -134,6 +134,10 @@ class LibraryTab(QtWidgets.QWidget):
         self._delete_button.clicked.connect(self._delete_selected)
         tags_row.addWidget(self._delete_button)
 
+        sort_button = QtWidgets.QPushButton("Sort Files", self)
+        sort_button.clicked.connect(self._sort_files)
+        tags_row.addWidget(sort_button)
+
         pager_row = QtWidgets.QHBoxLayout()
         self._count_label = QtWidgets.QLabel("Files: 0", self)
         self._page_label = QtWidgets.QLabel("Page 1/1", self)
@@ -281,6 +285,38 @@ class LibraryTab(QtWidgets.QWidget):
             QtWidgets.QMessageBox.warning(self, "Delete", "Some files could not be deleted:\n" + "\n".join(failures))
         self.reload()
 
+    def _sort_files(self) -> None:
+        items = self._selected_items()
+        if not items:
+            QtWidgets.QMessageBox.information(self, "Sort", "Select one or more rows.")
+            return
+        confirm = QtWidgets.QMessageBox.question(
+            self,
+            "Sort Files",
+            "Move selected files into data/{type}/{bpm}/ folders?",
+            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
+        )
+        if confirm != QtWidgets.QMessageBox.StandardButton.Yes:
+            return
+        failures = []
+        for item in items:
+            target_dir = self._build_sort_path(item)
+            target_dir.mkdir(parents=True, exist_ok=True)
+            target_path = target_dir / item.path.name
+            try:
+                item.path.rename(target_path)
+                self._metadata_store.delete(item.path)
+                if item.rating is not None or item.tags:
+                    self._metadata_store.save(
+                        target_path,
+                        UserMetadata(rating=item.rating, tags=list(item.tags)),
+                    )
+            except OSError as exc:
+                failures.append(f"{item.path.name}: {exc}")
+        if failures:
+            QtWidgets.QMessageBox.warning(self, "Sort", "Some files could not be moved:\n" + "\n".join(failures))
+        self.reload()
+
     def _on_page_size_changed(self) -> None:
         size = self._page_size.currentData()
         if isinstance(size, int):
@@ -305,3 +341,17 @@ class LibraryTab(QtWidgets.QWidget):
     def _update_count_label(self) -> None:
         total = self._filter.rowCount()
         self._count_label.setText(f"Files: {total}")
+
+    def _build_sort_path(self, item: MediaItem) -> Path:
+        base = self.root
+        suffix = item.path.suffix.lower().lstrip(".")
+        media_type = "wav" if suffix == "wav" else "midi" if suffix in {"mid", "midi"} else "other"
+        bpm_value = None
+        metadata = getattr(item, "metadata", None)
+        if metadata is not None and getattr(metadata, "bpm", None) is not None:
+            try:
+                bpm_value = int(round(float(metadata.bpm)))
+            except (TypeError, ValueError):
+                bpm_value = None
+        bpm_folder = f"{bpm_value}bpm" if bpm_value is not None else "unknown-bpm"
+        return base / media_type / bpm_folder
