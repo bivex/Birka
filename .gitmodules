@@ -1,0 +1,3 @@
+[submodule "modules/zarr-view"]
+	path = modules/zarr-view
+	url = https://github.com/marcel-goldschen-ohm/zarr-view
