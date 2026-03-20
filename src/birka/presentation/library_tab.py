@@ -226,7 +226,7 @@ class LibraryTab(QtWidgets.QWidget):
             except OSError as exc:
                 failures.append(f"{item.path.name}: {exc}")
         if failures:
-            QtWidgets.QMessageBox.warning(self, "Delete", "Some files могли не удалиться:\n" + "\n".join(failures))
+            QtWidgets.QMessageBox.warning(self, "Delete", "Some files could not be deleted:\n" + "\n".join(failures))
         self.reload()
 
     def _on_page_size_changed(self) -> None:
