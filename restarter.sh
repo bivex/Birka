@@ -11,4 +11,5 @@ fi
 
 cd "${PROJECT_ROOT}"
 source "${VENV_PATH}/bin/activate"
+export BIRKA_SOUNDFONT="${PROJECT_ROOT}/data/FluidR3 GM.sf2"
 PYTHONPATH="${PROJECT_ROOT}/src" python3 "${PROJECT_ROOT}/src/main.py"
