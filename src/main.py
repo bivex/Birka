@@ -5,19 +5,21 @@ from pathlib import Path
 
 from PyQt6 import QtWidgets
 
-from birka.application.use_cases import LoadDiagram
-from birka.infrastructure.json_diagram_source import JsonDiagramSource
-from birka.presentation.pyqt_app import MainWindow
+from birka.application.scan_library import ScanLibrary
+from birka.infrastructure.file_scanner import FileSystemScanner
+from birka.infrastructure.metadata_readers import AudioMidiMetadataReader
+from birka.presentation.audio_browser import AudioBrowserWindow
 
 
 def main() -> int:
     project_root = Path(__file__).resolve().parents[1]
-    data_path = project_root / "data" / "bpmn_fragment.json"
-    source = JsonDiagramSource(data_path)
-    diagram = LoadDiagram(source).execute()
+    library_root = project_root / "data" / "library"
+    scanner = FileSystemScanner([".wav", ".mid", ".midi"])
+    reader = AudioMidiMetadataReader()
+    items = ScanLibrary(scanner, reader).execute(library_root)
 
     app = QtWidgets.QApplication(sys.argv)
-    window = MainWindow(diagram)
+    window = AudioBrowserWindow(items)
     window.show()
     return app.exec()
 
