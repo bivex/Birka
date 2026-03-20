@@ -30,3 +30,4 @@ htmlcov/
 
 # SoundFonts
 /data/*.sf2
+/dpy_report

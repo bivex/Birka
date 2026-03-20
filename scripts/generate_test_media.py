@@ -7,10 +7,18 @@ import wave
 from pathlib import Path
 
 
+SAMPLE_WIDTH_BYTES = 2
+DEFAULT_TONE_HZ = 440.0
+DEFAULT_AMPLITUDE = 0.2
+MIDI_TICKS_PER_BEAT = 480
+MIDI_NOTE = 60
+MIDI_VELOCITY = 100
+
+
 def build_wav(path: Path, seconds: float, sample_rate: int, channels: int, bpm: float, key: str) -> None:
     frames = int(seconds * sample_rate)
-    tone_hz = 440.0
-    amplitude = 0.2
+    tone_hz = DEFAULT_TONE_HZ
+    amplitude = DEFAULT_AMPLITUDE
     samples = bytearray()
     for n in range(frames):
         value = int(amplitude * 32767 * math.sin(2 * math.pi * tone_hz * (n / sample_rate)))
@@ -19,7 +27,7 @@ def build_wav(path: Path, seconds: float, sample_rate: int, channels: int, bpm: 
 
     with wave.open(str(path), "wb") as wav:
         wav.setnchannels(channels)
-        wav.setsampwidth(2)
+        wav.setsampwidth(SAMPLE_WIDTH_BYTES)
         wav.setframerate(sample_rate)
         wav.writeframes(samples)
 
@@ -48,12 +56,12 @@ def _inject_bext(path: Path, description: bytes) -> None:
 
 
 def build_midi(path: Path, bpm: float, key_signature: str) -> None:
-    ticks_per_beat = 480
+    ticks_per_beat = MIDI_TICKS_PER_BEAT
     tempo = int(60_000_000 / bpm)
     tempo_event = b"\x00\xFF\x51\x03" + tempo.to_bytes(3, "big")
     key_event = b"\x00\xFF\x59\x02" + _encode_key_signature(key_signature)
-    note_on = b"\x00\x90\x3C\x64"
-    note_off = b"\x83\x60\x80\x3C\x00"
+    note_on = bytes([0x00, 0x90, MIDI_NOTE, MIDI_VELOCITY])
+    note_off = bytes([0x83, 0x60, 0x80, MIDI_NOTE, 0x00])
     end_event = b"\x00\xFF\x2F\x00"
     track_data = tempo_event + key_event + note_on + note_off + end_event
     header = b"MThd" + struct.pack(">IHHH", 6, 1, 1, ticks_per_beat)

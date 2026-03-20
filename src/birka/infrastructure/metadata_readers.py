@@ -9,6 +9,24 @@ from typing import Optional
 from birka.application.media_ports import MetadataReader
 from birka.domain.media import AudioItem, AudioMetadata, MediaItem, MidiItem, MidiMetadata
 
+MIDI_HEADER_ID = b"MThd"
+MIDI_TRACK_ID = b"MTrk"
+RIFF_ID = b"RIFF"
+WAVE_ID = b"WAVE"
+MIDI_META_EVENT = 0xFF
+MIDI_SYSEX_EVENTS = (0xF0, 0xF7)
+MIDI_TEMPO_META = 0x51
+MIDI_KEY_META = 0x59
+MIDI_DEFAULT_BPM = 120.0
+MIDI_HEADER_MIN = 14
+MIDI_HEADER_SIZE = 6
+RIFF_HEADER_SIZE = 12
+WAV_CHUNK_HEADER = 8
+WAV_META_CHUNKS = {b"bext", b"LIST", b"INFO", b"ICMT", b"INAM"}
+MIDI_STATUS_NOTE_OFF_MAX = 0xBF
+MIDI_STATUS_PROGRAM_CHANGE_MAX = 0xDF
+MIDI_STATUS_PITCH_MAX = 0xEF
+
 
 class AudioMidiMetadataReader(MetadataReader):
     def read(self, path: Path) -> MediaItem:
@@ -60,10 +78,10 @@ def _read_midi(path: Path) -> MidiItem:
     return MidiItem(path=path, name=path.name, metadata=metadata)
 
 def _parse_midi(data: bytes) -> tuple[Optional[int], Optional[int], Optional[float], Optional[str], Optional[float]]:
-    if len(data) < 14 or data[:4] != b"MThd":
+    if len(data) < MIDI_HEADER_MIN or data[:4] != MIDI_HEADER_ID:
         return None, None, None, None, None
     header_length = struct.unpack(">I", data[4:8])[0]
-    if header_length < 6 or len(data) < 8 + header_length:
+    if header_length < MIDI_HEADER_SIZE or len(data) < 8 + header_length:
         return None, None, None, None, None
     _, ntrks, division = struct.unpack(">HHH", data[8:14])
     if division & 0x8000:
@@ -75,7 +93,7 @@ def _parse_midi(data: bytes) -> tuple[Optional[int], Optional[int], Optional[flo
     max_ticks = 0
     offset = 8 + header_length
     for _ in range(ntrks):
-        if offset + 8 > len(data) or data[offset:offset + 4] != b"MTrk":
+        if offset + 8 > len(data) or data[offset:offset + 4] != MIDI_TRACK_ID:
             break
         track_length = struct.unpack(">I", data[offset + 4:offset + 8])[0]
         track_data = data[offset + 8:offset + 8 + track_length]
@@ -101,7 +119,7 @@ def _scan_midi_track(data: bytes, bpm: Optional[float], key: Optional[str]) -> t
         else:
             idx += 1
             running_status = status if status < 0xF0 else None
-        if status == 0xFF:
+        if status == MIDI_META_EVENT:
             if idx >= len(data):
                 break
             meta_type = data[idx]
@@ -109,13 +127,13 @@ def _scan_midi_track(data: bytes, bpm: Optional[float], key: Optional[str]) -> t
             length, idx = _read_vlq(data, idx)
             meta_data = data[idx:idx + length]
             idx += length
-            if meta_type == 0x51 and length == 3 and bpm is None:
+            if meta_type == MIDI_TEMPO_META and length == 3 and bpm is None:
                 tempo = (meta_data[0] << 16) | (meta_data[1] << 8) | meta_data[2]
                 if tempo:
                     bpm = round(60_000_000 / tempo, 3)
-            if meta_type == 0x59 and length == 2 and key is None:
+            if meta_type == MIDI_KEY_META and length == 2 and key is None:
                 key = _decode_key_signature(meta_data[0], meta_data[1])
-        elif status in (0xF0, 0xF7):
+        elif status in MIDI_SYSEX_EVENTS:
             length, idx = _read_vlq(data, idx)
             idx += length
         else:
@@ -127,7 +145,7 @@ def _scan_midi_track(data: bytes, bpm: Optional[float], key: Optional[str]) -> t
 def _ticks_to_seconds(ticks: int, ticks_per_beat: Optional[int], bpm: Optional[float]) -> Optional[float]:
     if ticks_per_beat is None or ticks_per_beat <= 0:
         return None
-    effective_bpm = bpm or 120.0
+    effective_bpm = bpm or MIDI_DEFAULT_BPM
     return (ticks / ticks_per_beat) * (60.0 / effective_bpm)
 
 
@@ -143,11 +161,11 @@ def _read_vlq(data: bytes, idx: int) -> tuple[int, int]:
 
 
 def _midi_data_length(status: int) -> int:
-    if 0x80 <= status <= 0xBF:
+    if 0x80 <= status <= MIDI_STATUS_NOTE_OFF_MAX:
         return 2
-    if 0xC0 <= status <= 0xDF:
+    if 0xC0 <= status <= MIDI_STATUS_PROGRAM_CHANGE_MAX:
         return 1
-    if 0xE0 <= status <= 0xEF:
+    if 0xE0 <= status <= MIDI_STATUS_PITCH_MAX:
         return 2
     return 0
 
@@ -163,17 +181,17 @@ def _decode_key_signature(sf: int, mi: int) -> str:
 
 def _extract_bpm_key_from_wav(path: Path) -> tuple[Optional[float], Optional[str]]:
     data = path.read_bytes()
-    if len(data) < 12 or data[:4] != b"RIFF" or data[8:12] != b"WAVE":
+    if len(data) < RIFF_HEADER_SIZE or data[:4] != RIFF_ID or data[8:12] != WAVE_ID:
         return None, None
-    offset = 12
+    offset = RIFF_HEADER_SIZE
     payloads: list[bytes] = []
-    while offset + 8 <= len(data):
+    while offset + WAV_CHUNK_HEADER <= len(data):
         chunk_id = data[offset:offset + 4]
         size = struct.unpack("<I", data[offset + 4:offset + 8])[0]
-        offset += 8
+        offset += WAV_CHUNK_HEADER
         chunk_data = data[offset:offset + size]
         offset += size + (size % 2)
-        if chunk_id in {b"bext", b"LIST", b"INFO", b"ICMT", b"INAM"}:
+        if chunk_id in WAV_META_CHUNKS:
             payloads.append(chunk_data)
     combined = b" ".join(payloads)
     text = combined.decode("utf-8", errors="ignore")
