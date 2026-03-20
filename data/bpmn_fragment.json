@@ -1,0 +1,91 @@
+{
+  "kind": "views",
+  "type": null,
+  "data": [
+    {
+      "_type": "BPMNTaskView",
+      "_id": "AAAAAAGdDUjqzVCAjKw=",
+      "left": 3886,
+      "top": 1139,
+      "width": 130,
+      "height": 60,
+      "subViews": [
+        {
+          "_type": "LabelView",
+          "_id": "AAAAAAGdDUjqzVCBos0=",
+          "text": "10. Создание стемов (stems)"
+        }
+      ]
+    },
+    {
+      "_type": "BPMNTaskView",
+      "_id": "AAAAAAGdDUkPzVCJz4U=",
+      "left": 3666,
+      "top": 1139,
+      "width": 170,
+      "height": 60,
+      "subViews": [
+        {
+          "_type": "LabelView",
+          "_id": "AAAAAAGdDUkPzVCKewo=",
+          "text": "11. Генерация версий (full, loop, 60/30/15)"
+        }
+      ]
+    },
+    {
+      "_type": "BPMNTaskView",
+      "_id": "AAAAAAGdDUkP61CS1hE=",
+      "left": 3496,
+      "top": 1139,
+      "width": 120,
+      "height": 60,
+      "subViews": [
+        {
+          "_type": "LabelView",
+          "_id": "AAAAAAGdDUkP61CTS0k=",
+          "text": "12. Метаданные и BPM теги"
+        }
+      ]
+    },
+    {
+      "_type": "BPMNTaskView",
+      "_id": "AAAAAAGdDUkP+1Cb/1s=",
+      "left": 3326,
+      "top": 1139,
+      "width": 120,
+      "height": 60,
+      "subViews": [
+        {
+          "_type": "LabelView",
+          "_id": "AAAAAAGdDUkP+1CcPSQ=",
+          "text": "13. Контроль качества (QC)"
+        }
+      ]
+    },
+    {
+      "_type": "BPMNSequenceFlowView",
+      "_id": "AAAAAAGdDU/0RFEdSUA=",
+      "head": {"$ref": "AAAAAAGdDUkPzVCJz4U="},
+      "tail": {"$ref": "AAAAAAGdDUjqzVCAjKw="},
+      "points": "3885:1169;3861:1169;3837:1169"
+    },
+    {
+      "_type": "BPMNSequenceFlowView",
+      "_id": "AAAAAAGdDU/0X1Emwas=",
+      "head": {"$ref": "AAAAAAGdDUkP61CS1hE="},
+      "tail": {"$ref": "AAAAAAGdDUkPzVCJz4U="},
+      "points": "3665:1169;3641:1169;3617:1169"
+    },
+    {
+      "_type": "BPMNSequenceFlowView",
+      "_id": "AAAAAAGdDU/0bFEv40M=",
+      "head": {"$ref": "AAAAAAGdDUkP+1Cb/1s="},
+      "tail": {"$ref": "AAAAAAGdDUkP61CS1hE="},
+      "points": "3495:1169;3471:1169;3447:1169"
+    }
+  ],
+  "context": {
+    "id": "AAAAAAGdDUVKN1AWSXA=",
+    "type": "BPMNDiagram"
+  }
+}
