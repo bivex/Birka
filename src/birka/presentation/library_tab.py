@@ -13,6 +13,7 @@ from birka.infrastructure.metadata_readers import AudioMidiMetadataReader
 from birka.infrastructure.midi_player import MidiPlayer
 from birka.infrastructure.waveform_provider import WaveformProvider
 from birka.presentation.media_presenter import MediaPresenter
+from birka.presentation.media_filter_proxy import MediaFilterProxyModel
 from birka.presentation.media_table_model import MediaTableModel
 from birka.presentation.pagination_proxy import PaginationProxyModel
 from birka.presentation.rename_dialog import RenameCoordinator
@@ -66,9 +67,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._selection_connected = True
 
     def _build_ui(self) -> None:
-        self._filter = QtCore.QSortFilterProxyModel(self)
-        self._filter.setFilterKeyColumn(-1)
-        self._filter.setFilterCaseSensitivity(QtCore.Qt.CaseSensitivity.CaseInsensitive)
+        self._filter = MediaFilterProxyModel(self)
         self._filter.modelReset.connect(self._update_page_label)
         self._filter.layoutChanged.connect(self._update_page_label)
         self._filter.modelReset.connect(self._update_count_label)
@@ -78,7 +77,7 @@ class LibraryTab(QtWidgets.QWidget):
 
         self._search = QtWidgets.QLineEdit(self)
         self._search.setPlaceholderText("Search by name, type, BPM, key, tags...")
-        self._search.textChanged.connect(self._filter.setFilterFixedString)
+        self._search.textChanged.connect(self._filter.set_text_filter)
 
         self._bpm_min = QtWidgets.QSpinBox(self)
         self._bpm_min.setRange(0, 400)
@@ -98,6 +97,8 @@ class LibraryTab(QtWidgets.QWidget):
         self._table.setAlternatingRowColors(True)
         self._table.setSortingEnabled(True)
         self._table.horizontalHeader().sortIndicatorChanged.connect(self._pager.sort)
+        self._table.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self._table.customContextMenuRequested.connect(self._show_context_menu)
 
 
         self._waveform = WaveformWidget(self)
@@ -274,6 +275,19 @@ class LibraryTab(QtWidgets.QWidget):
     def _open_library(self) -> None:
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(self.root)))
 
+    def _show_context_menu(self, pos: QtCore.QPoint) -> None:
+        item = self._first_selected_item()
+        if item is None:
+            return
+        menu = QtWidgets.QMenu(self)
+        open_action = menu.addAction("Reveal in Finder")
+        action = menu.exec(self._table.viewport().mapToGlobal(pos))
+        if action == open_action:
+            self._reveal_in_finder(item.path)
+
+    def _reveal_in_finder(self, path: Path) -> None:
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(path.parent)))
+
     def _stop_playback(self) -> None:
         self._player.stop()
         self._midi_player.stop()
@@ -366,43 +380,22 @@ class LibraryTab(QtWidgets.QWidget):
         bpm_min = self._bpm_min.value()
         bpm_max = self._bpm_max.value()
         key = self._key_filter.text().strip().lower()
-        rules = _FilterRules(bpm_min=bpm_min, bpm_max=bpm_max, key=key)
-        self._filter.setFilterRegularExpression(_build_filter_regex(rules))
-
-
-class _FilterRules:
-    def __init__(self, bpm_min: int, bpm_max: int, key: str) -> None:
-        self.bpm_min = bpm_min
-        self.bpm_max = bpm_max
-        self.key = key
-
-
-def _build_filter_regex(rules: _FilterRules) -> QtCore.QRegularExpression:
-    bpm_pattern = _bpm_regex(rules.bpm_min, rules.bpm_max)
-    key_pattern = rules.key if rules.key else r"[A-Ga-g]"
-    pattern = rf"(?i)(?=.*{bpm_pattern})(?=.*{key_pattern}).*"
-    return QtCore.QRegularExpression(pattern)
-
-
-def _bpm_regex(bpm_min: int, bpm_max: int) -> str:
-    if bpm_min <= 0 and bpm_max >= 400:
-        return r"\b\d{2,3}\b"
-    candidates = []
-    for bpm in range(bpm_min, bpm_max + 1):
-        candidates.append(str(bpm))
-    joined = "|".join(candidates)
-    return rf"\b({joined})\b"
+        self._filter.set_bpm_range(bpm_min, bpm_max)
+        self._filter.set_key_filter(key)
 
     def _build_sort_path(self, item: MediaItem) -> Path:
-        base = self.root
-        suffix = item.path.suffix.lower().lstrip(".")
-        media_type = "wav" if suffix == "wav" else "midi" if suffix in {"mid", "midi"} else "other"
-        bpm_value = None
-        metadata = getattr(item, "metadata", None)
-        if metadata is not None and getattr(metadata, "bpm", None) is not None:
-            try:
-                bpm_value = int(round(float(metadata.bpm)))
-            except (TypeError, ValueError):
-                bpm_value = None
-        bpm_folder = f"{bpm_value}bpm" if bpm_value is not None else "unknown-bpm"
-        return base / media_type / bpm_folder
+        return _sort_path_for_item(self.root, item)
+
+
+def _sort_path_for_item(root: Path, item: MediaItem) -> Path:
+    suffix = item.path.suffix.lower().lstrip(".")
+    media_type = "wav" if suffix == "wav" else "midi" if suffix in {"mid", "midi"} else "other"
+    bpm_value = None
+    metadata = getattr(item, "metadata", None)
+    if metadata is not None and getattr(metadata, "bpm", None) is not None:
+        try:
+            bpm_value = int(round(float(metadata.bpm)))
+        except (TypeError, ValueError):
+            bpm_value = None
+    bpm_folder = f"{bpm_value}bpm" if bpm_value is not None else "unknown-bpm"
+    return root / media_type / bpm_folder

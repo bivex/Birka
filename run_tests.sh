@@ -11,4 +11,5 @@ fi
 
 cd "${PROJECT_ROOT}"
 source "${VENV_PATH}/bin/activate"
-QT_QPA_PLATFORM=offscreen PYTHONPATH="${PROJECT_ROOT}/src" python3 -m unittest discover -s "${PROJECT_ROOT}/tests"
+rm -rf "${PROJECT_ROOT}/tests/__pycache__"
+PYTHONDONTWRITEBYTECODE=1 QT_QPA_PLATFORM=offscreen PYTHONPATH="${PROJECT_ROOT}/src" python3 -m unittest discover -s "${PROJECT_ROOT}/tests"
