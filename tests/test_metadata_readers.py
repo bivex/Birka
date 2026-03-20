@@ -33,6 +33,7 @@ class MetadataReaderTests(unittest.TestCase):
             self.assertEqual(item.metadata.ticks_per_beat, 480)
             self.assertEqual(item.metadata.bpm, 120.0)
             self.assertEqual(item.metadata.key, "C")
+            self.assertAlmostEqual(item.metadata.duration_seconds, 0.0, places=2)
 
 
 def _build_midi_file(track_count: int, ticks_per_beat: int) -> bytes:

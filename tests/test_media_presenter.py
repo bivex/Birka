@@ -40,3 +40,4 @@ class MediaPresenterTests(unittest.TestCase):
         self.assertEqual(rows[0].bpm, "90.0")
         self.assertEqual(rows[0].key, "Am")
         self.assertEqual(rows[0].tags, "")
+        self.assertEqual(rows[0].duration, "")

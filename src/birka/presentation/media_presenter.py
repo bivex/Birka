@@ -38,13 +38,14 @@ class MediaPresenter:
             )
         if isinstance(item, MidiItem):
             metadata = item.metadata
+            duration = _format_duration(metadata.duration_seconds) if metadata and metadata.duration_seconds else ""
             return MediaRow(
                 path=str(item.path),
                 name=item.name,
                 media_type="MIDI",
                 bpm=_format_optional(metadata.bpm) if metadata else "",
                 key=_format_optional(metadata.key) if metadata else "",
-                duration="",
+                duration=duration,
                 rating=_format_rating(item),
                 tags=_format_tags(item),
             )

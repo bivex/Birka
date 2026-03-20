@@ -10,6 +10,7 @@ from birka.application.user_metadata import UserMetadata, UserMetadataStore
 from birka.domain.media import MediaItem, Rating
 from birka.infrastructure.file_scanner import FileSystemScanner
 from birka.infrastructure.metadata_readers import AudioMidiMetadataReader
+from birka.infrastructure.midi_player import MidiPlayer
 from birka.infrastructure.waveform_provider import WaveformProvider
 from birka.presentation.media_presenter import MediaPresenter
 from birka.presentation.media_table_model import MediaTableModel
@@ -37,6 +38,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._player = QtMultimedia.QMediaPlayer(self)
         self._audio_output = QtMultimedia.QAudioOutput(self)
         self._player.setAudioOutput(self._audio_output)
+        self._midi_player = MidiPlayer()
 
         self._build_ui()
         self.reload()
@@ -81,7 +83,7 @@ class LibraryTab(QtWidgets.QWidget):
         play_button = QtWidgets.QPushButton("Play", self)
         stop_button = QtWidgets.QPushButton("Stop", self)
         play_button.clicked.connect(self._play_selected)
-        stop_button.clicked.connect(self._player.stop)
+        stop_button.clicked.connect(self._stop_playback)
 
         controls_row = QtWidgets.QHBoxLayout()
         controls_row.addWidget(play_button)
@@ -167,6 +169,14 @@ class LibraryTab(QtWidgets.QWidget):
         if item is None:
             QtWidgets.QMessageBox.information(self, "Play", "Select a file first.")
             return
+        if item.path.suffix.lower() in {".mid", ".midi"}:
+            if not self._midi_player.play(item.path):
+                QtWidgets.QMessageBox.information(
+                    self,
+                    "MIDI",
+                    "MIDI playback requires timidity or fluidsynth.",
+                )
+            return
         url = QtCore.QUrl.fromLocalFile(str(item.path))
         self._player.setSource(url)
         self._player.play()
@@ -205,6 +215,10 @@ class LibraryTab(QtWidgets.QWidget):
         for item in items:
             self._metadata_store.save(item.path, UserMetadata(rating=rating, tags=tags))
         self.reload()
+
+    def _stop_playback(self) -> None:
+        self._player.stop()
+        self._midi_player.stop()
 
     def _delete_selected(self) -> None:
         items = self._selected_items()

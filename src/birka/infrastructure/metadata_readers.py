@@ -43,22 +43,28 @@ def _read_wav(path: Path) -> AudioItem:
 
 def _read_midi(path: Path) -> MidiItem:
     data = path.read_bytes()
-    ticks_per_beat, track_count, bpm, key = _parse_midi(data)
+    ticks_per_beat, track_count, bpm, key, duration_seconds = _parse_midi(data)
     if bpm is None or key is None:
         fallback_bpm, fallback_key = _extract_bpm_key_from_name(path.stem)
         bpm = bpm if bpm is not None else fallback_bpm
         key = key if key is not None else fallback_key
     metadata = None
     if ticks_per_beat is not None and track_count is not None:
-        metadata = MidiMetadata(ticks_per_beat=ticks_per_beat, track_count=track_count, bpm=bpm, key=key)
+        metadata = MidiMetadata(
+            ticks_per_beat=ticks_per_beat,
+            track_count=track_count,
+            duration_seconds=duration_seconds,
+            bpm=bpm,
+            key=key,
+        )
     return MidiItem(path=path, name=path.name, metadata=metadata)
 
-def _parse_midi(data: bytes) -> tuple[Optional[int], Optional[int], Optional[float], Optional[str]]:
+def _parse_midi(data: bytes) -> tuple[Optional[int], Optional[int], Optional[float], Optional[str], Optional[float]]:
     if len(data) < 14 or data[:4] != b"MThd":
-        return None, None, None, None
+        return None, None, None, None, None
     header_length = struct.unpack(">I", data[4:8])[0]
     if header_length < 6 or len(data) < 8 + header_length:
-        return None, None, None, None
+        return None, None, None, None, None
     _, ntrks, division = struct.unpack(">HHH", data[8:14])
     if division & 0x8000:
         ticks_per_beat = None
@@ -66,23 +72,27 @@ def _parse_midi(data: bytes) -> tuple[Optional[int], Optional[int], Optional[flo
         ticks_per_beat = division
     bpm = None
     key = None
+    max_ticks = 0
     offset = 8 + header_length
     for _ in range(ntrks):
         if offset + 8 > len(data) or data[offset:offset + 4] != b"MTrk":
             break
         track_length = struct.unpack(">I", data[offset + 4:offset + 8])[0]
         track_data = data[offset + 8:offset + 8 + track_length]
-        bpm, key = _scan_midi_track(track_data, bpm, key)
+        bpm, key, ticks = _scan_midi_track(track_data, bpm, key)
+        max_ticks = max(max_ticks, ticks)
         offset += 8 + track_length
-    return ticks_per_beat, ntrks, bpm, key
+    duration_seconds = _ticks_to_seconds(max_ticks, ticks_per_beat, bpm)
+    return ticks_per_beat, ntrks, bpm, key, duration_seconds
 
 
-def _scan_midi_track(data: bytes, bpm: Optional[float], key: Optional[str]) -> tuple[Optional[float], Optional[str]]:
+def _scan_midi_track(data: bytes, bpm: Optional[float], key: Optional[str]) -> tuple[Optional[float], Optional[str], int]:
     idx = 0
     running_status = None
+    ticks = 0
     while idx < len(data):
         delta, idx = _read_vlq(data, idx)
-        _ = delta
+        ticks += delta
         if idx >= len(data):
             break
         status = data[idx]
@@ -111,7 +121,14 @@ def _scan_midi_track(data: bytes, bpm: Optional[float], key: Optional[str]) -> t
         else:
             data_len = _midi_data_length(status)
             idx += data_len
-    return bpm, key
+    return bpm, key, ticks
+
+
+def _ticks_to_seconds(ticks: int, ticks_per_beat: Optional[int], bpm: Optional[float]) -> Optional[float]:
+    if ticks_per_beat is None or ticks_per_beat <= 0:
+        return None
+    effective_bpm = bpm or 120.0
+    return (ticks / ticks_per_beat) * (60.0 / effective_bpm)
 
 
 def _read_vlq(data: bytes, idx: int) -> tuple[int, int]:

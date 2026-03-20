@@ -27,6 +27,7 @@ class AudioMetadata:
 class MidiMetadata:
     ticks_per_beat: int
     track_count: int
+    duration_seconds: float | None = None
     bpm: Optional[float] = None
     key: Optional[str] = None
 
