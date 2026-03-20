@@ -11,4 +11,4 @@ fi
 
 cd "${PROJECT_ROOT}"
 source "${VENV_PATH}/bin/activate"
-PYTHONPATH="${PROJECT_ROOT}/src" python3 -m unittest discover -s "${PROJECT_ROOT}/tests"
+QT_QPA_PLATFORM=offscreen PYTHONPATH="${PROJECT_ROOT}/src" python3 -m unittest discover -s "${PROJECT_ROOT}/tests"

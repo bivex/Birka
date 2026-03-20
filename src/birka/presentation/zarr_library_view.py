@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable, Optional
 
-from PyQt6 import QtWidgets
+from PyQt6 import QtCore, QtWidgets
 
 from birka.domain.media import MediaItem
 
@@ -35,6 +35,7 @@ class ZarrLibraryView(QtWidgets.QWidget):
             if module_path.exists() and str(module_path) not in sys.path:
                 sys.path.append(str(module_path))
 
+            _apply_qt_compat()
             import zarr  # type: ignore
             from zarrview.ZarrViewer import ZarrViewer  # type: ignore
         except Exception as exc:  # noqa: BLE001
@@ -85,3 +86,8 @@ def _build_zarr_hierarchy(root: Path, items: Iterable[MediaItem]):
             if hasattr(metadata, "ticks_per_beat"):
                 dataset.attrs["ticks_per_beat"] = metadata.ticks_per_beat
     return zroot
+
+
+def _apply_qt_compat() -> None:
+    if not hasattr(QtCore.Qt, "DropActions") and hasattr(QtCore.Qt, "DropAction"):
+        QtCore.Qt.DropActions = QtCore.Qt.DropAction  # type: ignore[attr-defined]
