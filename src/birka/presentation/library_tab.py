@@ -13,6 +13,7 @@ from birka.infrastructure.metadata_readers import AudioMidiMetadataReader
 from birka.infrastructure.midi_player import MidiPlayer
 from birka.infrastructure.waveform_provider import WaveformProvider
 from birka.presentation.media_presenter import MediaPresenter
+from birka.presentation.file_drag_table import FileDragTableView
 from birka.presentation.media_filter_proxy import MediaFilterProxyModel
 from birka.presentation.media_table_model import MediaTableModel
 from birka.presentation.pagination_proxy import PaginationProxyModel
@@ -92,8 +93,31 @@ class LibraryTab(QtWidgets.QWidget):
         self._key_filter.setPlaceholderText("Key (e.g., C#m)")
         self._key_filter.textChanged.connect(self._apply_meta_filters)
 
-        self._table = QtWidgets.QTableView(self)
+        self._type_filter = QtWidgets.QComboBox(self)
+        self._type_filter.addItem("All", "")
+        self._type_filter.addItem("Audio", "audio")
+        self._type_filter.addItem("MIDI", "midi")
+        self._type_filter.currentIndexChanged.connect(self._apply_meta_filters)
+
+        self._include_unknown_bpm = QtWidgets.QCheckBox("Include unknown BPM", self)
+        self._include_unknown_bpm.setChecked(True)
+        self._include_unknown_bpm.stateChanged.connect(self._apply_meta_filters)
+
+        self._duration_min = QtWidgets.QSpinBox(self)
+        self._duration_min.setRange(0, 3600)
+        self._duration_min.setPrefix("Dur min: ")
+        self._duration_min.setSuffix("s")
+        self._duration_min.valueChanged.connect(self._apply_meta_filters)
+        self._duration_max = QtWidgets.QSpinBox(self)
+        self._duration_max.setRange(0, 3600)
+        self._duration_max.setPrefix("Dur max: ")
+        self._duration_max.setSuffix("s")
+        self._duration_max.setValue(3600)
+        self._duration_max.valueChanged.connect(self._apply_meta_filters)
+
+        self._table = FileDragTableView(self._selected_paths, self)
         self._table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
+        self._table.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
         self._table.setAlternatingRowColors(True)
         self._table.setSortingEnabled(True)
         self._table.horizontalHeader().sortIndicatorChanged.connect(self._pager.sort)
@@ -178,6 +202,10 @@ class LibraryTab(QtWidgets.QWidget):
         filter_row.addWidget(self._bpm_min)
         filter_row.addWidget(self._bpm_max)
         filter_row.addWidget(self._key_filter)
+        filter_row.addWidget(self._type_filter)
+        filter_row.addWidget(self._include_unknown_bpm)
+        filter_row.addWidget(self._duration_min)
+        filter_row.addWidget(self._duration_max)
         filter_row.addStretch(1)
 
         list_layout.addWidget(self._search)
@@ -382,6 +410,12 @@ class LibraryTab(QtWidgets.QWidget):
         key = self._key_filter.text().strip().lower()
         self._filter.set_bpm_range(bpm_min, bpm_max)
         self._filter.set_key_filter(key)
+        self._filter.set_type_filter(self._type_filter.currentData() or "")
+        self._filter.set_include_unknown_bpm(self._include_unknown_bpm.isChecked())
+        self._filter.set_duration_range(self._duration_min.value(), self._duration_max.value())
+
+    def _selected_paths(self) -> list[str]:
+        return [str(item.path) for item in self._selected_items()]
 
     def _build_sort_path(self, item: MediaItem) -> Path:
         return _sort_path_for_item(self.root, item)

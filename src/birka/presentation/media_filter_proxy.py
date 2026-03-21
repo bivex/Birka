@@ -10,6 +10,10 @@ class MediaFilterProxyModel(QtCore.QSortFilterProxyModel):
         self._bpm_min = 0
         self._bpm_max = 400
         self._key = ""
+        self._type = ""
+        self._include_unknown_bpm = True
+        self._duration_min = 0
+        self._duration_max = 36000
 
     def set_text_filter(self, text: str) -> None:
         self._text = text.strip().lower()
@@ -22,6 +26,19 @@ class MediaFilterProxyModel(QtCore.QSortFilterProxyModel):
 
     def set_key_filter(self, key: str) -> None:
         self._key = key.strip().lower()
+        self.invalidateFilter()
+
+    def set_type_filter(self, media_type: str) -> None:
+        self._type = media_type.strip().lower()
+        self.invalidateFilter()
+
+    def set_include_unknown_bpm(self, value: bool) -> None:
+        self._include_unknown_bpm = value
+        self.invalidateFilter()
+
+    def set_duration_range(self, min_seconds: int, max_seconds: int) -> None:
+        self._duration_min = min_seconds
+        self._duration_max = max_seconds
         self.invalidateFilter()
 
     def filterAcceptsRow(self, source_row: int, source_parent: QtCore.QModelIndex) -> bool:  # noqa: N802
@@ -43,12 +60,25 @@ class MediaFilterProxyModel(QtCore.QSortFilterProxyModel):
             if bpm_value < self._bpm_min or bpm_value > self._bpm_max:
                 return False
         else:
-            if not (self._bpm_min <= 0 and self._bpm_max >= 400):
+            if not self._include_unknown_bpm or not (self._bpm_min <= 0 and self._bpm_max >= 400):
                 return False
 
         if self._key:
             key_value = row_values[3].lower() if len(row_values) > 3 else ""
             if self._key not in key_value:
+                return False
+
+        if self._type:
+            type_value = row_values[1].lower() if len(row_values) > 1 else ""
+            if self._type not in type_value:
+                return False
+
+        duration_value = _parse_duration(row_values[4]) if len(row_values) > 4 else None
+        if duration_value is not None:
+            if duration_value < self._duration_min or duration_value > self._duration_max:
+                return False
+        else:
+            if not (self._duration_min <= 0 and self._duration_max >= 36000):
                 return False
 
         return True
@@ -59,3 +89,19 @@ def _parse_bpm(value: str):  # noqa: ANN001
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _parse_duration(value: str) -> int | None:
+    if not value:
+        return None
+    if ":" not in value:
+        return None
+    parts = value.split(":")
+    if len(parts) != 2:
+        return None
+    try:
+        minutes = int(parts[0])
+        seconds = int(parts[1])
+    except ValueError:
+        return None
+    return minutes * 60 + seconds
