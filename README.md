@@ -2,6 +2,13 @@
 
 Birka is a fast, media‑focused file manager for **audio and MIDI** libraries. It aims to make large sample collections easy to search, preview, tag, and organize — without opening a DAW.
 
+## Screenshots
+**List view**
+![Birka List View](docs/screenshots/birka_gui_list.png)
+
+**Tree view**
+![Birka Tree View](docs/screenshots/birka_gui_tree.png)
+
 ## Highlights
 - **Audio + MIDI focused**: metadata (BPM, key, duration), tags, ratings.
 - **Fast search** across name, BPM, key, tags.
