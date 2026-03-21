@@ -50,6 +50,12 @@ class MediaTableModel(QtCore.QAbstractTableModel):
             return self._headers[section]
         return str(section + 1)
 
+    def flags(self, index: QtCore.QModelIndex) -> QtCore.Qt.ItemFlags:  # noqa: N802
+        base = super().flags(index)
+        if not index.isValid():
+            return base
+        return base | QtCore.Qt.ItemFlag.ItemIsDragEnabled
+
     def set_filter(self, text: str) -> None:
         needle = text.strip().lower()
         self.beginResetModel()
