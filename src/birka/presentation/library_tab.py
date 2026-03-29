@@ -22,7 +22,25 @@ from birka.presentation.waveform_widget import WaveformWidget
 from birka.presentation.zarr_library_view import ZarrLibraryView
 
 
+class _RefreshWorker(QtCore.QObject):
+    finished = QtCore.pyqtSignal(list)
+
+    def __init__(self, root: Path, metadata_store: UserMetadataStore) -> None:
+        super().__init__()
+        self._root = root
+        self._metadata_store = metadata_store
+
+    def run(self) -> None:
+        scanner = FileSystemScanner([".wav", ".mid", ".midi"])
+        reader = AudioMidiMetadataReader()
+        loader = LoadLibrary(scanner, reader, self._metadata_store)
+        items = loader.execute(self._root)
+        self.finished.emit(items)
+
+
 class LibraryTab(QtWidgets.QWidget):
+    folder_opened = QtCore.pyqtSignal(Path)
+
     def __init__(self, root: Path, metadata_store: UserMetadataStore, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
         self.root = root
@@ -45,20 +63,40 @@ class LibraryTab(QtWidgets.QWidget):
         self._midi_player = MidiPlayer()
         self._midi_available = self._midi_player.is_available()
 
+        self._refresh_thread: QtCore.QThread | None = None
+        self._refresh_worker: _RefreshWorker | None = None
+
         self._build_ui()
         self.reload()
 
+        self._auto_refresh_timer = QtCore.QTimer(self)
+        self._auto_refresh_timer.timeout.connect(self.reload)
+        self._auto_refresh_timer.start(10_000)
+
     def reload(self) -> None:
-        self._items = self._loader.execute(self.root)
-        self._item_by_path = {str(item.path): item for item in self._items}
-        self._model = MediaTableModel(self._presenter.to_rows(self._items))
+        if self._refresh_thread is not None:
+            return
+        worker = _RefreshWorker(self.root, self._metadata_store)
+        thread = QtCore.QThread()
+        worker.moveToThread(thread)
+        worker.finished.connect(self._apply_refresh)
+        thread.finished.connect(self._cleanup_thread)
+        thread.started.connect(worker.run)
+        self._refresh_thread = thread
+        self._refresh_worker = worker
+        thread.start()
+
+    def _apply_refresh(self, items: List[MediaItem]) -> None:
+        self._items = items
+        self._item_by_path = {str(item.path): item for item in items}
+        self._model = MediaTableModel(self._presenter.to_rows(items))
         self._filter.setSourceModel(self._model)
         self._table.setModel(self._pager)
         self._table.resizeColumnsToContents()
         self._update_page_label()
         self._update_count_label()
         if self._zarr_view is not None:
-            self._zarr_view.set_items(self._items)
+            self._zarr_view.set_items(items)
         if self._selection_connected:
             try:
                 self._table.selectionModel().selectionChanged.disconnect(self._on_selection_changed)
@@ -66,6 +104,12 @@ class LibraryTab(QtWidgets.QWidget):
                 pass
         self._table.selectionModel().selectionChanged.connect(self._on_selection_changed)
         self._selection_connected = True
+
+    def _cleanup_thread(self) -> None:
+        if self._refresh_thread is not None:
+            self._refresh_thread.wait()
+            self._refresh_thread = None
+            self._refresh_worker = None
 
     def _build_ui(self) -> None:
         self._filter = MediaFilterProxyModel(self)
@@ -148,8 +192,12 @@ class LibraryTab(QtWidgets.QWidget):
         open_button = QtWidgets.QPushButton("Open Library", self)
         open_button.clicked.connect(self._open_library)
 
+        refresh_button = QtWidgets.QPushButton("Refresh", self)
+        refresh_button.clicked.connect(self.reload)
+
         rename_row = QtWidgets.QHBoxLayout()
         rename_row.addWidget(open_button)
+        rename_row.addWidget(refresh_button)
         rename_row.addWidget(self._template_input)
         rename_row.addWidget(rename_button)
 
@@ -308,16 +356,9 @@ class LibraryTab(QtWidgets.QWidget):
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(self.root)))
 
     def _open_selected_folder(self) -> None:
-        items = self._selected_items()
-        if not items:
-            QtWidgets.QMessageBox.information(self, "Open Folder", "Select one or more files first.")
-            return
-        opened = set()
-        for item in items:
-            parent = str(item.path.parent)
-            if parent not in opened:
-                QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(parent))
-                opened.add(parent)
+        directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder with Audio/MIDI")
+        if directory:
+            self.folder_opened.emit(Path(directory))
 
     def _show_context_menu(self, pos: QtCore.QPoint) -> None:
         item = self._first_selected_item()

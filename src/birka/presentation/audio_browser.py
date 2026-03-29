@@ -32,7 +32,9 @@ class AudioBrowserWindow(QtWidgets.QMainWindow):
 
     def _add_tab(self, root: Path) -> None:
         tab = LibraryTab(root, self._metadata_store, self)
-        self._tabs.addTab(tab, root.name or str(root))
+        tab.folder_opened.connect(self._add_tab)
+        idx = self._tabs.addTab(tab, root.name or str(root))
+        self._tabs.setCurrentIndex(idx)
 
     def _add_folder(self) -> None:
         directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder")
