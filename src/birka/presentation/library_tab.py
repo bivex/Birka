@@ -176,6 +176,10 @@ class LibraryTab(QtWidgets.QWidget):
         sort_button.clicked.connect(self._sort_files)
         tags_row.addWidget(sort_button)
 
+        open_folder_button = QtWidgets.QPushButton("Open Folder", self)
+        open_folder_button.clicked.connect(self._open_selected_folder)
+        tags_row.addWidget(open_folder_button)
+
         pager_row = QtWidgets.QHBoxLayout()
         self._count_label = QtWidgets.QLabel("Files: 0", self)
         self._page_label = QtWidgets.QLabel("Page 1/1", self)
@@ -302,6 +306,18 @@ class LibraryTab(QtWidgets.QWidget):
 
     def _open_library(self) -> None:
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(self.root)))
+
+    def _open_selected_folder(self) -> None:
+        items = self._selected_items()
+        if not items:
+            QtWidgets.QMessageBox.information(self, "Open Folder", "Select one or more files first.")
+            return
+        opened = set()
+        for item in items:
+            parent = str(item.path.parent)
+            if parent not in opened:
+                QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(parent))
+                opened.add(parent)
 
     def _show_context_menu(self, pos: QtCore.QPoint) -> None:
         item = self._first_selected_item()
