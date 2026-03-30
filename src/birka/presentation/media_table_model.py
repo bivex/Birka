@@ -9,7 +9,7 @@ from birka.presentation.media_presenter import MediaRow
 
 
 class MediaTableModel(QtCore.QAbstractTableModel):
-    _headers = ["Name", "Type", "BPM", "Key", "Duration", "Rating", "Tags"]
+    _headers = ["Name", "Type", "BPM", "Key", "Duration", "Rating", "Tags", "Created", "Modified"]
 
     def __init__(self, rows: List[MediaRow]) -> None:
         super().__init__()
@@ -38,6 +38,8 @@ class MediaTableModel(QtCore.QAbstractTableModel):
             row.duration,
             row.rating,
             row.tags,
+            row.created,
+            row.modified,
         ][index.column()]
 
     def row_at(self, row: int) -> MediaRow:
@@ -72,6 +74,6 @@ class MediaTableModel(QtCore.QAbstractTableModel):
 
 def _row_matches(row: MediaRow, needle: str) -> bool:
     haystack = " ".join(
-        [row.name, row.media_type, row.bpm, row.key, row.duration, row.rating, row.tags]
+        [row.name, row.media_type, row.bpm, row.key, row.duration, row.rating, row.tags, row.created, row.modified]
     ).lower()
     return needle in haystack

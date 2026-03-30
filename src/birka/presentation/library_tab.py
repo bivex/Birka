@@ -11,6 +11,7 @@ from birka.domain.media import MediaItem, Rating
 from birka.infrastructure.file_scanner import FileSystemScanner
 from birka.infrastructure.metadata_readers import AudioMidiMetadataReader
 from birka.infrastructure.midi_player import MidiPlayer
+from birka.infrastructure.midi_renderer import render_midi_to_mp3
 from birka.infrastructure.waveform_provider import WaveformProvider
 from birka.presentation.media_presenter import MediaPresenter
 from birka.presentation.file_drag_table import FileDragTableView
@@ -228,6 +229,10 @@ class LibraryTab(QtWidgets.QWidget):
         open_folder_button.clicked.connect(self._open_selected_folder)
         tags_row.addWidget(open_folder_button)
 
+        render_button = QtWidgets.QPushButton("Render MIDI→MP3", self)
+        render_button.clicked.connect(self._render_midi)
+        tags_row.addWidget(render_button)
+
         pager_row = QtWidgets.QHBoxLayout()
         self._count_label = QtWidgets.QLabel("Files: 0", self)
         self._page_label = QtWidgets.QLabel("Page 1/1", self)
@@ -354,6 +359,29 @@ class LibraryTab(QtWidgets.QWidget):
 
     def _open_library(self) -> None:
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(self.root)))
+
+    def _render_midi(self) -> None:
+        items = self._selected_items()
+        if not items:
+            QtWidgets.QMessageBox.information(self, "Render", "Select one or more MIDI files.")
+            return
+        midi_items = [i for i in items if i.path.suffix.lower() in {".mid", ".midi"}]
+        if not midi_items:
+            QtWidgets.QMessageBox.information(self, "Render", "No MIDI files in selection.")
+            return
+        output_dir = self.root / "rendered_mp3"
+        failures = []
+        for item in midi_items:
+            result = render_midi_to_mp3(item.path, output_dir)
+            if result is None:
+                failures.append(item.path.name)
+        if failures:
+            QtWidgets.QMessageBox.warning(
+                self, "Render",
+                f"Failed to render:\n" + "\n".join(failures),
+            )
+            return
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(output_dir)))
 
     def _open_selected_folder(self) -> None:
         directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder with Audio/MIDI")

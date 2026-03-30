@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Iterable, List
 
 from birka.domain.media import AudioItem, MediaItem, MidiItem
@@ -16,6 +17,8 @@ class MediaRow:
     duration: str
     rating: str
     tags: str
+    created: str
+    modified: str
 
 
 class MediaPresenter:
@@ -23,6 +26,9 @@ class MediaPresenter:
         return [self._to_row(item) for item in items]
 
     def _to_row(self, item: MediaItem) -> MediaRow:
+        stat = item.path.stat()
+        created = datetime.fromtimestamp(stat.st_ctime).strftime("%Y-%m-%d %H:%M")
+        modified = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M")
         if isinstance(item, AudioItem):
             metadata = item.metadata
             duration = _format_duration(metadata.duration_seconds) if metadata else ""
@@ -35,6 +41,8 @@ class MediaPresenter:
                 duration=duration,
                 rating=_format_rating(item),
                 tags=_format_tags(item),
+                created=created,
+                modified=modified,
             )
         if isinstance(item, MidiItem):
             metadata = item.metadata
@@ -48,6 +56,8 @@ class MediaPresenter:
                 duration=duration,
                 rating=_format_rating(item),
                 tags=_format_tags(item),
+                created=created,
+                modified=modified,
             )
         return MediaRow(
             path=str(item.path),
@@ -58,6 +68,8 @@ class MediaPresenter:
             duration="",
             rating=_format_rating(item),
             tags=_format_tags(item),
+            created=created,
+            modified=modified,
         )
 
 
