@@ -27,7 +27,8 @@ from birka.presentation.zarr_library_view import ZarrLibraryView
 
 def _render_midi_to_tmp_wav(midi_path: Path) -> Path | None:
     """Render MIDI to a temporary WAV file using fluidsynth."""
-    from birka.infrastructure.midi_renderer import _find_soundfont
+    from birka.infrastructure.midi_renderer import _find_soundfont, _normalize_wav
+
     soundfont = _find_soundfont()
     if soundfont is None:
         return None
@@ -36,14 +37,21 @@ def _render_midi_to_tmp_wav(midi_path: Path) -> Path | None:
     tmp_dir = Path(tempfile.mkdtemp(prefix="birka_midi_"))
     wav_path = tmp_dir / (midi_path.stem + ".wav")
     cmd = [
-        "fluidsynth", "-i", "-ni", "-g", "0.8",
-        "-F", str(wav_path),
-        str(soundfont), str(midi_path),
+        "fluidsynth",
+        "-i",
+        "-ni",
+        "-g",
+        "0.8",
+        "-F",
+        str(wav_path),
+        str(soundfont),
+        str(midi_path),
     ]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0 or not wav_path.exists():
         wav_path.unlink(missing_ok=True)
         return None
+    _normalize_wav(wav_path)
     return wav_path
 
 
@@ -66,7 +74,12 @@ class _RefreshWorker(QtCore.QObject):
 class LibraryTab(QtWidgets.QWidget):
     folder_opened = QtCore.pyqtSignal(Path)
 
-    def __init__(self, root: Path, metadata_store: UserMetadataStore, parent: QtWidgets.QWidget | None = None) -> None:
+    def __init__(
+        self,
+        root: Path,
+        metadata_store: UserMetadataStore,
+        parent: QtWidgets.QWidget | None = None,
+    ) -> None:
         super().__init__(parent)
         self.root = root
         self._metadata_store = metadata_store
@@ -117,8 +130,14 @@ class LibraryTab(QtWidgets.QWidget):
     def _apply_refresh(self, items: List[MediaItem]) -> None:
         old_paths: set[str] = set()
         if not self._first_load:
-            selection = self._pager.mapSelectionToSource(self._table.selectionModel().selection())
-            old_paths = {self._model.row_at(i.row()).path for i in selection.indexes()} if selection.indexes() else set()
+            selection = self._pager.mapSelectionToSource(
+                self._table.selectionModel().selection()
+            )
+            old_paths = (
+                {self._model.row_at(i.row()).path for i in selection.indexes()}
+                if selection.indexes()
+                else set()
+            )
 
         self._items = items
         self._item_by_path = {str(item.path): item for item in items}
@@ -172,11 +191,19 @@ class LibraryTab(QtWidgets.QWidget):
         if selection.indexes():
             if self._selection_connected:
                 try:
-                    self._table.selectionModel().selectionChanged.disconnect(self._on_selection_changed)
+                    self._table.selectionModel().selectionChanged.disconnect(
+                        self._on_selection_changed
+                    )
                 except TypeError:
                     pass
-            self._table.selectionModel().select(selection, QtCore.QItemSelectionModel.SelectionFlag.Select | QtCore.QItemSelectionModel.SelectionFlag.Rows)
-            self._table.selectionModel().selectionChanged.connect(self._on_selection_changed)
+            self._table.selectionModel().select(
+                selection,
+                QtCore.QItemSelectionModel.SelectionFlag.Select
+                | QtCore.QItemSelectionModel.SelectionFlag.Rows,
+            )
+            self._table.selectionModel().selectionChanged.connect(
+                self._on_selection_changed
+            )
 
     def stop_all(self) -> None:
         self._player.stop()
@@ -240,14 +267,17 @@ class LibraryTab(QtWidgets.QWidget):
         self._duration_max.valueChanged.connect(self._apply_meta_filters)
 
         self._table = FileDragTableView(self._selected_paths, self)
-        self._table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
-        self._table.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
+        self._table.setSelectionBehavior(
+            QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self._table.setSelectionMode(
+            QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection
+        )
         self._table.setAlternatingRowColors(True)
         self._table.setSortingEnabled(True)
         self._table.horizontalHeader().sortIndicatorChanged.connect(self._pager.sort)
         self._table.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self._table.customContextMenuRequested.connect(self._show_context_menu)
-
 
         self._waveform = WaveformWidget(self)
         self._waveform.position_changed.connect(self._waveform_seek)
@@ -281,7 +311,9 @@ class LibraryTab(QtWidgets.QWidget):
         controls_row.addWidget(self._volume_slider)
 
         self._template_input = QtWidgets.QLineEdit(self)
-        self._template_input.setPlaceholderText("Rename template: [BPM]_[Key]_[OriginalName]")
+        self._template_input.setPlaceholderText(
+            "Rename template: [BPM]_[Key]_[OriginalName]"
+        )
         self._template_input.setText("[BPM]_[Key]_[OriginalName]")
         rename_button = QtWidgets.QPushButton("Preview Rename", self)
         rename_button.clicked.connect(self._preview_rename)
@@ -430,7 +462,9 @@ class LibraryTab(QtWidgets.QWidget):
         self._waveform.set_samples(samples)
 
     def _first_selected_item(self) -> MediaItem | None:
-        selection = self._pager.mapSelectionToSource(self._table.selectionModel().selection())
+        selection = self._pager.mapSelectionToSource(
+            self._table.selectionModel().selection()
+        )
         indexes = selection.indexes()
         if not indexes:
             return None
@@ -449,7 +483,8 @@ class LibraryTab(QtWidgets.QWidget):
             wav = _render_midi_to_tmp_wav(item.path)
             if wav is None:
                 QtWidgets.QMessageBox.information(
-                    self, "MIDI",
+                    self,
+                    "MIDI",
                     "Cannot render MIDI. Check fluidsynth + soundfont.",
                 )
                 return
@@ -465,14 +500,18 @@ class LibraryTab(QtWidgets.QWidget):
     def _preview_rename(self) -> None:
         items = self._selected_items()
         if not items:
-            QtWidgets.QMessageBox.information(self, "Rename", "Select one or more rows to rename.")
+            QtWidgets.QMessageBox.information(
+                self, "Rename", "Select one or more rows to rename."
+            )
             return
         template = self._template_input.text()
         self._rename.preview_and_apply(items, template)
         self.reload()
 
     def _selected_items(self) -> List[MediaItem]:
-        selection = self._pager.mapSelectionToSource(self._table.selectionModel().selection())
+        selection = self._pager.mapSelectionToSource(
+            self._table.selectionModel().selection()
+        )
         indexes = selection.indexes()
         if not indexes:
             return []
@@ -490,7 +529,9 @@ class LibraryTab(QtWidgets.QWidget):
         if not items:
             QtWidgets.QMessageBox.information(self, "Tags", "Select one or more rows.")
             return
-        tags = [tag.strip() for tag in self._tags_input.text().split(",") if tag.strip()]
+        tags = [
+            tag.strip() for tag in self._tags_input.text().split(",") if tag.strip()
+        ]
         rating_value = self._rating_combo.currentData()
         rating = Rating(rating_value) if rating_value is not None else None
         for item in items:
@@ -503,11 +544,15 @@ class LibraryTab(QtWidgets.QWidget):
     def _render_midi(self) -> None:
         items = self._selected_items()
         if not items:
-            QtWidgets.QMessageBox.information(self, "Render", "Select one or more MIDI files.")
+            QtWidgets.QMessageBox.information(
+                self, "Render", "Select one or more MIDI files."
+            )
             return
         midi_items = [i for i in items if i.path.suffix.lower() in {".mid", ".midi"}]
         if not midi_items:
-            QtWidgets.QMessageBox.information(self, "Render", "No MIDI files in selection.")
+            QtWidgets.QMessageBox.information(
+                self, "Render", "No MIDI files in selection."
+            )
             return
         output_dir = self.root / "rendered_mp3"
         failures = []
@@ -517,14 +562,17 @@ class LibraryTab(QtWidgets.QWidget):
                 failures.append(item.path.name)
         if failures:
             QtWidgets.QMessageBox.warning(
-                self, "Render",
+                self,
+                "Render",
                 f"Failed to render:\n" + "\n".join(failures),
             )
             return
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(output_dir)))
 
     def _open_selected_folder(self) -> None:
-        directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder with Audio/MIDI")
+        directory = QtWidgets.QFileDialog.getExistingDirectory(
+            self, "Select Folder with Audio/MIDI"
+        )
         if directory:
             self.folder_opened.emit(Path(directory))
 
@@ -553,13 +601,16 @@ class LibraryTab(QtWidgets.QWidget):
     def _delete_selected(self) -> None:
         items = self._selected_items()
         if not items:
-            QtWidgets.QMessageBox.information(self, "Delete", "Select one or more rows.")
+            QtWidgets.QMessageBox.information(
+                self, "Delete", "Select one or more rows."
+            )
             return
         confirm = QtWidgets.QMessageBox.question(
             self,
             "Delete",
             f"Delete {len(items)} file(s) from disk?",
-            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
+            QtWidgets.QMessageBox.StandardButton.Yes
+            | QtWidgets.QMessageBox.StandardButton.No,
         )
         if confirm != QtWidgets.QMessageBox.StandardButton.Yes:
             return
@@ -571,7 +622,11 @@ class LibraryTab(QtWidgets.QWidget):
             except OSError as exc:
                 failures.append(f"{item.path.name}: {exc}")
         if failures:
-            QtWidgets.QMessageBox.warning(self, "Delete", "Some files could not be deleted:\n" + "\n".join(failures))
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Delete",
+                "Some files could not be deleted:\n" + "\n".join(failures),
+            )
         self.reload()
 
     def _sort_files(self) -> None:
@@ -583,7 +638,8 @@ class LibraryTab(QtWidgets.QWidget):
             self,
             "Sort Files",
             "Move selected files into data/{type}/{bpm}/ folders?",
-            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
+            QtWidgets.QMessageBox.StandardButton.Yes
+            | QtWidgets.QMessageBox.StandardButton.No,
         )
         if confirm != QtWidgets.QMessageBox.StandardButton.Yes:
             return
@@ -603,7 +659,9 @@ class LibraryTab(QtWidgets.QWidget):
             except OSError as exc:
                 failures.append(f"{item.path.name}: {exc}")
         if failures:
-            QtWidgets.QMessageBox.warning(self, "Sort", "Some files could not be moved:\n" + "\n".join(failures))
+            QtWidgets.QMessageBox.warning(
+                self, "Sort", "Some files could not be moved:\n" + "\n".join(failures)
+            )
         self.reload()
 
     def _on_page_size_changed(self) -> None:
@@ -639,7 +697,9 @@ class LibraryTab(QtWidgets.QWidget):
         self._filter.set_key_filter(key)
         self._filter.set_type_filter(self._type_filter.currentData() or "")
         self._filter.set_include_unknown_bpm(self._include_unknown_bpm.isChecked())
-        self._filter.set_duration_range(self._duration_min.value(), self._duration_max.value())
+        self._filter.set_duration_range(
+            self._duration_min.value(), self._duration_max.value()
+        )
 
     def _selected_paths(self) -> list[str]:
         return [str(item.path) for item in self._selected_items()]
@@ -655,7 +715,9 @@ def _format_ms(ms: int) -> str:
 
 def _sort_path_for_item(root: Path, item: MediaItem) -> Path:
     suffix = item.path.suffix.lower().lstrip(".")
-    media_type = "wav" if suffix == "wav" else "midi" if suffix in {"mid", "midi"} else "other"
+    media_type = (
+        "wav" if suffix == "wav" else "midi" if suffix in {"mid", "midi"} else "other"
+    )
     bpm_value = None
     metadata = getattr(item, "metadata", None)
     if metadata is not None and getattr(metadata, "bpm", None) is not None:
