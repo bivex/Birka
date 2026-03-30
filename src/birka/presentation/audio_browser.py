@@ -21,6 +21,13 @@ class AudioBrowserWindow(QtWidgets.QMainWindow):
             self._add_tab(root)
         self._build_menu()
 
+    def closeEvent(self, event):  # noqa: N802
+        for i in range(self._tabs.count()):
+            tab = self._tabs.widget(i)
+            if hasattr(tab, "stop_all"):
+                tab.stop_all()
+        super().closeEvent(event)
+
     def _build_menu(self) -> None:
         menu = self.menuBar().addMenu("Library")
         add_action = menu.addAction("Add Folder")
