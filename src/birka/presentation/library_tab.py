@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 from typing import List
 
@@ -10,7 +13,6 @@ from birka.application.user_metadata import UserMetadata, UserMetadataStore
 from birka.domain.media import MediaItem, Rating
 from birka.infrastructure.file_scanner import FileSystemScanner
 from birka.infrastructure.metadata_readers import AudioMidiMetadataReader
-from birka.infrastructure.midi_player import MidiPlayer
 from birka.infrastructure.midi_renderer import render_midi_to_mp3
 from birka.infrastructure.waveform_provider import WaveformProvider
 from birka.presentation.media_presenter import MediaPresenter
@@ -21,6 +23,28 @@ from birka.presentation.pagination_proxy import PaginationProxyModel
 from birka.presentation.rename_dialog import RenameCoordinator
 from birka.presentation.waveform_widget import WaveformWidget
 from birka.presentation.zarr_library_view import ZarrLibraryView
+
+
+def _render_midi_to_tmp_wav(midi_path: Path) -> Path | None:
+    """Render MIDI to a temporary WAV file using fluidsynth."""
+    from birka.infrastructure.midi_renderer import _find_soundfont
+    soundfont = _find_soundfont()
+    if soundfont is None:
+        return None
+    if shutil.which("fluidsynth") is None:
+        return None
+    tmp_dir = Path(tempfile.mkdtemp(prefix="birka_midi_"))
+    wav_path = tmp_dir / (midi_path.stem + ".wav")
+    cmd = [
+        "fluidsynth", "-i", "-ni", "-g", "0.8",
+        "-F", str(wav_path),
+        str(soundfont), str(midi_path),
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0 or not wav_path.exists():
+        wav_path.unlink(missing_ok=True)
+        return None
+    return wav_path
 
 
 class _RefreshWorker(QtCore.QObject):
@@ -57,12 +81,15 @@ class LibraryTab(QtWidgets.QWidget):
         self._item_by_path: dict[str, MediaItem] = {}
         self._selection_connected = False
         self._zarr_view: ZarrLibraryView | None = None
+        self._tmp_midi_wav: Path | None = None
+        self._seeking = False
 
         self._player = QtMultimedia.QMediaPlayer(self)
         self._audio_output = QtMultimedia.QAudioOutput(self)
         self._player.setAudioOutput(self._audio_output)
-        self._midi_player = MidiPlayer()
-        self._midi_available = self._midi_player.is_available()
+        self._player.positionChanged.connect(self._on_position_changed)
+        self._player.durationChanged.connect(self._on_duration_changed)
+        self._player.mediaStatusChanged.connect(self._on_media_status)
 
         self._refresh_thread: QtCore.QThread | None = None
         self._refresh_worker: _RefreshWorker | None = None
@@ -114,7 +141,16 @@ class LibraryTab(QtWidgets.QWidget):
 
     def stop_all(self) -> None:
         self._player.stop()
-        self._midi_player.stop()
+        self._cleanup_tmp_wav()
+
+    def _cleanup_tmp_wav(self) -> None:
+        if self._tmp_midi_wav is not None:
+            try:
+                self._tmp_midi_wav.unlink()
+                self._tmp_midi_wav.parent.rmdir()
+            except OSError:
+                pass
+            self._tmp_midi_wav = None
 
     def _build_ui(self) -> None:
         self._filter = MediaFilterProxyModel(self)
@@ -180,13 +216,19 @@ class LibraryTab(QtWidgets.QWidget):
         play_button.clicked.connect(self._play_selected)
         stop_button.clicked.connect(self._stop_playback)
 
+        self._seek_slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
+        self._seek_slider.setRange(0, 0)
+        self._seek_slider.sliderPressed.connect(self._seek_started)
+        self._seek_slider.sliderReleased.connect(self._seek_finished)
+        self._seek_slider.sliderMoved.connect(self._seek_moved)
+
+        self._time_label = QtWidgets.QLabel("0:00 / 0:00", self)
+
         controls_row = QtWidgets.QHBoxLayout()
         controls_row.addWidget(play_button)
         controls_row.addWidget(stop_button)
-        self._midi_status = QtWidgets.QLabel(self)
-        self._midi_status.setText(self._midi_status_text())
-        controls_row.addWidget(self._midi_status)
-        controls_row.addStretch(1)
+        controls_row.addWidget(self._seek_slider, 1)
+        controls_row.addWidget(self._time_label)
 
         self._template_input = QtWidgets.QLineEdit(self)
         self._template_input.setPlaceholderText("Rename template: [BPM]_[Key]_[OriginalName]")
@@ -290,6 +332,37 @@ class LibraryTab(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self._tabs)
 
+    # --- Seek slider ---
+
+    def _seek_started(self) -> None:
+        self._seeking = True
+
+    def _seek_finished(self) -> None:
+        self._seeking = False
+        pos = self._seek_slider.value()
+        self._player.setPosition(pos)
+
+    def _seek_moved(self, value: int) -> None:
+        self._update_time_label(value, self._player.duration())
+
+    def _on_position_changed(self, pos: int) -> None:
+        if not self._seeking:
+            self._seek_slider.setValue(pos)
+        self._update_time_label(pos, self._player.duration())
+
+    def _on_duration_changed(self, duration: int) -> None:
+        self._seek_slider.setRange(0, duration)
+        self._update_time_label(self._player.position(), duration)
+
+    def _on_media_status(self, status: QtMultimedia.QMediaPlayer.MediaStatus) -> None:
+        if status == QtMultimedia.QMediaPlayer.MediaStatus.LoadedMedia:
+            self._player.play()
+
+    def _update_time_label(self, pos: int, duration: int) -> None:
+        self._time_label.setText(f"{_format_ms(pos)} / {_format_ms(duration)}")
+
+    # --- Selection / items ---
+
     def _on_selection_changed(self) -> None:
         item = self._first_selected_item()
         if item is None:
@@ -313,18 +386,21 @@ class LibraryTab(QtWidgets.QWidget):
         if item is None:
             QtWidgets.QMessageBox.information(self, "Play", "Select a file first.")
             return
+        self._stop_playback()
         if item.path.suffix.lower() in {".mid", ".midi"}:
-            print(f"[UI] MIDI play for {item.path}")
-            if not self._midi_player.play(item.path):
+            wav = _render_midi_to_tmp_wav(item.path)
+            if wav is None:
                 QtWidgets.QMessageBox.information(
-                    self,
-                    "MIDI",
-                    "MIDI playback requires timidity or fluidsynth.",
+                    self, "MIDI",
+                    "Cannot render MIDI. Check fluidsynth + soundfont.",
                 )
+                return
+            self._tmp_midi_wav = wav
+            url = QtCore.QUrl.fromLocalFile(str(wav))
+            self._player.setSource(url)
             return
         url = QtCore.QUrl.fromLocalFile(str(item.path))
         self._player.setSource(url)
-        self._player.play()
 
     def _preview_rename(self) -> None:
         items = self._selected_items()
@@ -407,10 +483,11 @@ class LibraryTab(QtWidgets.QWidget):
 
     def _stop_playback(self) -> None:
         self._player.stop()
-        self._midi_player.stop()
-
-    def _midi_status_text(self) -> str:
-        return "MIDI: available" if self._midi_available else "MIDI: not installed"
+        self._player.setSource(QtCore.QUrl())
+        self._cleanup_tmp_wav()
+        self._seek_slider.setRange(0, 0)
+        self._seek_slider.setValue(0)
+        self._time_label.setText("0:00 / 0:00")
 
     def _delete_selected(self) -> None:
         items = self._selected_items()
@@ -508,6 +585,11 @@ class LibraryTab(QtWidgets.QWidget):
 
     def _build_sort_path(self, item: MediaItem) -> Path:
         return _sort_path_for_item(self.root, item)
+
+
+def _format_ms(ms: int) -> str:
+    s = ms // 1000
+    return f"{s // 60}:{s % 60:02d}"
 
 
 def _sort_path_for_item(root: Path, item: MediaItem) -> Path:
