@@ -211,6 +211,7 @@ class LibraryTab(QtWidgets.QWidget):
 
 
         self._waveform = WaveformWidget(self)
+        self._waveform.position_changed.connect(self._waveform_seek)
         play_button = QtWidgets.QPushButton("Play", self)
         stop_button = QtWidgets.QPushButton("Stop", self)
         play_button.clicked.connect(self._play_selected)
@@ -348,11 +349,16 @@ class LibraryTab(QtWidgets.QWidget):
     def _on_position_changed(self, pos: int) -> None:
         if not self._seeking:
             self._seek_slider.setValue(pos)
+        self._waveform.set_position(pos, self._player.duration())
         self._update_time_label(pos, self._player.duration())
 
     def _on_duration_changed(self, duration: int) -> None:
         self._seek_slider.setRange(0, duration)
+        self._waveform.set_position(self._player.position(), duration)
         self._update_time_label(self._player.position(), duration)
+
+    def _waveform_seek(self, position_ms: int) -> None:
+        self._player.setPosition(position_ms)
 
     def _on_media_status(self, status: QtMultimedia.QMediaPlayer.MediaStatus) -> None:
         if status == QtMultimedia.QMediaPlayer.MediaStatus.LoadedMedia:
@@ -490,6 +496,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._seek_slider.setRange(0, 0)
         self._seek_slider.setValue(0)
         self._time_label.setText("0:00 / 0:00")
+        self._waveform.set_position(0, 0)
 
     def _delete_selected(self) -> None:
         items = self._selected_items()
