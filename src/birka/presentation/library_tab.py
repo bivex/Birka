@@ -93,6 +93,7 @@ class LibraryTab(QtWidgets.QWidget):
 
         self._refresh_thread: QtCore.QThread | None = None
         self._refresh_worker: _RefreshWorker | None = None
+        self._first_load = True
 
         self._build_ui()
         self.reload()
@@ -108,36 +109,74 @@ class LibraryTab(QtWidgets.QWidget):
         thread = QtCore.QThread()
         worker.moveToThread(thread)
         worker.finished.connect(self._apply_refresh)
-        thread.finished.connect(self._cleanup_thread)
         thread.started.connect(worker.run)
         self._refresh_thread = thread
         self._refresh_worker = worker
         thread.start()
 
     def _apply_refresh(self, items: List[MediaItem]) -> None:
+        old_paths: set[str] = set()
+        if not self._first_load:
+            selection = self._pager.mapSelectionToSource(self._table.selectionModel().selection())
+            old_paths = {self._model.row_at(i.row()).path for i in selection.indexes()} if selection.indexes() else set()
+
         self._items = items
         self._item_by_path = {str(item.path): item for item in items}
         self._model = MediaTableModel(self._presenter.to_rows(items))
         self._filter.setSourceModel(self._model)
         self._table.setModel(self._pager)
+
+        if not self._first_load:
+            self._restore_selection(old_paths)
+
         self._table.resizeColumnsToContents()
         self._update_page_label()
         self._update_count_label()
         if self._zarr_view is not None:
             self._zarr_view.set_items(items)
-        if self._selection_connected:
-            try:
-                self._table.selectionModel().selectionChanged.disconnect(self._on_selection_changed)
-            except TypeError:
-                pass
-        self._table.selectionModel().selectionChanged.connect(self._on_selection_changed)
-        self._selection_connected = True
 
-    def _cleanup_thread(self) -> None:
+        sel_model = self._table.selectionModel()
+        if sel_model is not None:
+            if self._selection_connected:
+                try:
+                    sel_model.selectionChanged.disconnect(self._on_selection_changed)
+                except TypeError:
+                    pass
+            sel_model.selectionChanged.connect(self._on_selection_changed)
+            self._selection_connected = True
+        self._first_load = False
+
         if self._refresh_thread is not None:
+            self._refresh_thread.quit()
             self._refresh_thread.wait()
             self._refresh_thread = None
             self._refresh_worker = None
+
+    def _restore_selection(self, old_paths: set[str]) -> None:
+        if not old_paths:
+            return
+        new_rows = set()
+        for row in range(self._model.rowCount()):
+            if self._model.row_at(row).path in old_paths:
+                new_rows.add(row)
+        if not new_rows:
+            return
+        selection = QtCore.QItemSelection()
+        for row in new_rows:
+            for col in range(self._filter.columnCount()):
+                src_idx = self._model.index(row, col)
+                filter_idx = self._filter.mapFromSource(src_idx)
+                pager_idx = self._pager.mapFromSource(filter_idx)
+                if pager_idx.isValid():
+                    selection.select(pager_idx, pager_idx)
+        if selection.indexes():
+            if self._selection_connected:
+                try:
+                    self._table.selectionModel().selectionChanged.disconnect(self._on_selection_changed)
+                except TypeError:
+                    pass
+            self._table.selectionModel().select(selection, QtCore.QItemSelectionModel.SelectionFlag.Select | QtCore.QItemSelectionModel.SelectionFlag.Rows)
+            self._table.selectionModel().selectionChanged.connect(self._on_selection_changed)
 
     def stop_all(self) -> None:
         self._player.stop()
@@ -225,11 +264,21 @@ class LibraryTab(QtWidgets.QWidget):
 
         self._time_label = QtWidgets.QLabel("0:00 / 0:00", self)
 
+        volume_label = QtWidgets.QLabel("Vol", self)
+        self._volume_slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
+        self._volume_slider.setRange(0, 100)
+        self._volume_slider.setValue(80)
+        self._volume_slider.setFixedWidth(100)
+        self._volume_slider.valueChanged.connect(self._on_volume_changed)
+        self._audio_output.setVolume(0.8)
+
         controls_row = QtWidgets.QHBoxLayout()
         controls_row.addWidget(play_button)
         controls_row.addWidget(stop_button)
         controls_row.addWidget(self._seek_slider, 1)
         controls_row.addWidget(self._time_label)
+        controls_row.addWidget(volume_label)
+        controls_row.addWidget(self._volume_slider)
 
         self._template_input = QtWidgets.QLineEdit(self)
         self._template_input.setPlaceholderText("Rename template: [BPM]_[Key]_[OriginalName]")
@@ -359,6 +408,9 @@ class LibraryTab(QtWidgets.QWidget):
 
     def _waveform_seek(self, position_ms: int) -> None:
         self._player.setPosition(position_ms)
+
+    def _on_volume_changed(self, value: int) -> None:
+        self._audio_output.setVolume(value / 100.0)
 
     def _on_media_status(self, status: QtMultimedia.QMediaPlayer.MediaStatus) -> None:
         if status == QtMultimedia.QMediaPlayer.MediaStatus.LoadedMedia:
