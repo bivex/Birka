@@ -7,7 +7,13 @@ from pathlib import Path
 from typing import Optional
 
 from birka.application.media_ports import MetadataReader
-from birka.domain.media import AudioItem, AudioMetadata, MediaItem, MidiItem, MidiMetadata
+from birka.domain.media import (
+    AudioItem,
+    AudioMetadata,
+    MediaItem,
+    MidiItem,
+    MidiMetadata,
+)
 
 MIDI_HEADER_ID = b"MThd"
 MIDI_TRACK_ID = b"MTrk"
@@ -77,7 +83,12 @@ def _read_midi(path: Path) -> MidiItem:
         )
     return MidiItem(path=path, name=path.name, metadata=metadata)
 
-def _parse_midi(data: bytes) -> tuple[Optional[int], Optional[int], Optional[float], Optional[str], Optional[float]]:
+
+def _parse_midi(
+    data: bytes,
+) -> tuple[
+    Optional[int], Optional[int], Optional[float], Optional[str], Optional[float]
+]:
     if len(data) < MIDI_HEADER_MIN or data[:4] != MIDI_HEADER_ID:
         return None, None, None, None, None
     header_length = struct.unpack(">I", data[4:8])[0]
@@ -93,10 +104,10 @@ def _parse_midi(data: bytes) -> tuple[Optional[int], Optional[int], Optional[flo
     max_ticks = 0
     offset = 8 + header_length
     for _ in range(ntrks):
-        if offset + 8 > len(data) or data[offset:offset + 4] != MIDI_TRACK_ID:
+        if offset + 8 > len(data) or data[offset : offset + 4] != MIDI_TRACK_ID:
             break
-        track_length = struct.unpack(">I", data[offset + 4:offset + 8])[0]
-        track_data = data[offset + 8:offset + 8 + track_length]
+        track_length = struct.unpack(">I", data[offset + 4 : offset + 8])[0]
+        track_data = data[offset + 8 : offset + 8 + track_length]
         bpm, key, ticks = _scan_midi_track(track_data, bpm, key)
         max_ticks = max(max_ticks, ticks)
         offset += 8 + track_length
@@ -104,7 +115,9 @@ def _parse_midi(data: bytes) -> tuple[Optional[int], Optional[int], Optional[flo
     return ticks_per_beat, ntrks, bpm, key, duration_seconds
 
 
-def _scan_midi_track(data: bytes, bpm: Optional[float], key: Optional[str]) -> tuple[Optional[float], Optional[str], int]:
+def _scan_midi_track(
+    data: bytes, bpm: Optional[float], key: Optional[str]
+) -> tuple[Optional[float], Optional[str], int]:
     idx = 0
     running_status = None
     ticks = 0
@@ -125,14 +138,16 @@ def _scan_midi_track(data: bytes, bpm: Optional[float], key: Optional[str]) -> t
             meta_type = data[idx]
             idx += 1
             length, idx = _read_vlq(data, idx)
-            meta_data = data[idx:idx + length]
+            meta_data = data[idx : idx + length]
             idx += length
             if meta_type == MIDI_TEMPO_META and length == 3 and bpm is None:
                 tempo = (meta_data[0] << 16) | (meta_data[1] << 8) | meta_data[2]
                 if tempo:
                     bpm = round(60_000_000 / tempo, 3)
             if meta_type == MIDI_KEY_META and length == 2 and key is None:
-                key = _decode_key_signature(meta_data[0], meta_data[1])
+                sf = meta_data[0]
+                sf = sf - 256 if sf >= 128 else sf
+                key = _decode_key_signature(sf, meta_data[1])
         elif status in MIDI_SYSEX_EVENTS:
             length, idx = _read_vlq(data, idx)
             idx += length
@@ -142,7 +157,9 @@ def _scan_midi_track(data: bytes, bpm: Optional[float], key: Optional[str]) -> t
     return bpm, key, ticks
 
 
-def _ticks_to_seconds(ticks: int, ticks_per_beat: Optional[int], bpm: Optional[float]) -> Optional[float]:
+def _ticks_to_seconds(
+    ticks: int, ticks_per_beat: Optional[int], bpm: Optional[float]
+) -> Optional[float]:
     if ticks_per_beat is None or ticks_per_beat <= 0:
         return None
     effective_bpm = bpm or MIDI_DEFAULT_BPM
@@ -171,8 +188,40 @@ def _midi_data_length(status: int) -> int:
 
 
 def _decode_key_signature(sf: int, mi: int) -> str:
-    major_keys = ["Cb", "Gb", "Db", "Ab", "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "F#", "C#"]
-    minor_keys = ["Abm", "Ebm", "Bbm", "Fm", "Cm", "Gm", "Dm", "Am", "Em", "Bm", "F#m", "C#m", "G#m", "D#m", "A#m"]
+    major_keys = [
+        "Cb",
+        "Gb",
+        "Db",
+        "Ab",
+        "Eb",
+        "Bb",
+        "F",
+        "C",
+        "G",
+        "D",
+        "A",
+        "E",
+        "B",
+        "F#",
+        "C#",
+    ]
+    minor_keys = [
+        "Abm",
+        "Ebm",
+        "Bbm",
+        "Fm",
+        "Cm",
+        "Gm",
+        "Dm",
+        "Am",
+        "Em",
+        "Bm",
+        "F#m",
+        "C#m",
+        "G#m",
+        "D#m",
+        "A#m",
+    ]
     index = sf + 7
     if 0 <= index < len(major_keys):
         return major_keys[index] if mi == 0 else minor_keys[index]
@@ -186,10 +235,10 @@ def _extract_bpm_key_from_wav(path: Path) -> tuple[Optional[float], Optional[str
     offset = RIFF_HEADER_SIZE
     payloads: list[bytes] = []
     while offset + WAV_CHUNK_HEADER <= len(data):
-        chunk_id = data[offset:offset + 4]
-        size = struct.unpack("<I", data[offset + 4:offset + 8])[0]
+        chunk_id = data[offset : offset + 4]
+        size = struct.unpack("<I", data[offset + 4 : offset + 8])[0]
         offset += WAV_CHUNK_HEADER
-        chunk_data = data[offset:offset + size]
+        chunk_data = data[offset : offset + size]
         offset += size + (size % 2)
         if chunk_id in WAV_META_CHUNKS:
             payloads.append(chunk_data)
