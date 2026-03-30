@@ -112,6 +112,10 @@ class LibraryTab(QtWidgets.QWidget):
             self._refresh_thread = None
             self._refresh_worker = None
 
+    def stop_all(self) -> None:
+        self._player.stop()
+        self._midi_player.stop()
+
     def _build_ui(self) -> None:
         self._filter = MediaFilterProxyModel(self)
         self._filter.modelReset.connect(self._update_page_label)

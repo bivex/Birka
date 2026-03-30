@@ -36,11 +36,12 @@ class MidiPlayer:
         if self._process and self._process.poll() is None:
             print(f"[MIDI] stopping pid={self._process.pid}")
             self._process.terminate()
-            stdout, stderr = self._process.communicate(timeout=2)
-            if stdout:
-                print(f"[MIDI] stdout: {stdout}")
-            if stderr:
-                print(f"[MIDI] stderr: {stderr}")
+            try:
+                self._process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                print(f"[MIDI] kill pid={self._process.pid}")
+                self._process.kill()
+                self._process.wait(timeout=2)
         self._process = None
 
     def is_available(self) -> bool:
