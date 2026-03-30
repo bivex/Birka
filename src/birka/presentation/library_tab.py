@@ -396,6 +396,8 @@ class LibraryTab(QtWidgets.QWidget):
                 )
                 return
             self._tmp_midi_wav = wav
+            samples = self._waveform_provider.load(wav)
+            self._waveform.set_samples(samples)
             url = QtCore.QUrl.fromLocalFile(str(wav))
             self._player.setSource(url)
             return
