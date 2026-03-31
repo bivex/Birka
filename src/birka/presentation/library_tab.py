@@ -26,33 +26,14 @@ from birka.presentation.zarr_library_view import ZarrLibraryView
 
 
 def _render_midi_to_tmp_wav(midi_path: Path) -> Path | None:
-    """Render MIDI to a temporary WAV file using fluidsynth."""
-    from birka.infrastructure.midi_renderer import _find_soundfont, _normalize_wav
+    """Render MIDI to a temporary WAV file using fluidsynth. No normalization (fast)."""
+    from birka.infrastructure.midi_renderer import render_midi_to_wav
 
-    soundfont = _find_soundfont()
-    if soundfont is None:
-        return None
-    if shutil.which("fluidsynth") is None:
-        return None
     tmp_dir = Path(tempfile.mkdtemp(prefix="birka_midi_"))
     wav_path = tmp_dir / (midi_path.stem + ".wav")
-    cmd = [
-        "fluidsynth",
-        "-i",
-        "-ni",
-        "-g",
-        "0.8",
-        "-F",
-        str(wav_path),
-        str(soundfont),
-        str(midi_path),
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0 or not wav_path.exists():
-        wav_path.unlink(missing_ok=True)
-        return None
-    _normalize_wav(wav_path)
-    return wav_path
+    if render_midi_to_wav(midi_path, wav_path):
+        return wav_path
+    return None
 
 
 class _RefreshWorker(QtCore.QObject):

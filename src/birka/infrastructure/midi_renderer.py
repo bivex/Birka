@@ -12,7 +12,11 @@ from typing import Callable, List, Optional, Tuple
 
 
 def render_midi_to_mp3(midi_path: Path, output_dir: Path) -> Optional[Path]:
-    """Render a MIDI file to MP3 via fluidsynth (MIDI→WAV) then ffmpeg (WAV→MP3)."""
+    """Render a MIDI file to MP3 via fluidsynth (MIDI→WAV) then ffmpeg (WAV→MP3).
+
+    Uses piped pipeline: fluidsynth stdout → ffmpeg loudnorm → ffmpeg MP3.
+    No intermediate WAV files written to disk.
+    """
     soundfont = _find_soundfont()
     if soundfont is None:
         return None
@@ -20,35 +24,129 @@ def render_midi_to_mp3(midi_path: Path, output_dir: Path) -> Optional[Path]:
         return None
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    wav_path = output_dir / (midi_path.stem + ".wav")
     mp3_path = output_dir / (midi_path.stem + ".mp3")
 
-    cmd_wav = [
+    # Pass 1: fluidsynth → ffmpeg loudnorm measure (pipe, no temp file)
+    measure_cmd = [
         "fluidsynth",
         "-i",
         "-ni",
         "-g",
         "0.8",
         "-F",
-        str(wav_path),
+        "-",
         str(soundfont),
         str(midi_path),
     ]
-    result = subprocess.run(cmd_wav, capture_output=True, text=True)
-    if result.returncode != 0 or not wav_path.exists():
-        wav_path.unlink(missing_ok=True)
-        return None
+    norm_filter = "loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json"
 
-    _normalize_wav(wav_path)
+    synth_proc = subprocess.Popen(
+        measure_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    measure_ffmpeg = subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-f",
+            "wav",
+            "-i",
+            "pipe:0",
+            "-af",
+            norm_filter,
+            "-f",
+            "null",
+            "-",
+        ],
+        stdin=synth_proc.stdout,
+        capture_output=True,
+        text=True,
+    )
+    synth_proc.wait()
 
-    cmd_mp3 = ["ffmpeg", "-y", "-i", str(wav_path), "-b:a", "320k", str(mp3_path)]
-    result = subprocess.run(cmd_mp3, capture_output=True, text=True)
-    wav_path.unlink(missing_ok=True)
-    if result.returncode != 0 or not mp3_path.exists():
+    stats = _parse_loudnorm_stats(measure_ffmpeg.stderr)
+
+    # Pass 2: fluidsynth → ffmpeg normalize+encode (pipe, no temp files)
+    synth_proc2 = subprocess.Popen(
+        measure_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    if stats is not None:
+        af = (
+            f"loudnorm=I=-16:TP=-1.5:LRA=11:"
+            f"measured_I={stats['input_i']}:"
+            f"measured_LRA={stats['input_lra']}:"
+            f"measured_TP={stats['input_tp']}:"
+            f"measured_thresh={stats['input_thresh']}:"
+            f"offset={stats['target_offset']}:"
+            f"linear=true"
+        )
+        encode_cmd = [
+            "ffmpeg",
+            "-y",
+            "-f",
+            "wav",
+            "-i",
+            "pipe:0",
+            "-af",
+            af,
+            "-b:a",
+            "320k",
+            str(mp3_path),
+        ]
+    else:
+        encode_cmd = [
+            "ffmpeg",
+            "-y",
+            "-f",
+            "wav",
+            "-i",
+            "pipe:0",
+            "-b:a",
+            "320k",
+            str(mp3_path),
+        ]
+
+    encode_result = subprocess.run(
+        encode_cmd,
+        stdin=synth_proc2.stdout,
+        capture_output=True,
+        text=True,
+    )
+    synth_proc2.wait()
+
+    if encode_result.returncode != 0 or not mp3_path.exists():
         mp3_path.unlink(missing_ok=True)
         return None
 
     return mp3_path
+
+
+def render_midi_to_wav(midi_path: Path, output_path: Path) -> bool:
+    """Render a single MIDI to WAV via fluidsynth. No normalization (fast)."""
+    soundfont = _find_soundfont()
+    if soundfont is None:
+        return False
+    if shutil.which("fluidsynth") is None:
+        return False
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    cmd = [
+        "fluidsynth",
+        "-i",
+        "-ni",
+        "-g",
+        "0.8",
+        "-F",
+        str(output_path),
+        str(soundfont),
+        str(midi_path),
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    return result.returncode == 0 and output_path.exists()
 
 
 def render_midi_to_mp3_batch(
@@ -57,6 +155,8 @@ def render_midi_to_mp3_batch(
     on_progress: Optional[Callable[[int, int, Path, bool], None]] = None,
 ) -> Tuple[List[Path], List[Path]]:
     """Render multiple MIDI files to MP3 in parallel using all available CPU cores.
+
+    Uses piped pipeline per file: fluidsynth → ffmpeg (no intermediate WAV on disk).
 
     Args:
         midi_paths: List of MIDI file paths to render.
@@ -77,34 +177,98 @@ def render_midi_to_mp3_batch(
     results: List[Tuple[Path, Optional[Path]]] = []
 
     def _render_one(midi_path: Path) -> Tuple[Path, Optional[Path]]:
-        wav_path = output_dir / (midi_path.stem + ".wav")
         mp3_path = output_dir / (midi_path.stem + ".mp3")
-
-        cmd_wav = [
+        synth_cmd = [
             "fluidsynth",
             "-i",
             "-ni",
             "-g",
             "0.8",
             "-F",
-            str(wav_path),
+            "-",
             str(soundfont),
             str(midi_path),
         ]
-        result = subprocess.run(cmd_wav, capture_output=True, text=True)
-        if result.returncode != 0 or not wav_path.exists():
-            wav_path.unlink(missing_ok=True)
-            return midi_path, None
 
-        _normalize_wav(wav_path)
+        # Pass 1: measure loudness
+        synth1 = subprocess.Popen(
+            synth_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        measure = subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-f",
+                "wav",
+                "-i",
+                "pipe:0",
+                "-af",
+                "loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json",
+                "-f",
+                "null",
+                "-",
+            ],
+            stdin=synth1.stdout,
+            capture_output=True,
+            text=True,
+        )
+        synth1.wait()
+        stats = _parse_loudnorm_stats(measure.stderr)
 
-        cmd_mp3 = ["ffmpeg", "-y", "-i", str(wav_path), "-b:a", "320k", str(mp3_path)]
-        result = subprocess.run(cmd_mp3, capture_output=True, text=True)
-        wav_path.unlink(missing_ok=True)
-        if result.returncode != 0 or not mp3_path.exists():
+        # Pass 2: normalize + encode
+        synth2 = subprocess.Popen(
+            synth_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if stats is not None:
+            af = (
+                f"loudnorm=I=-16:TP=-1.5:LRA=11:"
+                f"measured_I={stats['input_i']}:"
+                f"measured_LRA={stats['input_lra']}:"
+                f"measured_TP={stats['input_tp']}:"
+                f"measured_thresh={stats['input_thresh']}:"
+                f"offset={stats['target_offset']}:"
+                f"linear=true"
+            )
+            encode_cmd = [
+                "ffmpeg",
+                "-y",
+                "-f",
+                "wav",
+                "-i",
+                "pipe:0",
+                "-af",
+                af,
+                "-b:a",
+                "320k",
+                str(mp3_path),
+            ]
+        else:
+            encode_cmd = [
+                "ffmpeg",
+                "-y",
+                "-f",
+                "wav",
+                "-i",
+                "pipe:0",
+                "-b:a",
+                "320k",
+                str(mp3_path),
+            ]
+        enc = subprocess.run(
+            encode_cmd,
+            stdin=synth2.stdout,
+            capture_output=True,
+            text=True,
+        )
+        synth2.wait()
+
+        if enc.returncode != 0 or not mp3_path.exists():
             mp3_path.unlink(missing_ok=True)
             return midi_path, None
-
         return midi_path, mp3_path
 
     completed = 0
