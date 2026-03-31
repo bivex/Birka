@@ -13,7 +13,7 @@ from birka.application.user_metadata import UserMetadata, UserMetadataStore
 from birka.domain.media import MediaItem, Rating
 from birka.infrastructure.file_scanner import FileSystemScanner
 from birka.infrastructure.metadata_readers import AudioMidiMetadataReader
-from birka.infrastructure.midi_renderer import render_midi_to_mp3
+from birka.infrastructure.midi_renderer import render_midi_to_mp3_batch
 from birka.infrastructure.waveform_provider import WaveformProvider
 from birka.presentation.media_presenter import MediaPresenter
 from birka.presentation.file_drag_table import FileDragTableView
@@ -69,6 +69,25 @@ class _RefreshWorker(QtCore.QObject):
         loader = LoadLibrary(scanner, reader, self._metadata_store)
         items = loader.execute(self._root)
         self.finished.emit(items)
+
+
+class _RenderWorker(QtCore.QObject):
+    progress = QtCore.pyqtSignal(int, int)
+    finished = QtCore.pyqtSignal(list, list)
+
+    def __init__(self, midi_paths: list[Path], output_dir: Path) -> None:
+        super().__init__()
+        self._midi_paths = midi_paths
+        self._output_dir = output_dir
+
+    def run(self) -> None:
+        def on_progress(completed: int, total: int, _: Path, __: bool) -> None:
+            self.progress.emit(completed, total)
+
+        successful, failed = render_midi_to_mp3_batch(
+            self._midi_paths, self._output_dir, on_progress=on_progress
+        )
+        self.finished.emit(successful, failed)
 
 
 class LibraryTab(QtWidgets.QWidget):
@@ -555,19 +574,56 @@ class LibraryTab(QtWidgets.QWidget):
             )
             return
         output_dir = self.root / "rendered_mp3"
-        failures = []
-        for item in midi_items:
-            result = render_midi_to_mp3(item.path, output_dir)
-            if result is None:
-                failures.append(item.path.name)
-        if failures:
+
+        midi_paths = [item.path for item in midi_items]
+        total = len(midi_paths)
+
+        self._render_progress = QtWidgets.QProgressDialog(
+            "Rendering MIDI files...", "Cancel", 0, total, self
+        )
+        self._render_progress.setWindowModality(QtCore.Qt.WindowModality.WindowModal)
+        self._render_progress.setMinimumDuration(0)
+        self._render_progress.setValue(0)
+
+        worker = _RenderWorker(midi_paths, output_dir)
+        thread = QtCore.QThread()
+        worker.moveToThread(thread)
+        worker.progress.connect(self._on_render_progress)
+        worker.finished.connect(self._on_render_finished)
+        thread.started.connect(worker.run)
+        self._render_thread = thread
+        self._render_worker = worker
+        self._render_progress.canceled.connect(self._cancel_render)
+        thread.start()
+
+    def _on_render_progress(self, completed: int, total: int) -> None:
+        if hasattr(self, "_render_progress"):
+            self._render_progress.setMaximum(total)
+            self._render_progress.setValue(completed)
+
+    def _cancel_render(self) -> None:
+        pass
+
+    def _on_render_finished(self, successful: list, failed: list) -> None:
+        if hasattr(self, "_render_progress"):
+            self._render_progress.close()
+
+        if hasattr(self, "_render_thread") and self._render_thread is not None:
+            self._render_thread.quit()
+            self._render_thread.wait()
+            self._render_thread = None
+            self._render_worker = None
+
+        output_dir = self.root / "rendered_mp3"
+        if failed:
             QtWidgets.QMessageBox.warning(
                 self,
                 "Render",
-                f"Failed to render:\n" + "\n".join(failures),
+                f"Rendered {len(successful)}/{len(successful) + len(failed)} files.\n"
+                f"Failed:\n" + "\n".join(p.name for p in failed),
             )
-            return
-        QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(output_dir)))
+        if successful:
+            QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(output_dir)))
 
     def _open_selected_folder(self) -> None:
         directory = QtWidgets.QFileDialog.getExistingDirectory(
