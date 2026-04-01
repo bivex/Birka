@@ -32,6 +32,16 @@ WAV_META_CHUNKS = {b"bext", b"LIST", b"INFO", b"ICMT", b"INAM"}
 MIDI_STATUS_NOTE_OFF_MAX = 0xBF
 MIDI_STATUS_PROGRAM_CHANGE_MAX = 0xDF
 MIDI_STATUS_PITCH_MAX = 0xEF
+MIDI_DIVISION_SMPTE_MASK = 0x8000
+MIDI_STATUS_BYTE_MASK = 0x80
+MIDI_SYSEX_THRESHOLD = 0xF0
+MIDI_MICROSECONDS_PER_MINUTE = 60_000_000
+MIDI_SECONDS_PER_MINUTE = 60.0
+MIDI_VLQ_CONTINUATION_MASK = 0x7F
+MIDI_VLQ_MSB_MASK = 0x80
+MIDI_NOTE_ON_LOWER = 0x80
+MIDI_PROGRAM_CHANGE_LOWER = 0xC0
+MIDI_PITCH_BEND_LOWER = 0xE0
 
 
 class AudioMidiMetadataReader(MetadataReader):
@@ -94,8 +104,8 @@ def _parse_midi(
     header_length = struct.unpack(">I", data[4:8])[0]
     if header_length < MIDI_HEADER_SIZE or len(data) < 8 + header_length:
         return None, None, None, None, None
-    _, ntrks, division = struct.unpack(">HHH", data[8:14])
-    if division & 0x8000:
+    _, ntrks, division = struct.unpack(">HHH", data[8 : 8 + MIDI_HEADER_SIZE])
+    if division & MIDI_DIVISION_SMPTE_MASK:
         ticks_per_beat = None
     else:
         ticks_per_beat = division
@@ -127,11 +137,11 @@ def _scan_midi_track(
         if idx >= len(data):
             break
         status = data[idx]
-        if status < 0x80 and running_status is not None:
+        if status < MIDI_STATUS_BYTE_MASK and running_status is not None:
             status = running_status
         else:
             idx += 1
-            running_status = status if status < 0xF0 else None
+            running_status = status if status < MIDI_SYSEX_THRESHOLD else None
         if status == MIDI_META_EVENT:
             if idx >= len(data):
                 break
@@ -143,7 +153,7 @@ def _scan_midi_track(
             if meta_type == MIDI_TEMPO_META and length == 3 and bpm is None:
                 tempo = (meta_data[0] << 16) | (meta_data[1] << 8) | meta_data[2]
                 if tempo:
-                    bpm = round(60_000_000 / tempo, 3)
+                    bpm = round(MIDI_MICROSECONDS_PER_MINUTE / tempo, 3)
             if meta_type == MIDI_KEY_META and length == 2 and key is None:
                 sf = meta_data[0]
                 sf = sf - 256 if sf >= 128 else sf
@@ -163,7 +173,7 @@ def _ticks_to_seconds(
     if ticks_per_beat is None or ticks_per_beat <= 0:
         return None
     effective_bpm = bpm or MIDI_DEFAULT_BPM
-    return (ticks / ticks_per_beat) * (60.0 / effective_bpm)
+    return (ticks / ticks_per_beat) * (MIDI_SECONDS_PER_MINUTE / effective_bpm)
 
 
 def _read_vlq(data: bytes, idx: int) -> tuple[int, int]:
@@ -171,18 +181,18 @@ def _read_vlq(data: bytes, idx: int) -> tuple[int, int]:
     while idx < len(data):
         byte = data[idx]
         idx += 1
-        value = (value << 7) | (byte & 0x7F)
-        if byte & 0x80 == 0:
+        value = (value << 7) | (byte & MIDI_VLQ_CONTINUATION_MASK)
+        if byte & MIDI_VLQ_MSB_MASK == 0:
             break
     return value, idx
 
 
 def _midi_data_length(status: int) -> int:
-    if 0x80 <= status <= MIDI_STATUS_NOTE_OFF_MAX:
+    if MIDI_NOTE_ON_LOWER <= status <= MIDI_STATUS_NOTE_OFF_MAX:
         return 2
-    if 0xC0 <= status <= MIDI_STATUS_PROGRAM_CHANGE_MAX:
+    if MIDI_PROGRAM_CHANGE_LOWER <= status <= MIDI_STATUS_PROGRAM_CHANGE_MAX:
         return 1
-    if 0xE0 <= status <= MIDI_STATUS_PITCH_MAX:
+    if MIDI_PITCH_BEND_LOWER <= status <= MIDI_STATUS_PITCH_MAX:
         return 2
     return 0
 

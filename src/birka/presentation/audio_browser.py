@@ -10,11 +10,16 @@ from birka.presentation.library_tab import LibraryTab
 
 
 class AudioBrowserWindow(QtWidgets.QMainWindow):
+    DEFAULT_WIDTH = 900
+    DEFAULT_HEIGHT = 600
+
     def __init__(self, roots: list[Path]) -> None:
         super().__init__()
         self.setWindowTitle("Birka Audio Browser")
-        self.setMinimumSize(900, 600)
-        self._metadata_store = JsonUserMetadataStore(Path("/Volumes/External/Code/Birka/data/user_metadata.json"))
+        self.setMinimumSize(self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT)
+        self._metadata_store = JsonUserMetadataStore(
+            Path("/Volumes/External/Code/Birka/data/user_metadata.json")
+        )
         self._tabs = QtWidgets.QTabWidget(self)
         self.setCentralWidget(self._tabs)
         for root in roots:
@@ -49,15 +54,21 @@ class AudioBrowserWindow(QtWidgets.QMainWindow):
             self._add_tab(Path(directory))
 
     def _export_preset(self) -> None:
-        path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Export Preset", filter="JSON Files (*.json)")
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Export Preset", filter="JSON Files (*.json)"
+        )
         if not path:
             return
         roots = [self._tabs.widget(i).root for i in range(self._tabs.count())]
         payload = {"roots": [str(root) for root in roots]}
-        Path(path).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        Path(path).write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
 
     def _import_preset(self) -> None:
-        path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Import Preset", filter="JSON Files (*.json)")
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Import Preset", filter="JSON Files (*.json)"
+        )
         if not path:
             return
         payload = json.loads(Path(path).read_text(encoding="utf-8"))

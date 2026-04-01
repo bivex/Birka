@@ -8,6 +8,7 @@ from birka.application.media_ports import FileScanner
 
 class FileSystemScanner(FileScanner):
     def __init__(self, extensions: Iterable[str]) -> None:
+        super().__init__()
         self._extensions = {ext.lower() for ext in extensions}
 
     def scan(self, root: Path) -> Iterable[Path]:

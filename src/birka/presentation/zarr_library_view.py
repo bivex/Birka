@@ -9,7 +9,14 @@ from birka.domain.media import MediaItem
 
 
 class ZarrLibraryView(QtWidgets.QWidget):
-    def __init__(self, root: Path, items: Iterable[MediaItem], parent: QtWidgets.QWidget | None = None) -> None:
+    MODULE_PATH = "/Volumes/External/Code/Birka/modules/zarr-view"
+
+    def __init__(
+        self,
+        root: Path,
+        items: Iterable[MediaItem],
+        parent: QtWidgets.QWidget | None = None,
+    ) -> None:
         super().__init__(parent)
         self._root = root
         self._items = list(items)
@@ -31,7 +38,7 @@ class ZarrLibraryView(QtWidgets.QWidget):
             import sys
             from pathlib import Path as _Path
 
-            module_path = _Path("/Volumes/External/Code/Birka/modules/zarr-view")
+            module_path = _Path(self.MODULE_PATH)
             if module_path.exists() and str(module_path) not in sys.path:
                 sys.path.append(str(module_path))
 
@@ -40,8 +47,7 @@ class ZarrLibraryView(QtWidgets.QWidget):
             from zarrview.ZarrViewer import ZarrViewer  # type: ignore
         except Exception as exc:  # noqa: BLE001
             self._status.setText(
-                "Zarr view unavailable. Install zarr and zarrview.\n"
-                f"Details: {exc}"
+                f"Zarr view unavailable. Install zarr and zarrview.\nDetails: {exc}"
             )
             return
 
@@ -75,7 +81,10 @@ def _build_zarr_hierarchy(root: Path, items: Iterable[MediaItem]):
                 dataset.attrs["bpm"] = metadata.bpm
             if hasattr(metadata, "key") and metadata.key is not None:
                 dataset.attrs["key"] = metadata.key
-            if hasattr(metadata, "duration_seconds") and metadata.duration_seconds is not None:
+            if (
+                hasattr(metadata, "duration_seconds")
+                and metadata.duration_seconds is not None
+            ):
                 dataset.attrs["duration_seconds"] = metadata.duration_seconds
             if hasattr(metadata, "sample_rate_hz"):
                 dataset.attrs["sample_rate_hz"] = metadata.sample_rate_hz

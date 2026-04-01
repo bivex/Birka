@@ -4,9 +4,13 @@ from PyQt6 import QtCore
 
 
 class PaginationProxyModel(QtCore.QAbstractProxyModel):
-    def __init__(self, page_size: int = 50, parent: QtCore.QObject | None = None) -> None:
+    DEFAULT_PAGE_SIZE = 50
+
+    def __init__(
+        self, page_size: int = 0, parent: QtCore.QObject | None = None
+    ) -> None:
         super().__init__(parent)
-        self._page_size = max(1, page_size)
+        self._page_size = max(1, page_size or self.DEFAULT_PAGE_SIZE)
         self._page_index = 0
 
     def setSourceModel(self, source_model: QtCore.QAbstractItemModel | None) -> None:  # noqa: N802
@@ -32,7 +36,9 @@ class PaginationProxyModel(QtCore.QAbstractProxyModel):
             return 0
         return self.sourceModel().columnCount()
 
-    def index(self, row: int, column: int, parent: QtCore.QModelIndex = QtCore.QModelIndex()) -> QtCore.QModelIndex:
+    def index(
+        self, row: int, column: int, parent: QtCore.QModelIndex = QtCore.QModelIndex()
+    ) -> QtCore.QModelIndex:
         if self.sourceModel() is None or parent.isValid():
             return QtCore.QModelIndex()
         return self.createIndex(row, column)
@@ -73,7 +79,11 @@ class PaginationProxyModel(QtCore.QAbstractProxyModel):
         total = self.sourceModel().rowCount()
         return max(1, (total + self._page_size - 1) // self._page_size)
 
-    def sort(self, column: int, order: QtCore.Qt.SortOrder = QtCore.Qt.SortOrder.AscendingOrder) -> None:
+    def sort(
+        self,
+        column: int,
+        order: QtCore.Qt.SortOrder = QtCore.Qt.SortOrder.AscendingOrder,
+    ) -> None:
         if self.sourceModel() is not None:
             self.sourceModel().sort(column, order)
 

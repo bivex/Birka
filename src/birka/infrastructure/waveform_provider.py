@@ -6,7 +6,11 @@ from typing import List
 
 
 class WaveformProvider:
-    def load(self, path: Path, points: int = 200) -> List[float]:
+    POINTS_DEFAULT = 200
+    PCM16_MAX_VALUE = 32768.0
+
+    def load(self, path: Path, points: int = 0) -> List[float]:
+        effective_points = points or self.POINTS_DEFAULT
         if path.suffix.lower() != ".wav":
             return []
         with wave.open(str(path), "rb") as wav:
@@ -19,7 +23,7 @@ class WaveformProvider:
         samples = _to_samples(raw, channels)
         if not samples:
             return []
-        return _downsample(samples, points)
+        return _downsample(samples, effective_points, self.PCM16_MAX_VALUE)
 
 
 def _to_samples(raw: bytes, channels: int) -> List[int]:
@@ -33,13 +37,15 @@ def _to_samples(raw: bytes, channels: int) -> List[int]:
             break
         total = 0
         for c in range(channels):
-            sample = int.from_bytes(frame[c * 2 : c * 2 + 2], byteorder="little", signed=True)
+            sample = int.from_bytes(
+                frame[c * 2 : c * 2 + 2], byteorder="little", signed=True
+            )
             total += sample
         samples.append(total // channels)
     return samples
 
 
-def _downsample(samples: List[int], points: int) -> List[float]:
+def _downsample(samples: List[int], points: int, max_value: float) -> List[float]:
     if points <= 0:
         return []
     bucket = max(1, len(samples) // points)
@@ -49,5 +55,5 @@ def _downsample(samples: List[int], points: int) -> List[float]:
         if not chunk:
             continue
         peak = max(abs(min(chunk)), abs(max(chunk)))
-        result.append(peak / 32768.0)
+        result.append(peak / max_value)
     return result[:points]

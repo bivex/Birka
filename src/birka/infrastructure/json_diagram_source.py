@@ -30,6 +30,7 @@ class _RawFlow:
 
 class JsonDiagramSource(DiagramSource):
     def __init__(self, path: Path) -> None:
+        super().__init__()
         self._path = path
 
     def load(self) -> Diagram:
@@ -37,8 +38,18 @@ class JsonDiagramSource(DiagramSource):
         diagram_id = payload.get("context", {}).get("id", "diagram")
         raw_tasks = list(self._extract_tasks(payload.get("data", [])))
         raw_flows = list(self._extract_flows(payload.get("data", [])))
-        tasks = [TaskView(task.task_id, task.name, Rect(task.left, task.top, task.width, task.height)) for task in raw_tasks]
-        flows = [SequenceFlow(flow.flow_id, flow.head_id, flow.tail_id, flow.points) for flow in raw_flows]
+        tasks = [
+            TaskView(
+                task.task_id,
+                task.name,
+                Rect(task.left, task.top, task.width, task.height),
+            )
+            for task in raw_tasks
+        ]
+        flows = [
+            SequenceFlow(flow.flow_id, flow.head_id, flow.tail_id, flow.points)
+            for flow in raw_flows
+        ]
         return DiagramFactory.create(diagram_id=diagram_id, tasks=tasks, flows=flows)
 
     def _extract_tasks(self, items: Iterable[dict]) -> Iterable[_RawTask]:
@@ -65,7 +76,12 @@ class JsonDiagramSource(DiagramSource):
             points = _parse_points(item.get("points", ""))
             if not head_ref or not tail_ref:
                 continue
-            yield _RawFlow(flow_id=item.get("_id", ""), head_id=head_ref, tail_id=tail_ref, points=points)
+            yield _RawFlow(
+                flow_id=item.get("_id", ""),
+                head_id=head_ref,
+                tail_id=tail_ref,
+                points=points,
+            )
 
 
 def _parse_points(raw: str) -> List[Point]:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import logging
 import shutil
-import subprocess
 import tempfile
 from pathlib import Path
 from typing import List
@@ -23,6 +23,20 @@ from birka.presentation.pagination_proxy import PaginationProxyModel
 from birka.presentation.rename_dialog import RenameCoordinator
 from birka.presentation.waveform_widget import WaveformWidget
 from birka.presentation.zarr_library_view import ZarrLibraryView
+
+logger = logging.getLogger(__name__)
+
+AUTO_REFRESH_INTERVAL_MS = 10_000
+DEFAULT_PAGE_SIZE = 50
+DEFAULT_VOLUME_PERCENT = 80
+DEFAULT_VOLUME_FRACTION = 0.8
+PAGE_SIZE_OPTIONS = (25, 50, 100, 200)
+RATING_RANGE = range(0, 6)
+BPM_MAX = 400
+DURATION_MAX_SECONDS = 3600
+VOLUME_SLIDER_WIDTH = 100
+VOLUME_SLIDER_MAX = 100
+MIDI_EXTENSIONS = {".mid", ".midi"}
 
 
 def _render_midi_to_tmp_wav(midi_path: Path) -> Path | None:
@@ -113,7 +127,7 @@ class LibraryTab(QtWidgets.QWidget):
 
         self._auto_refresh_timer = QtCore.QTimer(self)
         self._auto_refresh_timer.timeout.connect(self.reload)
-        self._auto_refresh_timer.start(10_000)
+        self._auto_refresh_timer.start(AUTO_REFRESH_INTERVAL_MS)
 
     def reload(self) -> None:
         if self._refresh_thread is not None:
@@ -128,16 +142,7 @@ class LibraryTab(QtWidgets.QWidget):
         thread.start()
 
     def _apply_refresh(self, items: List[MediaItem]) -> None:
-        old_paths: set[str] = set()
-        if not self._first_load:
-            selection = self._pager.mapSelectionToSource(
-                self._table.selectionModel().selection()
-            )
-            old_paths = (
-                {self._model.row_at(i.row()).path for i in selection.indexes()}
-                if selection.indexes()
-                else set()
-            )
+        old_paths = self._capture_selection_paths()
 
         self._items = items
         self._item_by_path = {str(item.path): item for item in items}
@@ -154,17 +159,33 @@ class LibraryTab(QtWidgets.QWidget):
         if self._zarr_view is not None:
             self._zarr_view.set_items(items)
 
-        sel_model = self._table.selectionModel()
-        if sel_model is not None:
-            if self._selection_connected:
-                try:
-                    sel_model.selectionChanged.disconnect(self._on_selection_changed)
-                except TypeError:
-                    pass
-            sel_model.selectionChanged.connect(self._on_selection_changed)
-            self._selection_connected = True
+        self._reconnect_selection_model()
         self._first_load = False
+        self._cleanup_refresh_thread()
 
+    def _capture_selection_paths(self) -> set[str]:
+        if self._first_load:
+            return set()
+        selection = self._pager.mapSelectionToSource(
+            self._table.selectionModel().selection()
+        )
+        if not selection.indexes():
+            return set()
+        return {self._model.row_at(i.row()).path for i in selection.indexes()}
+
+    def _reconnect_selection_model(self) -> None:
+        sel_model = self._table.selectionModel()
+        if sel_model is None:
+            return
+        if self._selection_connected:
+            try:
+                sel_model.selectionChanged.disconnect(self._on_selection_changed)
+            except TypeError:
+                _already_disconnected = True
+        sel_model.selectionChanged.connect(self._on_selection_changed)
+        self._selection_connected = True
+
+    def _cleanup_refresh_thread(self) -> None:
         if self._refresh_thread is not None:
             self._refresh_thread.quit()
             self._refresh_thread.wait()
@@ -174,10 +195,11 @@ class LibraryTab(QtWidgets.QWidget):
     def _restore_selection(self, old_paths: set[str]) -> None:
         if not old_paths:
             return
-        new_rows = set()
-        for row in range(self._model.rowCount()):
-            if self._model.row_at(row).path in old_paths:
-                new_rows.add(row)
+        new_rows = {
+            row
+            for row in range(self._model.rowCount())
+            if self._model.row_at(row).path in old_paths
+        }
         if not new_rows:
             return
         selection = QtCore.QItemSelection()
@@ -189,21 +211,23 @@ class LibraryTab(QtWidgets.QWidget):
                 if pager_idx.isValid():
                     selection.select(pager_idx, pager_idx)
         if selection.indexes():
-            if self._selection_connected:
-                try:
-                    self._table.selectionModel().selectionChanged.disconnect(
-                        self._on_selection_changed
-                    )
-                except TypeError:
-                    pass
-            self._table.selectionModel().select(
-                selection,
-                QtCore.QItemSelectionModel.SelectionFlag.Select
-                | QtCore.QItemSelectionModel.SelectionFlag.Rows,
-            )
-            self._table.selectionModel().selectionChanged.connect(
-                self._on_selection_changed
-            )
+            self._apply_selection_to_table(selection)
+
+    def _apply_selection_to_table(self, selection: QtCore.QItemSelection) -> None:
+        sel_model = self._table.selectionModel()
+        if sel_model is None:
+            return
+        if self._selection_connected:
+            try:
+                sel_model.selectionChanged.disconnect(self._on_selection_changed)
+            except TypeError:
+                _already_disconnected = True
+        sel_model.select(
+            selection,
+            QtCore.QItemSelectionModel.SelectionFlag.Select
+            | QtCore.QItemSelectionModel.SelectionFlag.Rows,
+        )
+        sel_model.selectionChanged.connect(self._on_selection_changed)
 
     def stop_all(self) -> None:
         self._player.stop()
@@ -214,31 +238,42 @@ class LibraryTab(QtWidgets.QWidget):
             try:
                 self._tmp_midi_wav.unlink()
                 self._tmp_midi_wav.parent.rmdir()
-            except OSError:
-                pass
+            except OSError as exc:
+                logger.debug("Failed to clean up temp WAV: %s", exc)
             self._tmp_midi_wav = None
 
     def _build_ui(self) -> None:
+        self._init_filter_and_pager()
+        self._init_search_and_filters()
+        self._init_table()
+        self._init_playback_controls()
+        self._init_rename_controls()
+        self._init_tags_controls()
+        self._init_pager_controls()
+        self._assemble_layout()
+
+    def _init_filter_and_pager(self) -> None:
         self._filter = MediaFilterProxyModel(self)
         self._filter.modelReset.connect(self._update_page_label)
         self._filter.layoutChanged.connect(self._update_page_label)
         self._filter.modelReset.connect(self._update_count_label)
         self._filter.layoutChanged.connect(self._update_count_label)
-        self._pager = PaginationProxyModel(page_size=50, parent=self)
+        self._pager = PaginationProxyModel(page_size=DEFAULT_PAGE_SIZE, parent=self)
         self._pager.setSourceModel(self._filter)
 
+    def _init_search_and_filters(self) -> None:
         self._search = QtWidgets.QLineEdit(self)
         self._search.setPlaceholderText("Search by name, type, BPM, key, tags...")
         self._search.textChanged.connect(self._filter.set_text_filter)
 
         self._bpm_min = QtWidgets.QSpinBox(self)
-        self._bpm_min.setRange(0, 400)
+        self._bpm_min.setRange(0, BPM_MAX)
         self._bpm_min.setPrefix("BPM min: ")
         self._bpm_min.valueChanged.connect(self._apply_meta_filters)
         self._bpm_max = QtWidgets.QSpinBox(self)
-        self._bpm_max.setRange(0, 400)
+        self._bpm_max.setRange(0, BPM_MAX)
         self._bpm_max.setPrefix("BPM max: ")
-        self._bpm_max.setValue(400)
+        self._bpm_max.setValue(BPM_MAX)
         self._bpm_max.valueChanged.connect(self._apply_meta_filters)
         self._key_filter = QtWidgets.QLineEdit(self)
         self._key_filter.setPlaceholderText("Key (e.g., C#m)")
@@ -255,17 +290,18 @@ class LibraryTab(QtWidgets.QWidget):
         self._include_unknown_bpm.stateChanged.connect(self._apply_meta_filters)
 
         self._duration_min = QtWidgets.QSpinBox(self)
-        self._duration_min.setRange(0, 3600)
+        self._duration_min.setRange(0, DURATION_MAX_SECONDS)
         self._duration_min.setPrefix("Dur min: ")
         self._duration_min.setSuffix("s")
         self._duration_min.valueChanged.connect(self._apply_meta_filters)
         self._duration_max = QtWidgets.QSpinBox(self)
-        self._duration_max.setRange(0, 3600)
+        self._duration_max.setRange(0, DURATION_MAX_SECONDS)
         self._duration_max.setPrefix("Dur max: ")
         self._duration_max.setSuffix("s")
-        self._duration_max.setValue(3600)
+        self._duration_max.setValue(DURATION_MAX_SECONDS)
         self._duration_max.valueChanged.connect(self._apply_meta_filters)
 
+    def _init_table(self) -> None:
         self._table = FileDragTableView(self._selected_paths, self)
         self._table.setSelectionBehavior(
             QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows
@@ -279,12 +315,13 @@ class LibraryTab(QtWidgets.QWidget):
         self._table.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self._table.customContextMenuRequested.connect(self._show_context_menu)
 
+    def _init_playback_controls(self) -> None:
         self._waveform = WaveformWidget(self)
         self._waveform.position_changed.connect(self._waveform_seek)
-        play_button = QtWidgets.QPushButton("Play", self)
-        stop_button = QtWidgets.QPushButton("Stop", self)
-        play_button.clicked.connect(self._play_selected)
-        stop_button.clicked.connect(self._stop_playback)
+        self._play_button = QtWidgets.QPushButton("Play", self)
+        self._stop_button = QtWidgets.QPushButton("Stop", self)
+        self._play_button.clicked.connect(self._play_selected)
+        self._stop_button.clicked.connect(self._stop_playback)
 
         self._seek_slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
         self._seek_slider.setRange(0, 0)
@@ -294,118 +331,61 @@ class LibraryTab(QtWidgets.QWidget):
 
         self._time_label = QtWidgets.QLabel("0:00 / 0:00", self)
 
-        volume_label = QtWidgets.QLabel("Vol", self)
         self._volume_slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
         self._volume_slider.setRange(0, 100)
-        self._volume_slider.setValue(80)
-        self._volume_slider.setFixedWidth(100)
+        self._volume_slider.setValue(DEFAULT_VOLUME_PERCENT)
+        self._volume_slider.setFixedWidth(VOLUME_SLIDER_WIDTH)
         self._volume_slider.valueChanged.connect(self._on_volume_changed)
-        self._audio_output.setVolume(0.8)
+        self._audio_output.setVolume(DEFAULT_VOLUME_FRACTION)
 
-        controls_row = QtWidgets.QHBoxLayout()
-        controls_row.addWidget(play_button)
-        controls_row.addWidget(stop_button)
-        controls_row.addWidget(self._seek_slider, 1)
-        controls_row.addWidget(self._time_label)
-        controls_row.addWidget(volume_label)
-        controls_row.addWidget(self._volume_slider)
-
+    def _init_rename_controls(self) -> None:
         self._template_input = QtWidgets.QLineEdit(self)
         self._template_input.setPlaceholderText(
             "Rename template: [BPM]_[Key]_[OriginalName]"
         )
         self._template_input.setText("[BPM]_[Key]_[OriginalName]")
-        rename_button = QtWidgets.QPushButton("Preview Rename", self)
-        rename_button.clicked.connect(self._preview_rename)
+        self._rename_button = QtWidgets.QPushButton("Preview Rename", self)
+        self._rename_button.clicked.connect(self._preview_rename)
+        self._open_button = QtWidgets.QPushButton("Open Library", self)
+        self._open_button.clicked.connect(self._open_library)
+        self._refresh_button = QtWidgets.QPushButton("Refresh", self)
+        self._refresh_button.clicked.connect(self.reload)
 
-        open_button = QtWidgets.QPushButton("Open Library", self)
-        open_button.clicked.connect(self._open_library)
-
-        refresh_button = QtWidgets.QPushButton("Refresh", self)
-        refresh_button.clicked.connect(self.reload)
-
-        rename_row = QtWidgets.QHBoxLayout()
-        rename_row.addWidget(open_button)
-        rename_row.addWidget(refresh_button)
-        rename_row.addWidget(self._template_input)
-        rename_row.addWidget(rename_button)
-
+    def _init_tags_controls(self) -> None:
         self._tags_input = QtWidgets.QLineEdit(self)
         self._tags_input.setPlaceholderText("Tags (comma separated)")
         self._rating_combo = QtWidgets.QComboBox(self)
         self._rating_combo.addItem("", None)
-        for value in range(0, 6):
+        for value in RATING_RANGE:
             self._rating_combo.addItem(str(value), value)
-        apply_button = QtWidgets.QPushButton("Apply Tags/Rating", self)
-        apply_button.clicked.connect(self._apply_tags_rating)
-
-        tags_row = QtWidgets.QHBoxLayout()
-        tags_row.addWidget(self._tags_input)
-        tags_row.addWidget(self._rating_combo)
-        tags_row.addWidget(apply_button)
-
+        self._apply_button = QtWidgets.QPushButton("Apply Tags/Rating", self)
+        self._apply_button.clicked.connect(self._apply_tags_rating)
         self._delete_button = QtWidgets.QPushButton("Delete Selected", self)
         self._delete_button.setShortcut("Delete")
         self._delete_button.clicked.connect(self._delete_selected)
-        tags_row.addWidget(self._delete_button)
+        self._sort_button = QtWidgets.QPushButton("Sort Files", self)
+        self._sort_button.clicked.connect(self._sort_files)
+        self._open_folder_button = QtWidgets.QPushButton("Open Folder", self)
+        self._open_folder_button.clicked.connect(self._open_selected_folder)
+        self._render_button = QtWidgets.QPushButton("Render MIDI\u2192MP3", self)
+        self._render_button.clicked.connect(self._render_midi)
 
-        sort_button = QtWidgets.QPushButton("Sort Files", self)
-        sort_button.clicked.connect(self._sort_files)
-        tags_row.addWidget(sort_button)
-
-        open_folder_button = QtWidgets.QPushButton("Open Folder", self)
-        open_folder_button.clicked.connect(self._open_selected_folder)
-        tags_row.addWidget(open_folder_button)
-
-        render_button = QtWidgets.QPushButton("Render MIDI→MP3", self)
-        render_button.clicked.connect(self._render_midi)
-        tags_row.addWidget(render_button)
-
-        pager_row = QtWidgets.QHBoxLayout()
+    def _init_pager_controls(self) -> None:
         self._count_label = QtWidgets.QLabel("Files: 0", self)
         self._page_label = QtWidgets.QLabel("Page 1/1", self)
         self._page_size = QtWidgets.QComboBox(self)
-        for size in (25, 50, 100, 200):
+        for size in PAGE_SIZE_OPTIONS:
             self._page_size.addItem(str(size), size)
-        self._page_size.setCurrentText("50")
+        self._page_size.setCurrentText(str(DEFAULT_PAGE_SIZE))
         self._page_size.currentIndexChanged.connect(self._on_page_size_changed)
-        prev_button = QtWidgets.QPushButton("Prev", self)
-        next_button = QtWidgets.QPushButton("Next", self)
-        prev_button.clicked.connect(self._prev_page)
-        next_button.clicked.connect(self._next_page)
-        pager_row.addWidget(prev_button)
-        pager_row.addWidget(next_button)
-        pager_row.addWidget(self._count_label)
-        pager_row.addWidget(self._page_label)
-        pager_row.addStretch(1)
-        pager_row.addWidget(QtWidgets.QLabel("Page size", self))
-        pager_row.addWidget(self._page_size)
+        self._prev_button = QtWidgets.QPushButton("Prev", self)
+        self._next_button = QtWidgets.QPushButton("Next", self)
+        self._prev_button.clicked.connect(self._prev_page)
+        self._next_button.clicked.connect(self._next_page)
 
-        list_page = QtWidgets.QWidget(self)
-        list_layout = QtWidgets.QVBoxLayout(list_page)
-        filter_row = QtWidgets.QHBoxLayout()
-        filter_row.addWidget(self._bpm_min)
-        filter_row.addWidget(self._bpm_max)
-        filter_row.addWidget(self._key_filter)
-        filter_row.addWidget(self._type_filter)
-        filter_row.addWidget(self._include_unknown_bpm)
-        filter_row.addWidget(self._duration_min)
-        filter_row.addWidget(self._duration_max)
-        filter_row.addStretch(1)
-
-        list_layout.addWidget(self._search)
-        list_layout.addLayout(filter_row)
-        list_layout.addLayout(rename_row)
-        list_layout.addWidget(self._table)
-        list_layout.addWidget(self._waveform)
-        list_layout.addLayout(controls_row)
-        list_layout.addLayout(tags_row)
-        list_layout.addLayout(pager_row)
-
-        self._zarr_view = ZarrLibraryView(self.root, [], self)
-        tree_page = QtWidgets.QWidget(self)
-        tree_layout = QtWidgets.QVBoxLayout(tree_page)
-        tree_layout.addWidget(self._zarr_view)
+    def _assemble_layout(self) -> None:
+        list_page = self._build_list_page()
+        tree_page = self._build_tree_page()
 
         self._tabs = QtWidgets.QTabWidget(self)
         self._tabs.addTab(list_page, "List")
@@ -414,6 +394,85 @@ class LibraryTab(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self._tabs)
 
+    def _build_list_page(self) -> QtWidgets.QWidget:
+        filter_row = self._build_filter_row()
+        rename_row = self._build_rename_row()
+        controls_row = self._build_controls_row()
+        tags_row = self._build_tags_row()
+        pager_row = self._build_pager_row()
+
+        page = QtWidgets.QWidget(self)
+        layout = QtWidgets.QVBoxLayout(page)
+        layout.addWidget(self._search)
+        layout.addLayout(filter_row)
+        layout.addLayout(rename_row)
+        layout.addWidget(self._table)
+        layout.addWidget(self._waveform)
+        layout.addLayout(controls_row)
+        layout.addLayout(tags_row)
+        layout.addLayout(pager_row)
+        return page
+
+    def _build_tree_page(self) -> QtWidgets.QWidget:
+        self._zarr_view = ZarrLibraryView(self.root, [], self)
+        page = QtWidgets.QWidget(self)
+        layout = QtWidgets.QVBoxLayout(page)
+        layout.addWidget(self._zarr_view)
+        return page
+
+    def _build_filter_row(self) -> QtWidgets.QHBoxLayout:
+        row = QtWidgets.QHBoxLayout()
+        row.addWidget(self._bpm_min)
+        row.addWidget(self._bpm_max)
+        row.addWidget(self._key_filter)
+        row.addWidget(self._type_filter)
+        row.addWidget(self._include_unknown_bpm)
+        row.addWidget(self._duration_min)
+        row.addWidget(self._duration_max)
+        row.addStretch(1)
+        return row
+
+    def _build_rename_row(self) -> QtWidgets.QHBoxLayout:
+        row = QtWidgets.QHBoxLayout()
+        row.addWidget(self._open_button)
+        row.addWidget(self._refresh_button)
+        row.addWidget(self._template_input)
+        row.addWidget(self._rename_button)
+        return row
+
+    def _build_controls_row(self) -> QtWidgets.QHBoxLayout:
+        volume_label = QtWidgets.QLabel("Vol", self)
+        row = QtWidgets.QHBoxLayout()
+        row.addWidget(self._play_button)
+        row.addWidget(self._stop_button)
+        row.addWidget(self._seek_slider, 1)
+        row.addWidget(self._time_label)
+        row.addWidget(volume_label)
+        row.addWidget(self._volume_slider)
+        return row
+
+    def _build_tags_row(self) -> QtWidgets.QHBoxLayout:
+        row = QtWidgets.QHBoxLayout()
+        row.addWidget(self._tags_input)
+        row.addWidget(self._rating_combo)
+        row.addWidget(self._apply_button)
+        row.addWidget(self._delete_button)
+        row.addWidget(self._sort_button)
+        row.addWidget(self._open_folder_button)
+        row.addWidget(self._render_button)
+        return row
+
+    def _build_pager_row(self) -> QtWidgets.QHBoxLayout:
+        row = QtWidgets.QHBoxLayout()
+        row.addWidget(self._prev_button)
+        row.addWidget(self._next_button)
+        row.addWidget(self._count_label)
+        row.addWidget(self._page_label)
+        row.addStretch(1)
+        row.addWidget(QtWidgets.QLabel("Page size", self))
+        row.addWidget(self._page_size)
+        return row
+
     # --- Seek slider ---
 
     def _seek_started(self) -> None:
@@ -421,8 +480,7 @@ class LibraryTab(QtWidgets.QWidget):
 
     def _seek_finished(self) -> None:
         self._seeking = False
-        pos = self._seek_slider.value()
-        self._player.setPosition(pos)
+        self._player.setPosition(self._seek_slider.value())
 
     def _seek_moved(self, value: int) -> None:
         self._update_time_label(value, self._player.duration())
@@ -442,7 +500,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._player.setPosition(position_ms)
 
     def _on_volume_changed(self, value: int) -> None:
-        self._audio_output.setVolume(value / 100.0)
+        self._audio_output.setVolume(value / VOLUME_SLIDER_MAX)
 
     def _on_media_status(self, status: QtMultimedia.QMediaPlayer.MediaStatus) -> None:
         if status == QtMultimedia.QMediaPlayer.MediaStatus.LoadedMedia:
@@ -461,16 +519,20 @@ class LibraryTab(QtWidgets.QWidget):
         samples = self._waveform_provider.load(item.path)
         self._waveform.set_samples(samples)
 
-    def _first_selected_item(self) -> MediaItem | None:
+    def _selected_rows_from_table(self) -> set[int]:
         selection = self._pager.mapSelectionToSource(
             self._table.selectionModel().selection()
         )
         indexes = selection.indexes()
         if not indexes:
+            return set()
+        return {self._filter.mapToSource(index).row() for index in indexes}
+
+    def _first_selected_item(self) -> MediaItem | None:
+        rows = self._selected_rows_from_table()
+        if not rows:
             return None
-        filter_index = indexes[0]
-        source_index = self._filter.mapToSource(filter_index)
-        media_row = self._model.row_at(source_index.row())
+        media_row = self._model.row_at(next(iter(rows)))
         return self._item_by_path.get(media_row.path)
 
     def _play_selected(self) -> None:
@@ -479,22 +541,25 @@ class LibraryTab(QtWidgets.QWidget):
             QtWidgets.QMessageBox.information(self, "Play", "Select a file first.")
             return
         self._stop_playback()
-        if item.path.suffix.lower() in {".mid", ".midi"}:
-            wav = _render_midi_to_tmp_wav(item.path)
-            if wav is None:
-                QtWidgets.QMessageBox.information(
-                    self,
-                    "MIDI",
-                    "Cannot render MIDI. Check fluidsynth + soundfont.",
-                )
-                return
-            self._tmp_midi_wav = wav
-            samples = self._waveform_provider.load(wav)
-            self._waveform.set_samples(samples)
-            url = QtCore.QUrl.fromLocalFile(str(wav))
-            self._player.setSource(url)
+        if item.path.suffix.lower() in MIDI_EXTENSIONS:
+            self._play_midi(item.path)
             return
         url = QtCore.QUrl.fromLocalFile(str(item.path))
+        self._player.setSource(url)
+
+    def _play_midi(self, path: Path) -> None:
+        wav = _render_midi_to_tmp_wav(path)
+        if wav is None:
+            QtWidgets.QMessageBox.information(
+                self,
+                "MIDI",
+                "Cannot render MIDI. Check fluidsynth + soundfont.",
+            )
+            return
+        self._tmp_midi_wav = wav
+        samples = self._waveform_provider.load(wav)
+        self._waveform.set_samples(samples)
+        url = QtCore.QUrl.fromLocalFile(str(wav))
         self._player.setSource(url)
 
     def _preview_rename(self) -> None:
@@ -509,13 +574,9 @@ class LibraryTab(QtWidgets.QWidget):
         self.reload()
 
     def _selected_items(self) -> List[MediaItem]:
-        selection = self._pager.mapSelectionToSource(
-            self._table.selectionModel().selection()
-        )
-        indexes = selection.indexes()
-        if not indexes:
+        rows = self._selected_rows_from_table()
+        if not rows:
             return []
-        rows = {self._filter.mapToSource(index).row() for index in indexes}
         items = []
         for row in rows:
             media_row = self._model.row_at(row)
@@ -542,25 +603,18 @@ class LibraryTab(QtWidgets.QWidget):
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(self.root)))
 
     def _render_midi(self) -> None:
-        items = self._selected_items()
-        if not items:
-            QtWidgets.QMessageBox.information(
-                self, "Render", "Select one or more MIDI files."
-            )
-            return
-        midi_items = [i for i in items if i.path.suffix.lower() in {".mid", ".midi"}]
-        if not midi_items:
-            QtWidgets.QMessageBox.information(
-                self, "Render", "No MIDI files in selection."
-            )
+        midi_items = self._filtered_midi_selection()
+        if midi_items is None:
             return
         output_dir = self.root / "rendered_mp3"
-
         midi_paths = [item.path for item in midi_items]
-        total = len(midi_paths)
 
         self._render_progress = QtWidgets.QProgressDialog(
-            "Rendering MIDI files...", "Cancel", 0, total, self
+            "Rendering MIDI files...",
+            "Cancel",
+            0,
+            len(midi_paths),
+            self,
         )
         self._render_progress.setWindowModality(QtCore.Qt.WindowModality.WindowModal)
         self._render_progress.setMinimumDuration(0)
@@ -576,6 +630,21 @@ class LibraryTab(QtWidgets.QWidget):
         self._render_worker = worker
         self._render_progress.canceled.connect(self._cancel_render)
         thread.start()
+
+    def _filtered_midi_selection(self) -> list[MediaItem] | None:
+        items = self._selected_items()
+        if not items:
+            QtWidgets.QMessageBox.information(
+                self, "Render", "Select one or more MIDI files."
+            )
+            return None
+        midi_items = [i for i in items if i.path.suffix.lower() in MIDI_EXTENSIONS]
+        if not midi_items:
+            QtWidgets.QMessageBox.information(
+                self, "Render", "No MIDI files in selection."
+            )
+            return None
+        return midi_items
 
     def _on_render_progress(self, completed: int, total: int) -> None:
         if hasattr(self, "_render_progress"):
@@ -595,7 +664,6 @@ class LibraryTab(QtWidgets.QWidget):
             self._render_thread = None
             self._render_worker = None
 
-        output_dir = self.root / "rendered_mp3"
         if failed:
             QtWidgets.QMessageBox.warning(
                 self,
@@ -604,6 +672,7 @@ class LibraryTab(QtWidgets.QWidget):
                 f"Failed:\n" + "\n".join(p.name for p in failed),
             )
         if successful:
+            output_dir = self.root / "rendered_mp3"
             QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(output_dir)))
 
     def _open_selected_folder(self) -> None:
@@ -621,10 +690,9 @@ class LibraryTab(QtWidgets.QWidget):
         open_action = menu.addAction("Reveal in Finder")
         action = menu.exec(self._table.viewport().mapToGlobal(pos))
         if action == open_action:
-            self._reveal_in_finder(item.path)
-
-    def _reveal_in_finder(self, path: Path) -> None:
-        QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(path.parent)))
+            QtGui.QDesktopServices.openUrl(
+                QtCore.QUrl.fromLocalFile(str(item.path.parent))
+            )
 
     def _stop_playback(self) -> None:
         self._player.stop()
@@ -682,7 +750,7 @@ class LibraryTab(QtWidgets.QWidget):
             return
         failures = []
         for item in items:
-            target_dir = self._build_sort_path(item)
+            target_dir = _sort_path_for_item(self.root, item)
             target_dir.mkdir(parents=True, exist_ok=True)
             target_path = target_dir / item.path.name
             try:
@@ -740,9 +808,6 @@ class LibraryTab(QtWidgets.QWidget):
 
     def _selected_paths(self) -> list[str]:
         return [str(item.path) for item in self._selected_items()]
-
-    def _build_sort_path(self, item: MediaItem) -> Path:
-        return _sort_path_for_item(self.root, item)
 
 
 def _format_ms(ms: int) -> str:

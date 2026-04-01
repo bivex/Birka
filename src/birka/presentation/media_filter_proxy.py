@@ -4,16 +4,19 @@ from PyQt6 import QtCore
 
 
 class MediaFilterProxyModel(QtCore.QSortFilterProxyModel):
+    BPM_MAX_DEFAULT = 400
+    DURATION_MAX_DEFAULT = 36000
+
     def __init__(self, parent: QtCore.QObject | None = None) -> None:
         super().__init__(parent)
         self._text = ""
         self._bpm_min = 0
-        self._bpm_max = 400
+        self._bpm_max = self.BPM_MAX_DEFAULT
         self._key = ""
         self._type = ""
         self._include_unknown_bpm = True
         self._duration_min = 0
-        self._duration_max = 36000
+        self._duration_max = self.DURATION_MAX_DEFAULT
 
     def set_text_filter(self, text: str) -> None:
         self._text = text.strip().lower()
@@ -41,7 +44,9 @@ class MediaFilterProxyModel(QtCore.QSortFilterProxyModel):
         self._duration_max = max_seconds
         self.invalidateFilter()
 
-    def filterAcceptsRow(self, source_row: int, source_parent: QtCore.QModelIndex) -> bool:  # noqa: N802
+    def filterAcceptsRow(
+        self, source_row: int, source_parent: QtCore.QModelIndex
+    ) -> bool:  # noqa: N802
         model = self.sourceModel()
         if model is None:
             return True
@@ -60,7 +65,9 @@ class MediaFilterProxyModel(QtCore.QSortFilterProxyModel):
             if bpm_value < self._bpm_min or bpm_value > self._bpm_max:
                 return False
         else:
-            if not self._include_unknown_bpm or not (self._bpm_min <= 0 and self._bpm_max >= 400):
+            if not self._include_unknown_bpm or not (
+                self._bpm_min <= 0 and self._bpm_max >= self.BPM_MAX_DEFAULT
+            ):
                 return False
 
         if self._key:
@@ -75,10 +82,16 @@ class MediaFilterProxyModel(QtCore.QSortFilterProxyModel):
 
         duration_value = _parse_duration(row_values[4]) if len(row_values) > 4 else None
         if duration_value is not None:
-            if duration_value < self._duration_min or duration_value > self._duration_max:
+            if (
+                duration_value < self._duration_min
+                or duration_value > self._duration_max
+            ):
                 return False
         else:
-            if not (self._duration_min <= 0 and self._duration_max >= 36000):
+            if not (
+                self._duration_min <= 0
+                and self._duration_max >= self.DURATION_MAX_DEFAULT
+            ):
                 return False
 
         return True

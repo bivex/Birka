@@ -10,6 +10,7 @@ from birka.domain.media import Rating
 
 class JsonUserMetadataStore(UserMetadataStore):
     def __init__(self, path: Path) -> None:
+        super().__init__()
         self._path = path
 
     def load_all(self) -> Dict[Path, UserMetadata]:
@@ -32,11 +33,15 @@ class JsonUserMetadataStore(UserMetadataStore):
             "rating": metadata.rating.value if metadata.rating else None,
             "tags": list(metadata.tags),
         }
-        self._path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        self._path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
 
     def delete(self, path: Path) -> None:
         if not self._path.exists():
             return
         payload = json.loads(self._path.read_text(encoding="utf-8"))
         payload.pop(str(path), None)
-        self._path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        self._path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+        )

@@ -8,12 +8,21 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class WaveformWidget(QtWidgets.QWidget):
     position_changed = QtCore.pyqtSignal(int)
 
+    MIN_HEIGHT = 80
+    COLOR_BG = "#f3f1ec"
+    COLOR_PLAYED_BG = "#e0dbd2"
+    COLOR_PEN = "#6b5e52"
+    COLOR_PLAYHEAD = "#e74c3c"
+    COLOR_WAVEFORM_PLAYED = "#4a3f35"
+    CENTER_LINE_WIDTH = 1
+    PLAYHEAD_WIDTH = 2
+
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
         self._samples: List[float] = []
         self._playback_ratio: float = 0.0
         self._duration_ms: int = 0
-        self.setMinimumHeight(80)
+        self.setMinimumHeight(self.MIN_HEIGHT)
         self.setMouseTracking(True)
 
     def set_samples(self, samples: List[float]) -> None:
@@ -43,42 +52,37 @@ class WaveformWidget(QtWidgets.QWidget):
         h = self.height()
         mid_y = h / 2
 
-        bg = QtGui.QColor("#f3f1ec")
-        played_bg = QtGui.QColor("#e0dbd2")
-        pen_color = QtGui.QColor("#6b5e52")
-        playhead_color = QtGui.QColor("#e74c3c")
+        bg = QtGui.QColor(self.COLOR_BG)
+        played_bg = QtGui.QColor(self.COLOR_PLAYED_BG)
+        pen_color = QtGui.QColor(self.COLOR_PEN)
+        playhead_color = QtGui.QColor(self.COLOR_PLAYHEAD)
 
-        # background
         painter.fillRect(self.rect(), bg)
 
-        # played region background
         playhead_x = int(self._playback_ratio * w)
         if playhead_x > 0:
             painter.fillRect(0, 0, playhead_x, h, played_bg)
 
-        # center line
         pen = QtGui.QPen(pen_color)
-        pen.setWidth(1)
+        pen.setWidth(self.CENTER_LINE_WIDTH)
         painter.setPen(pen)
         painter.drawLine(0, int(mid_y), w, int(mid_y))
 
         if not self._samples:
             return
 
-        # waveform bars
         step = w / max(1, len(self._samples))
         for i, amp in enumerate(self._samples):
             x = int(i * step)
             bar_h = amp * mid_y
             if x < playhead_x:
-                pen.setColor(QtGui.QColor("#4a3f35"))
+                pen.setColor(QtGui.QColor(self.COLOR_WAVEFORM_PLAYED))
             else:
                 pen.setColor(pen_color)
             painter.setPen(pen)
             painter.drawLine(x, int(mid_y - bar_h), x, int(mid_y + bar_h))
 
-        # playhead line
         pen.setColor(playhead_color)
-        pen.setWidth(2)
+        pen.setWidth(self.PLAYHEAD_WIDTH)
         painter.setPen(pen)
         painter.drawLine(playhead_x, 0, playhead_x, h)

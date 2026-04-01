@@ -10,6 +10,8 @@ from typing import Optional
 
 
 class MidiPlayer:
+    STARTUP_DELAY_SECONDS = 0.15
+
     def __init__(self) -> None:
         self._process: Optional[subprocess.Popen] = None
 
@@ -19,9 +21,11 @@ class MidiPlayer:
         print(f"[MIDI] play request: path={path} command={command}")
         if command is None:
             return False
-        self._process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        self._process = subprocess.Popen(
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
         print(f"[MIDI] started pid={self._process.pid}")
-        time.sleep(0.15)
+        time.sleep(self.STARTUP_DELAY_SECONDS)
         if self._process.poll() is not None:
             stdout, stderr = self._process.communicate(timeout=2)
             if stdout:
@@ -79,7 +83,10 @@ def _find_soundfont() -> Optional[Path]:
     for path in candidates:
         if path.exists():
             return path
-    for base in [Path("/opt/homebrew/share/soundfonts"), Path("/usr/local/share/soundfonts")]:
+    for base in [
+        Path("/opt/homebrew/share/soundfonts"),
+        Path("/usr/local/share/soundfonts"),
+    ]:
         if base.exists():
             for sf2 in base.glob("*.sf2"):
                 return sf2

@@ -4,15 +4,29 @@ from typing import Iterable, List
 
 from PyQt6 import QtWidgets
 
-from birka.application.rename_batch import BuildRenamePlan, FileRenamer, RenameEntry, RenamePlan, RenameTemplate
+from birka.application.rename_batch import (
+    BuildRenamePlan,
+    FileRenamer,
+    RenameEntry,
+    RenamePlan,
+    RenameTemplate,
+)
 from birka.domain.media import MediaItem
 
 
 class RenamePreviewDialog(QtWidgets.QDialog):
-    def __init__(self, items: Iterable[MediaItem], template: str, parent: QtWidgets.QWidget | None = None) -> None:
+    DEFAULT_WIDTH = 700
+    DEFAULT_HEIGHT = 450
+
+    def __init__(
+        self,
+        items: Iterable[MediaItem],
+        template: str,
+        parent: QtWidgets.QWidget | None = None,
+    ) -> None:
         super().__init__(parent)
         self.setWindowTitle("Rename Preview")
-        self.setMinimumSize(700, 450)
+        self.setMinimumSize(self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT)
         self._items = list(items)
         self._plan = BuildRenamePlan(RenameTemplate(template)).execute(self._items)
 
@@ -66,7 +80,4 @@ class RenameCoordinator:
 
 
 def _summary_text(plan: RenamePlan) -> str:
-    return (
-        f"Planned renames: {len(plan.entries)} | "
-        f"Conflicts: {len(plan.conflicts)}"
-    )
+    return f"Planned renames: {len(plan.entries)} | Conflicts: {len(plan.conflicts)}"
