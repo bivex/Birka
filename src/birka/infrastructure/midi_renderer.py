@@ -182,7 +182,6 @@ def _build_loudnorm_filter(stats: Optional[dict]) -> Optional[str]:
 
 
 def _normalize_wav(wav_path: Path) -> bool:
-    """Normalize WAV volume using ffmpeg loudnorm (EBU R128 two-pass)."""
     if shutil.which("ffmpeg") is None or not wav_path.exists():
         return False
 
