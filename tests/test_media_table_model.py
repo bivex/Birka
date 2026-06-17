@@ -20,7 +20,7 @@ class MediaTableModelTests(unittest.TestCase):
         model = MediaTableModel(rows)
 
         self.assertEqual(model.rowCount(), 2)
-        self.assertEqual(model.columnCount(), 7)
+        self.assertEqual(model.columnCount(), 9)
 
     def test_model_formats_cells(self) -> None:
         rows = [

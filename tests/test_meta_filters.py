@@ -15,8 +15,8 @@ class MetaFilterTests(unittest.TestCase):
 
     def test_bpm_range_filter(self) -> None:
         rows = [
-            MediaRow(path="/tmp/a.wav", name="a.wav", media_type="Audio", bpm="90", key="C", duration="", rating="", tags=""),
-            MediaRow(path="/tmp/b.wav", name="b.wav", media_type="Audio", bpm="120", key="C", duration="", rating="", tags=""),
+            MediaRow(path="/tmp/a.wav", name="a.wav", media_type="Audio", bpm="90", key="C", duration="", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
+            MediaRow(path="/tmp/b.wav", name="b.wav", media_type="Audio", bpm="120", key="C", duration="", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
         ]
         model = MediaTableModel(rows)
         proxy = MediaFilterProxyModel()
@@ -30,8 +30,8 @@ class MetaFilterTests(unittest.TestCase):
 
     def test_key_filter(self) -> None:
         rows = [
-            MediaRow(path="/tmp/a.wav", name="a.wav", media_type="Audio", bpm="90", key="C#m", duration="", rating="", tags=""),
-            MediaRow(path="/tmp/b.wav", name="b.wav", media_type="Audio", bpm="90", key="Dm", duration="", rating="", tags=""),
+            MediaRow(path="/tmp/a.wav", name="a.wav", media_type="Audio", bpm="90", key="C#m", duration="", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
+            MediaRow(path="/tmp/b.wav", name="b.wav", media_type="Audio", bpm="90", key="Dm", duration="", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
         ]
         model = MediaTableModel(rows)
         proxy = MediaFilterProxyModel()
@@ -45,8 +45,8 @@ class MetaFilterTests(unittest.TestCase):
 
     def test_type_filter(self) -> None:
         rows = [
-            MediaRow(path="/tmp/a.wav", name="a.wav", media_type="Audio", bpm="90", key="C", duration="", rating="", tags=""),
-            MediaRow(path="/tmp/b.mid", name="b.mid", media_type="MIDI", bpm="90", key="C", duration="", rating="", tags=""),
+            MediaRow(path="/tmp/a.wav", name="a.wav", media_type="Audio", bpm="90", key="C", duration="", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
+            MediaRow(path="/tmp/b.mid", name="b.mid", media_type="MIDI", bpm="90", key="C", duration="", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
         ]
         model = MediaTableModel(rows)
         proxy = MediaFilterProxyModel()
@@ -60,8 +60,8 @@ class MetaFilterTests(unittest.TestCase):
 
     def test_unknown_bpm_filter(self) -> None:
         rows = [
-            MediaRow(path="/tmp/a.wav", name="a.wav", media_type="Audio", bpm="", key="C", duration="", rating="", tags=""),
-            MediaRow(path="/tmp/b.wav", name="b.wav", media_type="Audio", bpm="120", key="C", duration="", rating="", tags=""),
+            MediaRow(path="/tmp/a.wav", name="a.wav", media_type="Audio", bpm="", key="C", duration="", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
+            MediaRow(path="/tmp/b.wav", name="b.wav", media_type="Audio", bpm="120", key="C", duration="", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
         ]
         model = MediaTableModel(rows)
         proxy = MediaFilterProxyModel()
@@ -77,8 +77,8 @@ class MetaFilterTests(unittest.TestCase):
 
     def test_duration_range_filter(self) -> None:
         rows = [
-            MediaRow(path="/tmp/a.wav", name="a.wav", media_type="Audio", bpm="90", key="C", duration="00:30", rating="", tags=""),
-            MediaRow(path="/tmp/b.wav", name="b.wav", media_type="Audio", bpm="90", key="C", duration="01:10", rating="", tags=""),
+            MediaRow(path="/tmp/a.wav", name="a.wav", media_type="Audio", bpm="90", key="C", duration="00:30", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
+            MediaRow(path="/tmp/b.wav", name="b.wav", media_type="Audio", bpm="90", key="C", duration="01:10", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
         ]
         model = MediaTableModel(rows)
         proxy = MediaFilterProxyModel()
