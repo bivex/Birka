@@ -88,3 +88,31 @@ class MetaFilterTests(unittest.TestCase):
         self.assertEqual(proxy.rowCount(), 1)
         index = proxy.index(0, 0)
         self.assertEqual(proxy.data(index, QtCore.Qt.ItemDataRole.DisplayRole), "a.wav")
+
+    def test_numeric_sorting(self) -> None:
+        rows = [
+            MediaRow(path="/tmp/a.wav", name="a.wav", media_type="Audio", bpm="100", key="C", duration="12:00", rating="2", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
+            MediaRow(path="/tmp/b.wav", name="b.wav", media_type="Audio", bpm="80", key="C", duration="9:00", rating="10", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
+            MediaRow(path="/tmp/c.wav", name="c.wav", media_type="Audio", bpm="", key="C", duration="", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
+        ]
+        model = MediaTableModel(rows)
+        proxy = MediaFilterProxyModel()
+        proxy.setSourceModel(model)
+
+        # 1. Sort by BPM (Column 2) Ascending
+        proxy.sort(2, QtCore.Qt.SortOrder.AscendingOrder)
+        self.assertEqual(proxy.data(proxy.index(0, 0), QtCore.Qt.ItemDataRole.DisplayRole), "c.wav")
+        self.assertEqual(proxy.data(proxy.index(1, 0), QtCore.Qt.ItemDataRole.DisplayRole), "b.wav")
+        self.assertEqual(proxy.data(proxy.index(2, 0), QtCore.Qt.ItemDataRole.DisplayRole), "a.wav")
+
+        # 2. Sort by Duration (Column 4) Ascending
+        proxy.sort(4, QtCore.Qt.SortOrder.AscendingOrder)
+        self.assertEqual(proxy.data(proxy.index(0, 0), QtCore.Qt.ItemDataRole.DisplayRole), "c.wav")
+        self.assertEqual(proxy.data(proxy.index(1, 0), QtCore.Qt.ItemDataRole.DisplayRole), "b.wav")
+        self.assertEqual(proxy.data(proxy.index(2, 0), QtCore.Qt.ItemDataRole.DisplayRole), "a.wav")
+
+        # 3. Sort by Rating (Column 5) Ascending
+        proxy.sort(5, QtCore.Qt.SortOrder.AscendingOrder)
+        self.assertEqual(proxy.data(proxy.index(0, 0), QtCore.Qt.ItemDataRole.DisplayRole), "c.wav")
+        self.assertEqual(proxy.data(proxy.index(1, 0), QtCore.Qt.ItemDataRole.DisplayRole), "a.wav")
+        self.assertEqual(proxy.data(proxy.index(2, 0), QtCore.Qt.ItemDataRole.DisplayRole), "b.wav")

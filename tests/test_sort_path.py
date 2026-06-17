@@ -14,7 +14,7 @@ class SortPathTests(unittest.TestCase):
             metadata=AudioMetadata(1.0, 44100, 2, bpm=120.0, key="C"),
         )
         target = _sort_path_for_item(root, item)
-        self.assertEqual(target, root / "wav" / "120bpm")
+        self.assertEqual(target, root / "wav" / "120bpm" / "C")
 
     def test_sort_path_unknown_bpm(self) -> None:
         root = Path("/tmp/library")
@@ -24,4 +24,4 @@ class SortPathTests(unittest.TestCase):
             metadata=AudioMetadata(1.0, 44100, 2, bpm=None, key=None),
         )
         target = _sort_path_for_item(root, item)
-        self.assertEqual(target, root / "wav" / "unknown-bpm")
+        self.assertEqual(target, root / "wav" / "unknown-bpm" / "unknown-key")

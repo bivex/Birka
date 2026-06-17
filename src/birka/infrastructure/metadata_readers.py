@@ -238,6 +238,60 @@ def _decode_key_signature(sf: int, mi: int) -> str:
     return ""
 
 
+ENHARMONIC_MAPPING = {
+    # Major
+    "A#": "Bb",
+    "D#": "Eb",
+    "G#": "Ab",
+    "E#": "F",
+    "B#": "C",
+    "Fb": "E",
+    # Minor
+    "Dbm": "C#m",
+    "Gbm": "F#m",
+    "Cbm": "Bm",
+    "E#m": "Fm",
+    "Esm": "Fm",
+    "B#m": "Cm",
+    "Bsm": "Cm",
+    "Fbm": "Em",
+}
+
+
+def normalize_key(key_str: str) -> str | None:
+    if not key_str:
+        return None
+    key_str = key_str.strip()
+    if not key_str:
+        return None
+    match = re.match(r"^([A-Ga-g])(#|b|s)?\s*(?:maj|major|min|minor|m)?$", key_str, re.IGNORECASE)
+    if not match:
+        return None
+    root = match.group(1).upper()
+    accidental = match.group(2)
+    if accidental:
+        accidental = accidental.lower()
+        if accidental == "s":
+            accidental = "#"
+    else:
+        accidental = ""
+    is_minor = False
+    lower_str = key_str.lower()
+    if lower_str.endswith("m") or "min" in lower_str or "minor" in lower_str:
+        is_minor = True
+    normalized = f"{root}{accidental}"
+    if is_minor:
+        normalized += "m"
+    normalized = ENHARMONIC_MAPPING.get(normalized, normalized)
+    standard_keys = {
+        "Cb", "Gb", "Db", "Ab", "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "F#", "C#",
+        "Abm", "Ebm", "Bbm", "Fm", "Cm", "Gm", "Dm", "Am", "Em", "Bm", "F#m", "C#m", "G#m", "D#m", "A#m"
+    }
+    if normalized in standard_keys:
+        return normalized
+    return None
+
+
 def _extract_bpm_key_from_wav(path: Path) -> tuple[Optional[float], Optional[str]]:
     data = path.read_bytes()
     if len(data) < RIFF_HEADER_SIZE or data[:4] != RIFF_ID or data[8:12] != WAVE_ID:
@@ -258,12 +312,42 @@ def _extract_bpm_key_from_wav(path: Path) -> tuple[Optional[float], Optional[str
     key_match = re.search(r"KEY\s*[:=]\s*([A-Ga-g](?:#|b)?(?:m|maj|min)?)", text)
     bpm = float(bpm_match.group(1)) if bpm_match else None
     key = key_match.group(1) if key_match else None
+    if key:
+        key = normalize_key(key)
     return bpm, key
 
 
 def _extract_bpm_key_from_name(stem: str) -> tuple[Optional[float], Optional[str]]:
-    bpm_match = re.search(r"(?:^|\D)(\d{2,3})(?:bpm)?(?:\D|$)", stem, re.IGNORECASE)
-    key_match = re.search(r"(?:^|\W)([A-Ga-g](?:#|b)?(?:m|maj|min)?)(?:\W|$)", stem)
-    bpm = float(bpm_match.group(1)) if bpm_match else None
-    key = key_match.group(1) if key_match else None
+    clean_stem = stem.replace("_", " ").replace("-", " ")
+    bpm_match = re.search(r"\b(\d{2,3})\s*bpm\b", clean_stem, re.IGNORECASE)
+    bpm = None
+    if bpm_match:
+        bpm = float(bpm_match.group(1))
+    else:
+        all_nums = re.findall(r"\b(\d{2,3})\b", clean_stem)
+        for num_str in reversed(all_nums):
+            val = int(num_str)
+            if 50 <= val <= 220:
+                bpm = float(val)
+                break
+    minor_pattern = r"(?<![a-zA-Z0-9])([A-Ga-g](?:#|b|s)?\s*(?:m|min|minor))(?![a-zA-Z0-9])"
+    major_pattern = r"(?<![a-zA-Z0-9])([A-Ga-g](?:#|b|s)?\s*(?:maj|major))(?![a-zA-Z0-9])"
+    accidental_pattern = r"(?<![a-zA-Z0-9])([A-Ga-g](?:#|b|s))(?![a-zA-Z0-9])"
+    single_letter_pattern = r"(?<![a-zA-Z0-9])([A-G])(?![a-zA-Z0-9])"
+    key = None
+    m = re.search(minor_pattern, clean_stem, re.IGNORECASE)
+    if m:
+        key = normalize_key(m.group(1))
+    if key is None:
+        m = re.search(major_pattern, clean_stem, re.IGNORECASE)
+        if m:
+            key = normalize_key(m.group(1))
+    if key is None:
+        m = re.search(accidental_pattern, clean_stem, re.IGNORECASE)
+        if m:
+            key = normalize_key(m.group(1))
+    if key is None:
+        m = re.search(single_letter_pattern, clean_stem)
+        if m:
+            key = normalize_key(m.group(1))
     return bpm, key

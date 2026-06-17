@@ -3,7 +3,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from birka.infrastructure.metadata_readers import AudioMidiMetadataReader
+from birka.infrastructure.metadata_readers import (
+    AudioMidiMetadataReader,
+    _extract_bpm_key_from_name,
+)
 
 
 class MetadataReaderTests(unittest.TestCase):
@@ -34,6 +37,21 @@ class MetadataReaderTests(unittest.TestCase):
             self.assertEqual(item.metadata.bpm, 120.0)
             self.assertEqual(item.metadata.key, "C")
             self.assertAlmostEqual(item.metadata.duration_seconds, 0.0, places=2)
+
+    def test_extract_bpm_key_from_name(self) -> None:
+        test_cases = [
+            ("song_Csm_120", (120.0, "C#m")),
+            ("test_159_Fsm", (159.0, "F#m")),
+            ("A#_120bpm", (120.0, "Bb")),
+            ("Bb_120bpm", (120.0, "Bb")),
+            ("track_with_a_nice_melody", (None, None)),
+            ("track_with_A_nice_melody", (None, "A")),
+            ("130_Db_minor", (130.0, "C#m")),
+            ("95_csm", (95.0, "C#m")),
+        ]
+        for name, expected in test_cases:
+            with self.subTest(name=name):
+                self.assertEqual(_extract_bpm_key_from_name(name), expected)
 
 
 def _build_midi_file(track_count: int, ticks_per_beat: int) -> bytes:

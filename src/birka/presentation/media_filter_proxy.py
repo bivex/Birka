@@ -96,6 +96,49 @@ class MediaFilterProxyModel(QtCore.QSortFilterProxyModel):
 
         return True
 
+    def lessThan(self, left: QtCore.QModelIndex, right: QtCore.QModelIndex) -> bool:
+        column = left.column()
+        left_data = self.sourceModel().data(left, QtCore.Qt.ItemDataRole.DisplayRole)
+        right_data = self.sourceModel().data(right, QtCore.Qt.ItemDataRole.DisplayRole)
+
+        left_str = str(left_data) if left_data is not None else ""
+        right_str = str(right_data) if right_data is not None else ""
+
+        if column == 2:  # BPM
+            l_val = _parse_bpm(left_str)
+            r_val = _parse_bpm(right_str)
+            if l_val is None and r_val is None:
+                return False
+            if l_val is None:
+                return True
+            if r_val is None:
+                return False
+            return l_val < r_val
+
+        elif column == 4:  # Duration
+            l_val = _parse_duration(left_str)
+            r_val = _parse_duration(right_str)
+            if l_val is None and r_val is None:
+                return False
+            if l_val is None:
+                return True
+            if r_val is None:
+                return False
+            return l_val < r_val
+
+        elif column == 5:  # Rating
+            l_val = _parse_rating(left_str)
+            r_val = _parse_rating(right_str)
+            if l_val is None and r_val is None:
+                return False
+            if l_val is None:
+                return True
+            if r_val is None:
+                return False
+            return l_val < r_val
+
+        return super().lessThan(left, right)
+
 
 def _parse_bpm(value: str):  # noqa: ANN001
     try:
@@ -118,3 +161,10 @@ def _parse_duration(value: str) -> int | None:
     except ValueError:
         return None
     return minutes * 60 + seconds
+
+
+def _parse_rating(value: str) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None

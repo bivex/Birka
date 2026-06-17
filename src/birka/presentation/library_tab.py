@@ -839,7 +839,7 @@ class LibraryTab(QtWidgets.QWidget):
         confirm = QtWidgets.QMessageBox.question(
             self,
             "Sort Files",
-            "Move selected files into data/{type}/{bpm}/ folders?",
+            "Move selected files into data/{type}/{bpm}/{key}/ folders?",
             QtWidgets.QMessageBox.StandardButton.Yes
             | QtWidgets.QMessageBox.StandardButton.No,
         )
@@ -918,11 +918,16 @@ def _sort_path_for_item(root: Path, item: MediaItem) -> Path:
         "wav" if suffix == "wav" else "midi" if suffix in {"mid", "midi"} else "other"
     )
     bpm_value = None
+    key_value = None
     metadata = getattr(item, "metadata", None)
-    if metadata is not None and getattr(metadata, "bpm", None) is not None:
-        try:
-            bpm_value = int(round(float(metadata.bpm)))
-        except (TypeError, ValueError):
-            bpm_value = None
+    if metadata is not None:
+        if getattr(metadata, "bpm", None) is not None:
+            try:
+                bpm_value = int(round(float(metadata.bpm)))
+            except (TypeError, ValueError):
+                bpm_value = None
+        if getattr(metadata, "key", None) is not None:
+            key_value = metadata.key
     bpm_folder = f"{bpm_value}bpm" if bpm_value is not None else "unknown-bpm"
-    return root / media_type / bpm_folder
+    key_folder = key_value if (key_value is not None and key_value != "") else "unknown-key"
+    return root / media_type / bpm_folder / key_folder
