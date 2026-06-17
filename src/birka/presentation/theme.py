@@ -3,7 +3,7 @@ DARK_STYLESHEET = """
 QWidget {
     background-color: #121214;
     color: #e3e3e6;
-    font-family: "SF Pro Display", "Inter", "Segoe UI", sans-serif;
+    font-family: sans-serif;
     font-size: 13px;
 }
 
