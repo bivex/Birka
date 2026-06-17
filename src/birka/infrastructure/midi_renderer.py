@@ -42,14 +42,14 @@ def render_midi_to_mp3(midi_path: Path, output_dir: Path) -> Optional[Path]:
         tmp_wav.unlink(missing_ok=True)
 
 
-def render_midi_to_wav(midi_path: Path, output_path: Path, sample_rate: int = 44100) -> bool:
+def render_midi_to_wav(midi_path: Path, output_path: Path, sample_rate: int = 44100, polyphony: int = 256) -> bool:
     """Render a single MIDI to WAV via fluidsynth. No normalization (fast)."""
     soundfont = _find_soundfont()
     if soundfont is None or shutil.which("fluidsynth") is None:
         return False
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    return _synth_to_wav(soundfont, midi_path, output_path, sample_rate=sample_rate)
+    return _synth_to_wav(soundfont, midi_path, output_path, sample_rate=sample_rate, polyphony=polyphony)
 
 
 def render_midi_to_mp3_batch(
@@ -105,6 +105,7 @@ def _synth_to_wav(
     midi_path: Path,
     output_path: Path,
     sample_rate: int = 44100,
+    polyphony: int = 256,
 ) -> bool:
     """Run fluidsynth to render MIDI to a WAV file."""
     cmd = [
@@ -115,6 +116,8 @@ def _synth_to_wav(
         FLUIDSYNTH_GAIN,
         "-r",
         str(sample_rate),
+        "-o",
+        f"synth.polyphony={polyphony}",
         "-F",
         str(output_path),
         str(soundfont),
