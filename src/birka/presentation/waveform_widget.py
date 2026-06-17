@@ -9,11 +9,11 @@ class WaveformWidget(QtWidgets.QWidget):
     position_changed = QtCore.pyqtSignal(int)
 
     MIN_HEIGHT = 80
-    COLOR_BG = "#f3f1ec"
-    COLOR_PLAYED_BG = "#e0dbd2"
-    COLOR_PEN = "#6b5e52"
-    COLOR_PLAYHEAD = "#e74c3c"
-    COLOR_WAVEFORM_PLAYED = "#4a3f35"
+    COLOR_BG = "#121214"
+    COLOR_PLAYED_BG = "#15151c"
+    COLOR_PEN = "#4f4f5a"
+    COLOR_PLAYHEAD = "#ff007f"
+    COLOR_WAVEFORM_PLAYED = "#00f0ff"
     CENTER_LINE_WIDTH = 1
     PLAYHEAD_WIDTH = 2
 

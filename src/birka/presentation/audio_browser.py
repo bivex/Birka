@@ -17,6 +17,11 @@ class AudioBrowserWindow(QtWidgets.QMainWindow):
         super().__init__()
         self.setWindowTitle("Birka Audio Browser")
         self.setMinimumSize(self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT)
+
+        # Load global dark stylesheet
+        from birka.presentation.theme import DARK_STYLESHEET
+        self.setStyleSheet(DARK_STYLESHEET)
+
         self._metadata_store = JsonUserMetadataStore(
             Path("/Volumes/External/Code/Birka/data/user_metadata.json")
         )

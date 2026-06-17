@@ -343,7 +343,9 @@ class LibraryTab(QtWidgets.QWidget):
         self._waveform = WaveformWidget(self)
         self._waveform.position_changed.connect(self._waveform_seek)
         self._play_button = QtWidgets.QPushButton("Play", self)
+        self._play_button.setObjectName("playButton")
         self._stop_button = QtWidgets.QPushButton("Stop", self)
+        self._stop_button.setObjectName("stopButton")
         self._play_button.clicked.connect(self._play_selected)
         self._stop_button.clicked.connect(self._stop_playback)
 
@@ -385,6 +387,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._apply_button = QtWidgets.QPushButton("Apply Tags/Rating", self)
         self._apply_button.clicked.connect(self._apply_tags_rating)
         self._delete_button = QtWidgets.QPushButton("Delete Selected", self)
+        self._delete_button.setObjectName("deleteButton")
         self._delete_button.setShortcut("Delete")
         self._delete_button.clicked.connect(self._delete_selected)
         self._sort_button = QtWidgets.QPushButton("Sort Files", self)
@@ -419,21 +422,49 @@ class LibraryTab(QtWidgets.QWidget):
         layout.addWidget(self._tabs)
 
     def _build_list_page(self) -> QtWidgets.QWidget:
-        filter_row = self._build_filter_row()
-        rename_row = self._build_rename_row()
+        filter_layout = self._build_filter_layout()
+        ops_layout = self._build_operations_layout()
         controls_row = self._build_controls_row()
-        tags_row = self._build_tags_row()
         pager_row = self._build_pager_row()
 
         page = QtWidgets.QWidget(self)
         layout = QtWidgets.QVBoxLayout(page)
-        layout.addWidget(self._search)
-        layout.addLayout(filter_row)
-        layout.addLayout(rename_row)
-        layout.addWidget(self._table)
-        layout.addWidget(self._waveform)
-        layout.addLayout(controls_row)
-        layout.addLayout(tags_row)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(12)
+
+        # 1. Search & Filter Card
+        filter_frame = QtWidgets.QFrame(page)
+        filter_frame.setObjectName("containerFrame")
+        filter_layout_container = QtWidgets.QVBoxLayout(filter_frame)
+        filter_layout_container.setContentsMargins(12, 12, 12, 12)
+        filter_layout_container.setSpacing(8)
+        filter_layout_container.addWidget(self._search)
+        filter_layout_container.addLayout(filter_layout)
+        layout.addWidget(filter_frame)
+
+        # 2. Main Media Table
+        layout.addWidget(self._table, 1)
+
+        # 3. Playback & Waveform Card
+        player_frame = QtWidgets.QFrame(page)
+        player_frame.setObjectName("containerFrame")
+        player_layout = QtWidgets.QVBoxLayout(player_frame)
+        player_layout.setContentsMargins(12, 12, 12, 12)
+        player_layout.setSpacing(8)
+        player_layout.addWidget(self._waveform)
+        player_layout.addLayout(controls_row)
+        layout.addWidget(player_frame)
+
+        # 4. Operations (Rename & Tags) Card
+        ops_frame = QtWidgets.QFrame(page)
+        ops_frame.setObjectName("containerFrame")
+        ops_layout_container = QtWidgets.QVBoxLayout(ops_frame)
+        ops_layout_container.setContentsMargins(12, 12, 12, 12)
+        ops_layout_container.setSpacing(8)
+        ops_layout_container.addLayout(ops_layout)
+        layout.addWidget(ops_frame)
+
+        # 5. Pager bottom row
         layout.addLayout(pager_row)
         return page
 
@@ -444,25 +475,42 @@ class LibraryTab(QtWidgets.QWidget):
         layout.addWidget(self._zarr_view)
         return page
 
-    def _build_filter_row(self) -> QtWidgets.QHBoxLayout:
-        row = QtWidgets.QHBoxLayout()
-        row.addWidget(self._bpm_min)
-        row.addWidget(self._bpm_max)
-        row.addWidget(self._key_filter)
-        row.addWidget(self._type_filter)
-        row.addWidget(self._include_unknown_bpm)
-        row.addWidget(self._duration_min)
-        row.addWidget(self._duration_max)
-        row.addStretch(1)
-        return row
+    def _build_filter_layout(self) -> QtWidgets.QGridLayout:
+        grid = QtWidgets.QGridLayout()
+        grid.setSpacing(8)
+        grid.addWidget(self._bpm_min, 0, 0)
+        grid.addWidget(self._bpm_max, 0, 1)
+        grid.addWidget(self._include_unknown_bpm, 0, 2)
+        grid.addWidget(self._key_filter, 0, 3)
+        grid.addWidget(self._type_filter, 0, 4)
 
-    def _build_rename_row(self) -> QtWidgets.QHBoxLayout:
-        row = QtWidgets.QHBoxLayout()
-        row.addWidget(self._open_button)
-        row.addWidget(self._refresh_button)
-        row.addWidget(self._template_input)
-        row.addWidget(self._rename_button)
-        return row
+        grid.addWidget(self._duration_min, 1, 0)
+        grid.addWidget(self._duration_max, 1, 1)
+        grid.setColumnStretch(5, 1)
+        return grid
+
+    def _build_operations_layout(self) -> QtWidgets.QGridLayout:
+        grid = QtWidgets.QGridLayout()
+        grid.setSpacing(8)
+
+        # Row 0: Rename
+        grid.addWidget(self._open_button, 0, 0)
+        grid.addWidget(self._refresh_button, 0, 1)
+        grid.addWidget(self._template_input, 0, 2, 1, 2)
+        grid.addWidget(self._rename_button, 0, 4)
+
+        # Row 1: Tags
+        grid.addWidget(self._tags_input, 1, 0, 1, 3)
+        grid.addWidget(self._rating_combo, 1, 3)
+        grid.addWidget(self._apply_button, 1, 4)
+
+        # Row 2: Actions
+        grid.addWidget(self._delete_button, 2, 0)
+        grid.addWidget(self._sort_button, 2, 1)
+        grid.addWidget(self._open_folder_button, 2, 2)
+        grid.addWidget(self._render_button, 2, 3, 1, 2)
+
+        return grid
 
     def _build_controls_row(self) -> QtWidgets.QHBoxLayout:
         volume_label = QtWidgets.QLabel("Vol", self)
@@ -473,17 +521,6 @@ class LibraryTab(QtWidgets.QWidget):
         row.addWidget(self._time_label)
         row.addWidget(volume_label)
         row.addWidget(self._volume_slider)
-        return row
-
-    def _build_tags_row(self) -> QtWidgets.QHBoxLayout:
-        row = QtWidgets.QHBoxLayout()
-        row.addWidget(self._tags_input)
-        row.addWidget(self._rating_combo)
-        row.addWidget(self._apply_button)
-        row.addWidget(self._delete_button)
-        row.addWidget(self._sort_button)
-        row.addWidget(self._open_folder_button)
-        row.addWidget(self._render_button)
         return row
 
     def _build_pager_row(self) -> QtWidgets.QHBoxLayout:
