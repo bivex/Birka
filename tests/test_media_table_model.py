@@ -14,8 +14,8 @@ class MediaTableModelTests(unittest.TestCase):
 
     def test_model_exposes_rows_and_columns(self) -> None:
         rows = [
-            MediaRow(path="/tmp/clip.wav", name="clip.wav", media_type="Audio", bpm="", key="", duration="00:01", rating="", tags=""),
-            MediaRow(path="/tmp/pattern.mid", name="pattern.mid", media_type="MIDI", bpm="120", key="Am", duration="", rating="", tags=""),
+            MediaRow(path="/tmp/clip.wav", name="clip.wav", media_type="Audio", bpm="", key="", duration="00:01", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
+            MediaRow(path="/tmp/pattern.mid", name="pattern.mid", media_type="MIDI", bpm="120", key="Am", duration="", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
         ]
         model = MediaTableModel(rows)
 
@@ -24,7 +24,7 @@ class MediaTableModelTests(unittest.TestCase):
 
     def test_model_formats_cells(self) -> None:
         rows = [
-            MediaRow(path="/tmp/clip.wav", name="clip.wav", media_type="Audio", bpm="120.0", key="C#m", duration="01:05", rating="4", tags=""),
+            MediaRow(path="/tmp/clip.wav", name="clip.wav", media_type="Audio", bpm="120.0", key="C#m", duration="01:05", rating="4", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
         ]
         model = MediaTableModel(rows)
         index_duration = model.index(0, 4)
@@ -37,8 +37,8 @@ class MediaTableModelTests(unittest.TestCase):
 
     def test_model_filters_rows(self) -> None:
         rows = [
-            MediaRow(path="/tmp/kick.wav", name="kick.wav", media_type="Audio", bpm="128", key="C", duration="00:01", rating="", tags=""),
-            MediaRow(path="/tmp/snare.wav", name="snare.wav", media_type="Audio", bpm="90", key="D", duration="00:01", rating="", tags=""),
+            MediaRow(path="/tmp/kick.wav", name="kick.wav", media_type="Audio", bpm="128", key="C", duration="00:01", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
+            MediaRow(path="/tmp/snare.wav", name="snare.wav", media_type="Audio", bpm="90", key="D", duration="00:01", rating="", tags="", created="2026-06-17 03:00", modified="2026-06-17 03:00"),
         ]
         model = MediaTableModel(rows)
 
