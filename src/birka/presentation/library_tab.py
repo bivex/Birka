@@ -45,7 +45,7 @@ def _render_midi_to_tmp_wav(midi_path: Path) -> Path | None:
 
     tmp_dir = Path(tempfile.mkdtemp(prefix="birka_midi_"))
     wav_path = tmp_dir / (midi_path.stem + ".wav")
-    if render_midi_to_wav(midi_path, wav_path):
+    if render_midi_to_wav(midi_path, wav_path, sample_rate=22050):
         return wav_path
     return None
 
@@ -85,6 +85,18 @@ class _RenderWorker(QtCore.QObject):
         self.finished.emit(successful, failed)
 
 
+class _MidiPlayRenderWorker(QtCore.QObject):
+    finished = QtCore.pyqtSignal(str)
+
+    def __init__(self, midi_path: Path) -> None:
+        super().__init__()
+        self._midi_path = midi_path
+
+    def run(self) -> None:
+        wav = _render_midi_to_tmp_wav(self._midi_path)
+        self.finished.emit(str(wav) if wav is not None else "")
+
+
 class LibraryTab(QtWidgets.QWidget):
     folder_opened = QtCore.pyqtSignal(Path)
 
@@ -109,6 +121,9 @@ class LibraryTab(QtWidgets.QWidget):
         self._selection_connected = False
         self._zarr_view: ZarrLibraryView | None = None
         self._tmp_midi_wav: Path | None = None
+        self._midi_play_thread: QtCore.QThread | None = None
+        self._midi_play_worker: _MidiPlayRenderWorker | None = None
+        self._loading_midi_path: Path | None = None
         self._seeking = False
 
         self._player = QtMultimedia.QMediaPlayer(self)
@@ -228,6 +243,7 @@ class LibraryTab(QtWidgets.QWidget):
     def stop_all(self) -> None:
         self._player.stop()
         self._cleanup_tmp_wav()
+        self._stop_midi_render_thread()
 
     def _cleanup_tmp_wav(self) -> None:
         if self._tmp_midi_wav is not None:
@@ -237,6 +253,18 @@ class LibraryTab(QtWidgets.QWidget):
             except OSError as exc:
                 logger.debug("Failed to clean up temp WAV: %s", exc)
             self._tmp_midi_wav = None
+
+    def _stop_midi_render_thread(self) -> None:
+        self._loading_midi_path = None
+        if self._midi_play_thread is not None:
+            try:
+                self._midi_play_worker.finished.disconnect(self._on_midi_render_finished)
+            except (TypeError, RuntimeError):
+                pass
+            self._midi_play_thread.quit()
+            self._midi_play_thread.wait()
+            self._midi_play_thread = None
+            self._midi_play_worker = None
 
     def _build_ui(self) -> None:
         self._init_filter_and_pager()
@@ -694,6 +722,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._player.stop()
         self._player.setSource(QtCore.QUrl())
         self._cleanup_tmp_wav()
+        self._stop_midi_render_thread()
         self._seek_slider.setRange(0, 0)
         self._seek_slider.setValue(0)
         self._time_label.setText("0:00 / 0:00")
