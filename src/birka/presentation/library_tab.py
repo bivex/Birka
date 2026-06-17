@@ -371,10 +371,13 @@ class LibraryTab(QtWidgets.QWidget):
         )
         self._template_input.setText("[BPM]_[Key]_[OriginalName]")
         self._rename_button = QtWidgets.QPushButton("Preview Rename", self)
+        self._rename_button.setObjectName("renameButton")
         self._rename_button.clicked.connect(self._preview_rename)
         self._open_button = QtWidgets.QPushButton("Open Library", self)
+        self._open_button.setObjectName("openLibraryButton")
         self._open_button.clicked.connect(self._open_library)
         self._refresh_button = QtWidgets.QPushButton("Refresh", self)
+        self._refresh_button.setObjectName("refreshButton")
         self._refresh_button.clicked.connect(self.reload)
 
     def _init_tags_controls(self) -> None:
@@ -385,16 +388,20 @@ class LibraryTab(QtWidgets.QWidget):
         for value in RATING_RANGE:
             self._rating_combo.addItem(str(value), value)
         self._apply_button = QtWidgets.QPushButton("Apply Tags/Rating", self)
+        self._apply_button.setObjectName("applyButton")
         self._apply_button.clicked.connect(self._apply_tags_rating)
         self._delete_button = QtWidgets.QPushButton("Delete Selected", self)
         self._delete_button.setObjectName("deleteButton")
         self._delete_button.setShortcut("Delete")
         self._delete_button.clicked.connect(self._delete_selected)
         self._sort_button = QtWidgets.QPushButton("Sort Files", self)
+        self._sort_button.setObjectName("sortButton")
         self._sort_button.clicked.connect(self._sort_files)
         self._open_folder_button = QtWidgets.QPushButton("Open Folder", self)
+        self._open_folder_button.setObjectName("openFolderButton")
         self._open_folder_button.clicked.connect(self._open_selected_folder)
         self._render_button = QtWidgets.QPushButton("Render MIDI\u2192MP3", self)
+        self._render_button.setObjectName("renderButton")
         self._render_button.clicked.connect(self._render_midi)
 
     def _init_pager_controls(self) -> None:
@@ -406,7 +413,9 @@ class LibraryTab(QtWidgets.QWidget):
         self._page_size.setCurrentText(str(DEFAULT_PAGE_SIZE))
         self._page_size.currentIndexChanged.connect(self._on_page_size_changed)
         self._prev_button = QtWidgets.QPushButton("Prev", self)
+        self._prev_button.setObjectName("prevButton")
         self._next_button = QtWidgets.QPushButton("Next", self)
+        self._next_button.setObjectName("nextButton")
         self._prev_button.clicked.connect(self._prev_page)
         self._next_button.clicked.connect(self._next_page)
 
