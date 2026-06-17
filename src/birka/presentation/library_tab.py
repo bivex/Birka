@@ -572,19 +572,54 @@ class LibraryTab(QtWidgets.QWidget):
         self._player.setSource(url)
 
     def _play_midi(self, path: Path) -> None:
-        wav = _render_midi_to_tmp_wav(path)
-        if wav is None:
-            QtWidgets.QMessageBox.information(
-                self,
-                "MIDI",
-                "Cannot render MIDI. Check fluidsynth + soundfont.",
-            )
+        self._stop_midi_render_thread()
+
+        self._loading_midi_path = path
+        self._play_button.setEnabled(False)
+        self._play_button.setText("Loading...")
+
+        self._midi_play_thread = QtCore.QThread()
+        self._midi_play_worker = _MidiPlayRenderWorker(path)
+        self._midi_play_worker.moveToThread(self._midi_play_thread)
+        self._midi_play_thread.started.connect(self._midi_play_worker.run)
+        self._midi_play_worker.finished.connect(self._on_midi_render_finished)
+        self._midi_play_thread.start()
+
+    def _on_midi_render_finished(self, wav_path_str: str) -> None:
+        self._play_button.setEnabled(True)
+        self._play_button.setText("Play")
+
+        if self._midi_play_thread is not None:
+            self._midi_play_thread.quit()
+            self._midi_play_thread.wait()
+            self._midi_play_thread = None
+            self._midi_play_worker = None
+
+        if not wav_path_str:
+            if self._loading_midi_path is not None:
+                QtWidgets.QMessageBox.information(
+                    self,
+                    "MIDI",
+                    "Cannot render MIDI. Check fluidsynth + soundfont.",
+                )
+                self._loading_midi_path = None
             return
-        self._tmp_midi_wav = wav
-        samples = self._waveform_provider.load(wav)
-        self._waveform.set_samples(samples)
-        url = QtCore.QUrl.fromLocalFile(str(wav))
-        self._player.setSource(url)
+
+        wav_path = Path(wav_path_str)
+        if self._loading_midi_path is not None and wav_path.stem == self._loading_midi_path.stem:
+            self._tmp_midi_wav = wav_path
+            samples = self._waveform_provider.load(wav_path)
+            self._waveform.set_samples(samples)
+            url = QtCore.QUrl.fromLocalFile(wav_path_str)
+            self._player.setSource(url)
+        else:
+            try:
+                wav_path.unlink()
+                wav_path.parent.rmdir()
+            except OSError as exc:
+                logger.debug("Failed to clean up aborted temp WAV: %s", exc)
+
+        self._loading_midi_path = None
 
     def _preview_rename(self) -> None:
         items = self._selected_items()

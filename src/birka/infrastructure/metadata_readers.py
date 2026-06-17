@@ -43,6 +43,14 @@ MIDI_NOTE_ON_LOWER = 0x80
 MIDI_PROGRAM_CHANGE_LOWER = 0xC0
 MIDI_PITCH_BEND_LOWER = 0xE0
 
+_MIDI_DATA_LENGTHS = [0] * 256
+for _s in range(0x80, 0xC0):
+    _MIDI_DATA_LENGTHS[_s] = 2
+for _s in range(0xC0, 0xE0):
+    _MIDI_DATA_LENGTHS[_s] = 1
+for _s in range(0xE0, 0xF0):
+    _MIDI_DATA_LENGTHS[_s] = 2
+
 
 class AudioMidiMetadataReader(MetadataReader):
     def read(self, path: Path) -> MediaItem:
@@ -162,8 +170,7 @@ def _scan_midi_track(
             length, idx = _read_vlq(data, idx)
             idx += length
         else:
-            data_len = _midi_data_length(status)
-            idx += data_len
+            idx += _MIDI_DATA_LENGTHS[status]
     return bpm, key, ticks
 
 
@@ -187,14 +194,7 @@ def _read_vlq(data: bytes, idx: int) -> tuple[int, int]:
     return value, idx
 
 
-def _midi_data_length(status: int) -> int:
-    if MIDI_NOTE_ON_LOWER <= status <= MIDI_STATUS_NOTE_OFF_MAX:
-        return 2
-    if MIDI_PROGRAM_CHANGE_LOWER <= status <= MIDI_STATUS_PROGRAM_CHANGE_MAX:
-        return 1
-    if MIDI_PITCH_BEND_LOWER <= status <= MIDI_STATUS_PITCH_MAX:
-        return 2
-    return 0
+
 
 
 def _decode_key_signature(sf: int, mi: int) -> str:
