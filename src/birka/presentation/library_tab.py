@@ -166,12 +166,8 @@ class LibraryTab(QtWidgets.QWidget):
     def _capture_selection_paths(self) -> set[str]:
         if self._first_load:
             return set()
-        selection = self._pager.mapSelectionToSource(
-            self._table.selectionModel().selection()
-        )
-        if not selection.indexes():
-            return set()
-        return {self._model.row_at(i.row()).path for i in selection.indexes()}
+        rows = self._selected_rows_from_table()
+        return {self._model.row_at(r).path for r in rows}
 
     def _reconnect_selection_model(self) -> None:
         sel_model = self._table.selectionModel()
