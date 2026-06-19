@@ -85,17 +85,18 @@ class _RenderWorker(QtCore.QObject):
     progress = QtCore.pyqtSignal(int, int)
     finished = QtCore.pyqtSignal(list, list)
 
-    def __init__(self, midi_paths: list[Path], output_dir: Path) -> None:
+    def __init__(self, midi_paths: list[Path], output_dir: Path, quality: int = 2) -> None:
         super().__init__()
         self._midi_paths = midi_paths
         self._output_dir = output_dir
+        self._quality = quality
 
     def run(self) -> None:
         def on_progress(completed: int, total: int, _: Path, __: bool) -> None:
             self.progress.emit(completed, total)
 
         successful, failed = render_midi_to_mp3_batch(
-            self._midi_paths, self._output_dir, on_progress=on_progress
+            self._midi_paths, self._output_dir, on_progress=on_progress, quality=self._quality
         )
         self.finished.emit(successful, failed)
 
@@ -104,17 +105,18 @@ class _RenderWavWorker(QtCore.QObject):
     progress = QtCore.pyqtSignal(int, int)
     finished = QtCore.pyqtSignal(list, list)
 
-    def __init__(self, midi_paths: list[Path], output_dir: Path) -> None:
+    def __init__(self, midi_paths: list[Path], output_dir: Path, quality: int = 2) -> None:
         super().__init__()
         self._midi_paths = midi_paths
         self._output_dir = output_dir
+        self._quality = quality
 
     def run(self) -> None:
         def on_progress(completed: int, total: int, _: Path, __: bool) -> None:
             self.progress.emit(completed, total)
 
         successful, failed = render_midi_to_wav_batch(
-            self._midi_paths, self._output_dir, on_progress=on_progress
+            self._midi_paths, self._output_dir, on_progress=on_progress, quality=self._quality
         )
         self.finished.emit(successful, failed)
 
@@ -450,6 +452,12 @@ class LibraryTab(QtWidgets.QWidget):
         self._render_wav_button = QtWidgets.QPushButton("Render MIDI\u2192WAV", self)
         self._render_wav_button.setObjectName("renderWavButton")
         self._render_wav_button.clicked.connect(self._render_midi_wav)
+        self._quality_label = QtWidgets.QLabel("Synth Quality:", self)
+        self._quality_combo = QtWidgets.QComboBox(self)
+        self._quality_combo.addItem("Fast Quality (Hermite3)", 2)
+        self._quality_combo.addItem("Standard Quality (Sinc24)", 6)
+        self._quality_combo.addItem("Studio Quality (Sinc72)", 10)
+        self._quality_combo.setCurrentIndex(0)
 
     def _init_pager_controls(self) -> None:
         self._count_label = QtWidgets.QLabel("Files: 0", self)
@@ -566,6 +574,10 @@ class LibraryTab(QtWidgets.QWidget):
         grid.addWidget(self._open_folder_button, 2, 2)
         grid.addWidget(self._render_button, 2, 3)
         grid.addWidget(self._render_wav_button, 2, 4)
+
+        # Row 3: Quality
+        grid.addWidget(self._quality_label, 3, 2)
+        grid.addWidget(self._quality_combo, 3, 3, 1, 2)
 
         return grid
 
@@ -790,6 +802,7 @@ class LibraryTab(QtWidgets.QWidget):
             worker_cls = _RenderWorker
         midi_paths = [item.path for item in midi_items]
         self._render_format = fmt
+        quality = self._quality_combo.currentData() or 2
 
         self._render_progress = QtWidgets.QProgressDialog(
             "Rendering MIDI files...",
@@ -802,7 +815,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._render_progress.setMinimumDuration(0)
         self._render_progress.setValue(0)
 
-        worker = worker_cls(midi_paths, output_dir)
+        worker = worker_cls(midi_paths, output_dir, quality=quality)
         thread = QtCore.QThread()
         worker.moveToThread(thread)
         worker.progress.connect(self._on_render_progress)

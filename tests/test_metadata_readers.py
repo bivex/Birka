@@ -24,6 +24,26 @@ class MetadataReaderTests(unittest.TestCase):
             self.assertEqual(item.metadata.bpm, 128.0)
             self.assertEqual(item.metadata.key, "F#m")
 
+    def test_reads_float_wav_metadata(self) -> None:
+        # Build an IEEE float WAV (format code 3, 32-bit floats)
+        # fmt_chunk size: 16, format tag: 3 (float), channels: 2, sample_rate: 44100, byte_rate: 44100*8, block_align: 8, bits_per_sample: 32
+        fmt_chunk = b"fmt " + struct.pack("<IHHIIHH", 16, 3, 2, 44100, 44100 * 8, 8, 32)
+        data_bytes = b"\x00" * 44100 * 8  # 1 second of stereo float32
+        data_chunk = b"data" + struct.pack("<I", len(data_bytes)) + data_bytes
+        riff_size = 4 + len(fmt_chunk) + len(data_chunk)
+        float_wav = b"RIFF" + struct.pack("<I", riff_size) + b"WAVE" + fmt_chunk + data_chunk
+
+        with tempfile.TemporaryDirectory() as tmp:
+            wav_path = Path(tmp) / "float_tone.wav"
+            wav_path.write_bytes(float_wav)
+
+            reader = AudioMidiMetadataReader()
+            item = reader.read(wav_path)
+
+            self.assertEqual(item.metadata.sample_rate_hz, 44100)
+            self.assertEqual(item.metadata.channels, 2)
+            self.assertAlmostEqual(item.metadata.duration_seconds, 1.0, places=2)
+
     def test_reads_midi_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             midi_path = Path(tmp) / "pattern.mid"

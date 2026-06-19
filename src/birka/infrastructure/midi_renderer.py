@@ -129,7 +129,7 @@ def _backend_name() -> str:
 
 
 def _synth_to_wav_for_backend(
-    backend: str, midi_path: Path, tmp_wav: Path, sample_rate: int, polyphony: int
+    backend: str, midi_path: Path, tmp_wav: Path, sample_rate: int, polyphony: int, quality: int = 2
 ) -> bool:
     """Synthesize one MIDI to a temp WAV using the given backend.
 
@@ -140,7 +140,7 @@ def _synth_to_wav_for_backend(
         sfz = _find_sfz()
         if sfz is not None:
             return _synth_sfizz_to_wav(
-                sfz, midi_path, tmp_wav, sample_rate=sample_rate, polyphony=polyphony
+                sfz, midi_path, tmp_wav, sample_rate=sample_rate, polyphony=polyphony, quality=quality
             )
         backend = "tsf" if _TSF_AVAILABLE else "fluidsynth"
 
@@ -158,7 +158,7 @@ def _synth_to_wav_for_backend(
     return False
 
 
-def render_midi_to_mp3(midi_path: Path, output_dir: Path) -> Optional[Path]:
+def render_midi_to_mp3(midi_path: Path, output_dir: Path, quality: int = 2) -> Optional[Path]:
     """Render a MIDI file to MP3 via the selected backend + ffmpeg loudnorm."""
     if shutil.which("ffmpeg") is None:
         return None
@@ -174,7 +174,7 @@ def render_midi_to_mp3(midi_path: Path, output_dir: Path) -> Optional[Path]:
     mp3_path = output_dir / (midi_path.stem + ".mp3")
     tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
     try:
-        if not _synth_to_wav_for_backend(backend, midi_path, tmp_wav, 44100, 256):
+        if not _synth_to_wav_for_backend(backend, midi_path, tmp_wav, 44100, 256, quality=quality):
             return None
         stats = _measure_stats(tmp_wav)
         af = _build_loudnorm_filter(stats)
@@ -186,7 +186,7 @@ def render_midi_to_mp3(midi_path: Path, output_dir: Path) -> Optional[Path]:
 
 
 def render_midi_to_wav(
-    midi_path: Path, output_path: Path, sample_rate: int = 44100, polyphony: int = 256
+    midi_path: Path, output_path: Path, sample_rate: int = 44100, polyphony: int = 256, quality: int = 2
 ) -> bool:
     """Render a single MIDI to WAV via the selected backend. No normalization."""
     backend = _resolve_backend()
@@ -196,7 +196,7 @@ def render_midi_to_wav(
         sfz = _find_sfz()
         if sfz is not None:
             return _synth_sfizz_to_wav(
-                sfz, midi_path, output_path, sample_rate=sample_rate, polyphony=polyphony
+                sfz, midi_path, output_path, sample_rate=sample_rate, polyphony=polyphony, quality=quality
             )
         # no SFZ bank -> fall through to auto resolution
         backend = "tsf" if _TSF_AVAILABLE else "fluidsynth"
@@ -280,6 +280,7 @@ def render_midi_to_mp3_batch(
     midi_paths: List[Path],
     output_dir: Path,
     on_progress: Optional[Callable[[int, int, Path, bool], None]] = None,
+    quality: int = 2,
 ) -> Tuple[List[Path], List[Path]]:
     """Render multiple MIDI files to MP3 in parallel using all CPU cores."""
     if shutil.which("ffmpeg") is None:
@@ -304,7 +305,7 @@ def render_midi_to_mp3_batch(
         mp3_path = output_dir / (midi_path.stem + ".mp3")
         tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
         try:
-            if not _synth_to_wav_for_backend(backend, midi_path, tmp_wav, 44100, 256):
+            if not _synth_to_wav_for_backend(backend, midi_path, tmp_wav, 44100, 256, quality=quality):
                 return midi_path, None
             stats = _measure_stats(tmp_wav)
             af = _build_loudnorm_filter(stats)
@@ -336,6 +337,7 @@ def render_midi_to_wav_batch(
     on_progress: Optional[Callable[[int, int, Path, bool], None]] = None,
     sample_rate: int = 44100,
     polyphony: int = 256,
+    quality: int = 2,
 ) -> Tuple[List[Path], List[Path]]:
     """Render multiple MIDI files to WAV in parallel. No normalization (fast)."""
     backend = _resolve_backend()
@@ -359,6 +361,7 @@ def render_midi_to_wav_batch(
             wav_path,
             sample_rate=sample_rate,
             polyphony=polyphony,
+            quality=quality,
         ):
             return midi_path, wav_path
         return midi_path, None
@@ -640,6 +643,7 @@ def _synth_sfizz_to_wav(
     sample_rate: int = 44100,
     polyphony: int = 256,
     bit_depth: int = 32,
+    quality: int = 2,
 ) -> bool:
     """Render a MIDI to a stereo WAV via the sfizz engine (SFZ bank).
 
@@ -692,6 +696,7 @@ def _synth_sfizz_to_wav(
         synth = _sfizz.Synth(sample_rate, _SFIZZ_BLOCK_FRAMES)
         synth.enable_freewheeling()
         synth.set_num_voices(max(1, min(polyphony, 512)))
+        synth.set_sample_quality(quality)
         if not synth.load_sfz_file(str(sfz_path)):
             return False
 

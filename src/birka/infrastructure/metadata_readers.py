@@ -62,11 +62,55 @@ class AudioMidiMetadataReader(MetadataReader):
         return MediaItem(path=path, name=path.name)
 
 
+def _parse_wav_header_fallback(path: Path) -> tuple[int, int, int]:
+    fmt_tag = None
+    channels = 0
+    rate = 0
+    block_align = 0
+    data_size = None
+
+    try:
+        with open(path, "rb") as f:
+            # Skip RIFF header
+            f.seek(12)
+            while True:
+                header = f.read(8)
+                if len(header) < 8:
+                    break
+                chunk_id = header[:4]
+                chunk_size = struct.unpack("<I", header[4:8])[0]
+                if chunk_id == b"fmt ":
+                    fmt_body = f.read(chunk_size)
+                    if len(fmt_body) >= 16:
+                        fmt_tag, channels, rate, _, block_align, _ = struct.unpack("<HHIIHH", fmt_body[:16])
+                elif chunk_id == b"data":
+                    data_size = chunk_size
+                    break
+                else:
+                    # Skip chunk, alignment padding if size is odd
+                    f.seek(chunk_size + (chunk_size & 1), 1)
+    except Exception:
+        pass
+
+    if fmt_tag is None or data_size is None or block_align == 0 or rate == 0 or channels == 0:
+        raise ValueError("Invalid or unsupported WAV metadata")
+
+    frames = data_size // block_align
+    return frames, rate, channels
+
+
 def _read_wav(path: Path) -> AudioItem:
-    with wave.open(str(path), "rb") as wav:
-        frames = wav.getnframes()
-        rate = wav.getframerate()
-        channels = wav.getnchannels()
+    try:
+        with wave.open(str(path), "rb") as wav:
+            frames = wav.getnframes()
+            rate = wav.getframerate()
+            channels = wav.getnchannels()
+    except wave.Error:
+        try:
+            frames, rate, channels = _parse_wav_header_fallback(path)
+        except Exception:
+            frames, rate, channels = 0, 0, 0
+
     duration = frames / rate if rate else 0.0
     bpm, key = _extract_bpm_key_from_wav(path)
     if bpm is None or key is None:
