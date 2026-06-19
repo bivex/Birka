@@ -17,6 +17,10 @@ from birka.infrastructure.midi_renderer import (
     _measure_stats,
     _parse_loudnorm_stats,
     _synth_tsf_to_wav,
+    PREVIEW_MP3_BITRATE,
+    PREVIEW_POLYPHONY,
+    PREVIEW_SAMPLE_RATE,
+    render_midi_preview_mp3,
     render_midi_to_mp3,
     render_midi_to_mp3_batch,
     render_midi_to_wav,
@@ -420,3 +424,52 @@ class TestRenderMidiToMp3Batch(unittest.TestCase):
         ok, fail = render_midi_to_mp3_batch([], self.tmp)
         self.assertEqual(ok, [])
         self.assertEqual(fail, [])
+
+
+# ---------------------------------------------------------------------------
+# render_midi_preview_mp3
+# ---------------------------------------------------------------------------
+
+class TestRenderMidiPreviewMp3(unittest.TestCase):
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.tmp = Path(self._tmp.name)
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    def test_preview_constants(self) -> None:
+        self.assertEqual(PREVIEW_SAMPLE_RATE, 22050)
+        self.assertEqual(PREVIEW_MP3_BITRATE, "96k")
+        self.assertLessEqual(PREVIEW_POLYPHONY, 256)
+
+    def test_returns_true_and_creates_mp3(self) -> None:
+        mp3 = self.tmp / "preview.mp3"
+        self.assertTrue(render_midi_preview_mp3(MIDI_PATH, mp3))
+        self.assertTrue(mp3.exists())
+        self.assertGreater(mp3.stat().st_size, 0)
+
+    def test_output_is_smaller_than_full_mp3(self) -> None:
+        preview = self.tmp / "preview.mp3"
+        full = self.tmp / "full.mp3"
+        self.assertTrue(render_midi_preview_mp3(MIDI_PATH, preview))
+        self.assertTrue(render_midi_to_mp3(MIDI_PATH, self.tmp))
+        full_path = self.tmp / (MIDI_PATH.stem + ".mp3")
+        # Preview (22 kHz / 96k) should be no larger than the full (44.1 kHz / 320k) render.
+        self.assertLessEqual(preview.stat().st_size, full_path.stat().st_size)
+
+    def test_creates_parent_dir(self) -> None:
+        mp3 = self.tmp / "nested" / "out.mp3"
+        self.assertTrue(render_midi_preview_mp3(MIDI_PATH, mp3))
+        self.assertTrue(mp3.exists())
+
+    def test_returns_false_for_missing_midi(self) -> None:
+        mp3 = self.tmp / "preview.mp3"
+        self.assertFalse(render_midi_preview_mp3(Path("/nonexistent.mid"), mp3))
+
+    def test_multiple_preview_files(self) -> None:
+        midi_files = list(MIDI_DIR.rglob("*.mid"))[:4]
+        for midi in midi_files:
+            mp3 = self.tmp / f"{midi.stem}.mp3"
+            self.assertTrue(render_midi_preview_mp3(midi, mp3), f"Failed: {midi.name}")
+            self.assertGreater(mp3.stat().st_size, 0)

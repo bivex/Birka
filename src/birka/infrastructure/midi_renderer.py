@@ -39,6 +39,9 @@ except ImportError:
 FLUIDSYNTH_GAIN = "0.8"
 LOUDNORM_TARGET = "loudnorm=I=-16:TP=-1.5:LRA=11"
 MP3_BITRATE = "320k"
+PREVIEW_SAMPLE_RATE = 22050
+PREVIEW_MP3_BITRATE = "96k"
+PREVIEW_POLYPHONY = 64
 _TSF_BUFFER_FRAMES = 2048
 
 
@@ -91,6 +94,53 @@ def render_midi_to_wav(
     return _synth_to_wav(
         soundfont, midi_path, output_path, sample_rate=sample_rate, polyphony=polyphony
     )
+
+
+def render_midi_preview_mp3(
+    midi_path: Path,
+    output_path: Path,
+    sample_rate: int = PREVIEW_SAMPLE_RATE,
+    polyphony: int = PREVIEW_POLYPHONY,
+    bitrate: str = PREVIEW_MP3_BITRATE,
+) -> bool:
+    """Render a MIDI to a small MP3 for fast preview listening.
+
+    Trades audio quality for speed: low sample rate, reduced polyphony, single
+    ffmpeg pass (no loudness normalization). Intended for quick listening, not
+    for the final rendered library output.
+    """
+    if shutil.which("ffmpeg") is None:
+        return False
+    soundfont = _find_soundfont()
+    if soundfont is None:
+        return False
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
+    try:
+        if _TSF_AVAILABLE:
+            if not _synth_tsf_to_wav(
+                soundfont,
+                midi_path,
+                tmp_wav,
+                sample_rate=sample_rate,
+                polyphony=polyphony,
+            ):
+                return False
+        else:
+            if shutil.which("fluidsynth") is None:
+                return False
+            if not _synth_to_wav(
+                soundfont,
+                midi_path,
+                tmp_wav,
+                sample_rate=sample_rate,
+                polyphony=polyphony,
+            ):
+                return False
+        # Single-pass encode, no loudnorm measurement step.
+        return _encode_mp3(tmp_wav, None, output_path, bitrate=bitrate)
+    finally:
+        tmp_wav.unlink(missing_ok=True)
 
 
 def render_midi_to_mp3_batch(
@@ -402,12 +452,13 @@ def _encode_mp3(
     wav_path: Path,
     audio_filter: Optional[str],
     mp3_path: Path,
+    bitrate: str = MP3_BITRATE,
 ) -> bool:
     """Run ffmpeg to normalize and encode a WAV file to MP3."""
     encode_cmd = ["ffmpeg", "-y", "-i", str(wav_path)]
     if audio_filter:
         encode_cmd += ["-af", audio_filter]
-    encode_cmd += ["-b:a", MP3_BITRATE, str(mp3_path)]
+    encode_cmd += ["-b:a", bitrate, str(mp3_path)]
 
     result = subprocess.run(encode_cmd, capture_output=True, text=True)
     if result.returncode != 0 or not mp3_path.exists():

@@ -53,6 +53,17 @@ def _render_midi_to_tmp_wav(midi_path: Path) -> Path | None:
     return None
 
 
+def _render_midi_to_tmp_preview_mp3(midi_path: Path) -> Path | None:
+    """Render MIDI to a small temp MP3 (22 kHz) for fast preview listening."""
+    from birka.infrastructure.midi_renderer import render_midi_preview_mp3
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="birka_midi_"))
+    mp3_path = tmp_dir / (midi_path.stem + ".mp3")
+    if render_midi_preview_mp3(midi_path, mp3_path):
+        return mp3_path
+    return None
+
+
 class _RefreshWorker(QtCore.QObject):
     finished = QtCore.pyqtSignal(list)
 
@@ -110,13 +121,17 @@ class _RenderWavWorker(QtCore.QObject):
 class _MidiPlayRenderWorker(QtCore.QObject):
     finished = QtCore.pyqtSignal(str)
 
-    def __init__(self, midi_path: Path) -> None:
+    def __init__(self, midi_path: Path, fast: bool = False) -> None:
         super().__init__()
         self._midi_path = midi_path
+        self._fast = fast
 
     def run(self) -> None:
-        wav = _render_midi_to_tmp_wav(self._midi_path)
-        self.finished.emit(str(wav) if wav is not None else "")
+        if self._fast:
+            rendered = _render_midi_to_tmp_preview_mp3(self._midi_path)
+        else:
+            rendered = _render_midi_to_tmp_wav(self._midi_path)
+        self.finished.emit(str(rendered) if rendered is not None else "")
 
 
 class LibraryTab(QtWidgets.QWidget):
@@ -369,6 +384,12 @@ class LibraryTab(QtWidgets.QWidget):
         self._stop_button = QtWidgets.QPushButton("Stop", self)
         self._stop_button.setObjectName("stopButton")
         self._play_button.clicked.connect(self._play_selected)
+        self._play_fast_button = QtWidgets.QPushButton("Play Fast", self)
+        self._play_fast_button.setObjectName("playFastButton")
+        self._play_fast_button.setToolTip(
+            "Render selected MIDI to a low-quality MP3 (22 kHz) for fast preview"
+        )
+        self._play_fast_button.clicked.connect(self._play_selected_fast)
         self._stop_button.clicked.connect(self._stop_playback)
 
         self._seek_slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
@@ -551,6 +572,7 @@ class LibraryTab(QtWidgets.QWidget):
         volume_label = QtWidgets.QLabel("Vol", self)
         row = QtWidgets.QHBoxLayout()
         row.addWidget(self._play_button)
+        row.addWidget(self._play_fast_button)
         row.addWidget(self._stop_button)
         row.addWidget(self._seek_slider, 1)
         row.addWidget(self._time_label)
@@ -643,15 +665,27 @@ class LibraryTab(QtWidgets.QWidget):
         url = QtCore.QUrl.fromLocalFile(str(item.path))
         self._player.setSource(url)
 
-    def _play_midi(self, path: Path) -> None:
+    def _play_selected_fast(self) -> None:
+        item = self._first_selected_item()
+        if item is None:
+            QtWidgets.QMessageBox.information(self, "Play Fast", "Select a file first.")
+            return
+        if item.path.suffix.lower() not in MIDI_EXTENSIONS:
+            self._play_selected()
+            return
+        self._stop_playback()
+        self._play_midi(item.path, fast=True)
+
+    def _play_midi(self, path: Path, fast: bool = False) -> None:
         self._stop_midi_render_thread()
 
         self._loading_midi_path = path
-        self._play_button.setEnabled(False)
-        self._play_button.setText("Loading...")
+        button = self._play_fast_button if fast else self._play_button
+        button.setEnabled(False)
+        button.setText("Loading...")
 
         self._midi_play_thread = QtCore.QThread()
-        self._midi_play_worker = _MidiPlayRenderWorker(path)
+        self._midi_play_worker = _MidiPlayRenderWorker(path, fast=fast)
         self._midi_play_worker.moveToThread(self._midi_play_thread)
         self._midi_play_thread.started.connect(self._midi_play_worker.run)
         self._midi_play_worker.finished.connect(self._on_midi_render_finished)
@@ -660,6 +694,8 @@ class LibraryTab(QtWidgets.QWidget):
     def _on_midi_render_finished(self, wav_path_str: str) -> None:
         self._play_button.setEnabled(True)
         self._play_button.setText("Play")
+        self._play_fast_button.setEnabled(True)
+        self._play_fast_button.setText("Play Fast")
 
         if self._midi_play_thread is not None:
             self._midi_play_thread.quit()
