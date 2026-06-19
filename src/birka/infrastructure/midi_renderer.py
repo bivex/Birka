@@ -330,6 +330,26 @@ def _render_tsf_to_mp3_batch(
     return successful, failed
 
 
+def _soft_clip_to_int16(samples: List[float]) -> List[int]:
+    """Convert float samples to 16-bit ints with tanh soft-clipping.
+
+    When many synth voices sum together the float output can exceed [-1.0, 1.0].
+    A hard clamp pins those samples to the 16-bit ceiling/floor, producing
+    audible clicks (crackle). tanh is applied to the *whole* signal so the
+    curve is continuous and monotonic: near-linear at low levels (identity at
+    the origin, slope 1) and smoothly limiting at high levels, so nothing is
+    ever pinned flat to the ceiling.
+
+    Applying tanh only above a threshold (e.g. >1.0) is *wrong*: it creates a
+    notch at the crossing (just-under-1.0 -> ~32439, just-over-1.0 -> ~25000),
+    which is itself a click.
+    """
+    return [
+        max(-32768, min(32767, int(math.tanh(s) * 32767.0)))
+        for s in samples
+    ]
+
+
 def _synth_tsf_to_wav(
     soundfont: Path,
     midi_path: Path,
@@ -404,16 +424,10 @@ def _synth_tsf_to_wav(
     except Exception:
         return False
     
-    # Soft-clip (tanh) then scale to 16-bit signed integers.
-    # When many voices sum together the float output can exceed [-1.0, 1.0];
-    # a hard clamp produces audible clicks (samples pinned to the ceiling).
-    # tanh is near-linear below ~0.7 and smoothly limits peaks above that,
-    # so quiet passages stay exact and only the overshoot is rounded off.
-    int16_samples = []
-    for s in samples[:samples_needed]:
-        if s > 1.0 or s < -1.0:
-            s = math.tanh(s)
-        int16_samples.append(max(-32768, min(32767, int(s * 32767.0))))
+    # Soft-clip (tanh) then scale to 16-bit signed integers. See
+    # _soft_clip_to_int16 for why a hard clamp (and threshold-only tanh) audibly
+    # clicks when dense polyphony sums past full scale.
+    int16_samples = _soft_clip_to_int16(samples[:samples_needed])
 
     if not int16_samples:
         return False

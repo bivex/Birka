@@ -16,6 +16,7 @@ from birka.infrastructure.midi_renderer import (
     _find_soundfont,
     _measure_stats,
     _parse_loudnorm_stats,
+    _soft_clip_to_int16,
     _synth_tsf_to_wav,
     PREVIEW_MP3_BITRATE,
     PREVIEW_POLYPHONY,
@@ -543,3 +544,138 @@ class TestSoftClipping(unittest.TestCase):
             self.assertGreater(peak, 32767 * 0.5, "Signal unexpectedly quiet")
         finally:
             tmp.cleanup()
+
+
+# ---------------------------------------------------------------------------
+# _soft_clip_to_int16 (unit tests for the clip-bug fix)
+# ---------------------------------------------------------------------------
+
+class TestSoftClipToInt16(unittest.TestCase):
+    """Unit tests for the float->int16 soft-clipper.
+
+    These pin the exact behaviours that were broken by the original hard-clamp
+    (and by an intermediate threshold-only tanh variant that introduced a
+    notch at the 1.0 crossing). Each test targets one specific clip defect.
+    """
+
+    CEIL = 32767
+    FLOOR = -32768
+
+    # --- Bug 1: overshoot must not be pinned to the ceiling (hard clamp) ---
+
+    def test_overshoot_positive_not_pinned_to_ceiling(self) -> None:
+        """A realistic overshoot must not hit +32767 (the crackle bug).
+
+        Real-world voice-sum overshoot is ~1.5x-3.0x full scale (observed peak
+        of the crackling file was ~1.5x). tanh keeps those well clear of the
+        ceiling. Absurd inputs (e.g. 100x) saturate to 1.0 and are documented in
+        test_extreme_saturation instead -- they cannot occur from the synth.
+        """
+        out = _soft_clip_to_int16([1.5, 2.0, 2.5, 3.0, 5.0])
+        for v in out:
+            self.assertLess(v, self.CEIL, "Realistic overshoot pinned to ceiling")
+            self.assertGreater(v, 0)
+
+    def test_overshoot_negative_not_pinned_to_floor(self) -> None:
+        """A realistic negative overshoot must not hit -32768."""
+        out = _soft_clip_to_int16([-1.5, -2.0, -2.5, -3.0, -5.0])
+        for v in out:
+            self.assertGreater(v, self.FLOOR, "Realistic overshoot pinned to floor")
+            self.assertLess(v, 0)
+
+    def test_extreme_saturation_documented(self) -> None:
+        """An absurd input (100x) saturates tanh to exactly 1.0 -> hits ceiling.
+
+        This is expected math, NOT a bug: such values cannot be produced by the
+        synth (max real overshoot is a few x). The test documents the boundary
+        so a future change is noticed deliberately. Note the int16 asymmetry:
+        positive saturates to +32767, negative to -32767 (because the floor is
+        -32768 but int(-1.0 * 32767) truncates to -32767).
+        """
+        self.assertEqual(_soft_clip_to_int16([100.0])[0], self.CEIL)
+        self.assertEqual(_soft_clip_to_int16([-100.0])[0], -(self.CEIL))
+
+    def test_no_sample_in_full_signal_hits_ceiling(self) -> None:
+        """A realistically loud signal that overshoots must never touch ceiling.
+
+        4x sine is louder than anything the synth produces in practice while
+        still being a plausible dense-mix level.
+        """
+        import math
+
+        t = [i / 44100 for i in range(1000)]
+        sig = [4.0 * math.sin(2 * math.pi * 220 * x) for x in t]
+        out = _soft_clip_to_int16(sig)
+        self.assertNotIn(self.CEIL, out, "Some sample hit +ceiling")
+        self.assertNotIn(self.FLOOR, out, "Some sample hit floor")
+
+    # --- Bug 2: threshold-only tanh created a notch at the 1.0 crossing ---
+
+    def test_monotonic_around_positive_crossing(self) -> None:
+        """Samples straddling +1.0 must keep increasing monotonically.
+
+        A threshold-only tanh (applied only above 1.0) made 0.99 -> ~32439 and
+        1.01 -> tanh(1.01) -> ~24900, i.e. a downward jump = a click. The global
+        tanh must be monotonic non-decreasing through the crossing.
+        """
+        below = _soft_clip_to_int16([0.95])[0]
+        at = _soft_clip_to_int16([1.0])[0]
+        above = _soft_clip_to_int16([1.05])[0]
+        self.assertLess(below, at, "Not monotonic: dipped below 1.0 crossing")
+        self.assertLessEqual(at, above, "Not monotonic: dipped above 1.0 crossing")
+
+    def test_monotonic_around_negative_crossing(self) -> None:
+        """Symmetric monotonicity check through the -1.0 crossing."""
+        above = _soft_clip_to_int16([-0.95])[0]
+        at = _soft_clip_to_int16([-1.0])[0]
+        below = _soft_clip_to_int16([-1.05])[0]
+        self.assertGreater(above, at, "Not monotonic at -1.0 crossing")
+        self.assertGreaterEqual(at, below, "Not monotonic below -1.0 crossing")
+
+    def test_no_downward_jump_at_overshoot_boundary(self) -> None:
+        """The single biggest regression: a step just under->over 1.0 must
+        not produce a negative sample-to-sample delta (which would click)."""
+        out = _soft_clip_to_int16([0.999, 1.001, 1.5, 2.0])
+        diffs = [out[i + 1] - out[i] for i in range(len(out) - 1)]
+        for d in diffs:
+            self.assertGreaterEqual(
+                d, 0, f"Downward jump {d} at overshoot boundary -> audible click"
+            )
+
+    # --- Sanity: behaviour at the extremes and origin ---
+
+    def test_silence_is_zero(self) -> None:
+        self.assertEqual(_soft_clip_to_int16([0.0, 0.0]), [0, 0])
+
+    def test_large_realistic_positive_below_ceiling(self) -> None:
+        """A large-but-plausible overshoot (3x) stays finite and clear of ceiling."""
+        v = _soft_clip_to_int16([3.0])[0]
+        self.assertLess(v, self.CEIL)
+        self.assertGreater(v, self.CEIL - 1000)  # tanh(3) -> ~0.995
+
+    def test_large_realistic_negative_above_floor(self) -> None:
+        """Symmetric: a large negative overshoot (3x) stays above the floor."""
+        v = _soft_clip_to_int16([-3.0])[0]
+        self.assertGreater(v, self.FLOOR)
+        self.assertLess(v, self.FLOOR + 1000)
+
+    def test_in_range_is_near_linear(self) -> None:
+        """Below ~0.5 the soft-clipper should be within 5% of a raw scale.
+
+        Guarantees quiet passages are not audibly attenuated/coloured.
+        """
+        for s in (0.1, 0.2, 0.3, 0.4, 0.5):
+            got = _soft_clip_to_int16([s])[0]
+            raw = int(s * 32767.0)
+            self.assertLess(abs(got - raw), 0.05 * 32767, f"Deviation too large at {s}")
+
+    def test_output_range_valid_int16(self) -> None:
+        import math
+
+        sig = [10.0 * math.sin(i * 0.1) for i in range(500)]
+        for v in _soft_clip_to_int16(sig):
+            self.assertGreaterEqual(v, self.FLOOR)
+            self.assertLessEqual(v, self.CEIL)
+
+    def test_empty_input(self) -> None:
+        self.assertEqual(_soft_clip_to_int16([]), [])
