@@ -13,6 +13,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
+import logging
+
+logger_sfizz = logging.getLogger("birka.midi_renderer.sfizz")
+
 try:
     try:
         from tsfpy import TinySoundFont, TSF_STEREO_INTERLEAVED
@@ -37,6 +41,44 @@ except ImportError:
     TSF_STEREO_INTERLEAVED = 0
     _TSF_AVAILABLE = False
 
+# sfizz backend (SFZ instruments via pysfizz). Opt-in via BIRKA_BACKEND=sfizz.
+# pysfizz ships as a submodule under modules/pysfizz and is SFZ-only, so it is
+# independent of the SF2 soundfont used by tsf. The native _sfizz extension is
+# NOT built by default; the import below fails gracefully when unbuilt.
+#
+# We prefer an *installed* pysfizz (pip-installed into the venv, which has the
+# compiled _sfizz extension). We only fall back to the source dir under
+# modules/pysfizz when that dir actually contains a compiled _sfizz.* extension
+# -- otherwise it would shadow the working installed package (pure-Python
+# __init__ with no .so => ImportError "partially initialized module").
+try:
+    try:
+        import pysfizz  # noqa: F401
+        from pysfizz import _sfizz as _sfizz_check  # noqa: F401
+    except ImportError:
+        import sys as _sys
+        _sfizz_root = Path(__file__).resolve().parent
+        _added = False
+        for _ancestor in _sfizz_root.parents:
+            _candidate = _ancestor / "modules" / "pysfizz"
+            _pkg = _candidate / "pysfizz"
+            if (_pkg / "__init__.py").exists():
+                # Only use the source dir if it actually has a compiled extension,
+                # so we never shadow the installed package with a source-only copy.
+                if any(_pkg.glob("_sfizz*.so")) or any(_pkg.glob("_sfizz*.pyd")):
+                    if str(_candidate) not in _sys.path:
+                        _sys.path.insert(0, str(_candidate))
+                    _added = True
+                break
+        if _added:
+            import pysfizz  # noqa: F401
+            from pysfizz import _sfizz as _sfizz_check  # noqa: F401
+        else:
+            raise ImportError("pysfizz not importable (no compiled _sfizz extension)")
+    _SFIZZ_AVAILABLE = True
+except Exception:
+    _SFIZZ_AVAILABLE = False
+
 FLUIDSYNTH_GAIN = "0.8"
 LOUDNORM_TARGET = "loudnorm=I=-16:TP=-1.5:LRA=11"
 MP3_BITRATE = "320k"
@@ -44,26 +86,95 @@ PREVIEW_SAMPLE_RATE = 22050
 PREVIEW_MP3_BITRATE = "96k"
 PREVIEW_POLYPHONY = 64
 _TSF_BUFFER_FRAMES = 2048
+_SFIZZ_BLOCK_FRAMES = 1024
+_VALID_BACKENDS = {"auto", "tsf", "sfizz", "fluidsynth"}
+
+
+def _selected_backend() -> str:
+    """Backend requested via BIRKA_BACKEND (one of _VALID_BACKENDS).
+
+    "auto" is returned for unknown/empty values and for a requested backend
+    whose dependency is not available (so callers can fall back).
+    """
+    choice = os.environ.get("BIRKA_BACKEND", "auto").strip().lower()
+    if choice == "sfizz":
+        return "sfizz" if _SFIZZ_AVAILABLE else "auto"
+    if choice == "tsf":
+        return "tsf" if _TSF_AVAILABLE else "auto"
+    if choice == "fluidsynth":
+        return "fluidsynth"
+    return "auto"
+
+
+def _resolve_backend() -> str:
+    """Concrete backend: tsf | sfizz | fluidsynth | none.
+
+    Honours BIRKA_BACKEND. "auto" keeps the historical default (tsf, then
+    fluidsynth) and deliberately does NOT auto-promote sfizz, which stays
+    opt-in only so behaviour is unchanged unless explicitly requested.
+    """
+    requested = _selected_backend()
+    if requested != "auto":
+        return requested
+    if _TSF_AVAILABLE:
+        return "tsf"
+    if shutil.which("fluidsynth") is not None:
+        return "fluidsynth"
+    return "none"
 
 
 def _backend_name() -> str:
-    return "tsf" if _TSF_AVAILABLE else "fluidsynth"
+    """Resolved backend name; kept for tests and diagnostics."""
+    return _resolve_backend()
+
+
+def _synth_to_wav_for_backend(
+    backend: str, midi_path: Path, tmp_wav: Path, sample_rate: int, polyphony: int
+) -> bool:
+    """Synthesize one MIDI to a temp WAV using the given backend.
+
+    Returns False if the backend is unavailable or synthesis fails. sfizz falls
+    back to tsf/fluidsynth when no SFZ bank is found.
+    """
+    if backend == "sfizz":
+        sfz = _find_sfz()
+        if sfz is not None:
+            return _synth_sfizz_to_wav(
+                sfz, midi_path, tmp_wav, sample_rate=sample_rate, polyphony=polyphony
+            )
+        backend = "tsf" if _TSF_AVAILABLE else "fluidsynth"
+
+    soundfont = _find_soundfont()
+    if soundfont is None:
+        return False
+    if backend == "tsf" and _TSF_AVAILABLE:
+        return _synth_tsf_to_wav(
+            soundfont, midi_path, tmp_wav, sample_rate=sample_rate, polyphony=polyphony
+        )
+    if backend == "fluidsynth" and shutil.which("fluidsynth") is not None:
+        return _synth_to_wav(
+            soundfont, midi_path, tmp_wav, sample_rate=sample_rate, polyphony=polyphony
+        )
+    return False
 
 
 def render_midi_to_mp3(midi_path: Path, output_dir: Path) -> Optional[Path]:
-    """Render a MIDI file to MP3 via fluidsynth/tsf + ffmpeg loudness normalization."""
-    soundfont = _find_soundfont()
-    if soundfont is None or shutil.which("ffmpeg") is None:
+    """Render a MIDI file to MP3 via the selected backend + ffmpeg loudnorm."""
+    if shutil.which("ffmpeg") is None:
         return None
-    if _TSF_AVAILABLE:
+    backend = _resolve_backend()
+    if backend == "none":
+        return None
+    if backend == "tsf" and _TSF_AVAILABLE:
+        soundfont = _find_soundfont()
+        if soundfont is None:
+            return None
         return _render_tsf_to_mp3(midi_path, output_dir, soundfont)
-    if shutil.which("fluidsynth") is None:
-        return None
     output_dir.mkdir(parents=True, exist_ok=True)
     mp3_path = output_dir / (midi_path.stem + ".mp3")
     tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
     try:
-        if not _synth_to_wav(soundfont, midi_path, tmp_wav):
+        if not _synth_to_wav_for_backend(backend, midi_path, tmp_wav, 44100, 256):
             return None
         stats = _measure_stats(tmp_wav)
         af = _build_loudnorm_filter(stats)
@@ -77,12 +188,23 @@ def render_midi_to_mp3(midi_path: Path, output_dir: Path) -> Optional[Path]:
 def render_midi_to_wav(
     midi_path: Path, output_path: Path, sample_rate: int = 44100, polyphony: int = 256
 ) -> bool:
-    """Render a single MIDI to WAV via fluidsynth/tsf. No normalization (fast)."""
+    """Render a single MIDI to WAV via the selected backend. No normalization."""
+    backend = _resolve_backend()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if backend == "sfizz":
+        sfz = _find_sfz()
+        if sfz is not None:
+            return _synth_sfizz_to_wav(
+                sfz, midi_path, output_path, sample_rate=sample_rate, polyphony=polyphony
+            )
+        # no SFZ bank -> fall through to auto resolution
+        backend = "tsf" if _TSF_AVAILABLE else "fluidsynth"
+
     soundfont = _find_soundfont()
     if soundfont is None:
         return False
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    if _TSF_AVAILABLE:
+    if backend == "tsf" and _TSF_AVAILABLE:
         return _synth_tsf_to_wav(
             soundfont,
             midi_path,
@@ -90,11 +212,11 @@ def render_midi_to_wav(
             sample_rate=sample_rate,
             polyphony=polyphony,
         )
-    if shutil.which("fluidsynth") is None:
-        return False
-    return _synth_to_wav(
-        soundfont, midi_path, output_path, sample_rate=sample_rate, polyphony=polyphony
-    )
+    if backend == "fluidsynth" and shutil.which("fluidsynth") is not None:
+        return _synth_to_wav(
+            soundfont, midi_path, output_path, sample_rate=sample_rate, polyphony=polyphony
+        )
+    return False
 
 
 def render_midi_preview_mp3(
@@ -112,13 +234,23 @@ def render_midi_preview_mp3(
     """
     if shutil.which("ffmpeg") is None:
         return False
-    soundfont = _find_soundfont()
-    if soundfont is None:
-        return False
+    backend = _resolve_backend()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
     try:
-        if _TSF_AVAILABLE:
+        if backend == "sfizz":
+            sfz = _find_sfz()
+            if sfz is not None:
+                if not _synth_sfizz_to_wav(
+                    sfz, midi_path, tmp_wav, sample_rate=sample_rate, polyphony=polyphony
+                ):
+                    return False
+                return _encode_mp3(tmp_wav, None, output_path, bitrate=bitrate)
+            backend = "tsf" if _TSF_AVAILABLE else "fluidsynth"
+        soundfont = _find_soundfont()
+        if soundfont is None:
+            return False
+        if backend == "tsf" and _TSF_AVAILABLE:
             if not _synth_tsf_to_wav(
                 soundfont,
                 midi_path,
@@ -150,14 +282,17 @@ def render_midi_to_mp3_batch(
     on_progress: Optional[Callable[[int, int, Path, bool], None]] = None,
 ) -> Tuple[List[Path], List[Path]]:
     """Render multiple MIDI files to MP3 in parallel using all CPU cores."""
-    soundfont = _find_soundfont()
-    if soundfont is None or shutil.which("ffmpeg") is None:
+    if shutil.which("ffmpeg") is None:
         return [], list(midi_paths)
-    if not _TSF_AVAILABLE and shutil.which("fluidsynth") is None:
+    backend = _resolve_backend()
+    if backend == "none":
         return [], list(midi_paths)
     if not midi_paths:
         return [], []
-    if _TSF_AVAILABLE:
+    if backend == "tsf" and _TSF_AVAILABLE:
+        soundfont = _find_soundfont()
+        if soundfont is None:
+            return [], list(midi_paths)
         return _render_tsf_to_mp3_batch(
             midi_paths, output_dir, soundfont, on_progress=on_progress
         )
@@ -169,7 +304,7 @@ def render_midi_to_mp3_batch(
         mp3_path = output_dir / (midi_path.stem + ".mp3")
         tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
         try:
-            if not _synth_to_wav(soundfont, midi_path, tmp_wav):
+            if not _synth_to_wav_for_backend(backend, midi_path, tmp_wav, 44100, 256):
                 return midi_path, None
             stats = _measure_stats(tmp_wav)
             af = _build_loudnorm_filter(stats)
@@ -203,10 +338,13 @@ def render_midi_to_wav_batch(
     polyphony: int = 256,
 ) -> Tuple[List[Path], List[Path]]:
     """Render multiple MIDI files to WAV in parallel. No normalization (fast)."""
-    soundfont = _find_soundfont()
-    if soundfont is None:
+    backend = _resolve_backend()
+    if backend == "none":
         return [], list(midi_paths)
-    if not _TSF_AVAILABLE and shutil.which("fluidsynth") is None:
+    # sfizz needs an SFZ bank; tsf/fluidsynth need an SF2 soundfont.
+    if backend != "sfizz" and _find_soundfont() is None:
+        return [], list(midi_paths)
+    if backend == "sfizz" and _find_sfz() is None:
         return [], list(midi_paths)
     if not midi_paths:
         return [], []
@@ -423,12 +561,21 @@ def _synth_tsf_to_wav(
                 samples.extend(synth.render_float(_TSF_BUFFER_FRAMES))
     except Exception:
         return False
-    
-    # Soft-clip (tanh) then scale to 16-bit signed integers. See
-    # _soft_clip_to_int16 for why a hard clamp (and threshold-only tanh) audibly
-    # clicks when dense polyphony sums past full scale.
-    int16_samples = _soft_clip_to_int16(samples[:samples_needed])
 
+    # Soft-clip (tanh) + 16-bit stereo WAV. Shared with the sfizz renderer via
+    # _write_int16_wav so both backends produce identical output format.
+    return _write_int16_wav(samples[:samples_needed], output_path, sample_rate)
+
+
+def _write_int16_wav(
+    interleaved: List[float], output_path: Path, sample_rate: int
+) -> bool:
+    """Soft-clip a flat interleaved float buffer and write a 16-bit stereo WAV.
+
+    Shared by the tsf and sfizz renderers so both get identical output format
+    (16-bit stereo) and the same crackle-preventing soft-clip.
+    """
+    int16_samples = _soft_clip_to_int16(interleaved)
     if not int16_samples:
         return False
     try:
@@ -440,6 +587,105 @@ def _synth_tsf_to_wav(
     except Exception:
         return False
     return output_path.exists()
+
+
+def _synth_sfizz_to_wav(
+    sfz_path: Path,
+    midi_path: Path,
+    output_path: Path,
+    sample_rate: int = 44100,
+    polyphony: int = 256,
+) -> bool:
+    """Render a MIDI to a 16-bit stereo WAV via the sfizz engine (SFZ bank).
+
+    Mirrors _synth_tsf_to_wav's event-driven approach but drives pysfizz's
+    low-level _sfizz.Synth block API. pysfizz renders planar (left, right)
+    float32 blocks; we interleave them and reuse _write_int16_wav for the same
+    16-bit output + soft-clip as tsf.
+
+    Caveat: pysfizz does not expose program_change/bank selection. SFZ GM banks
+    map channels/programs to regions up front, so program_change events are
+    dropped (a debug warning is logged once). If a MIDI audibly mis-renders
+    because of this, add a programChange binding in modules/pysfizz (the engine
+    supports it at sfz::Synth::programChange).
+    """
+    try:
+        import mido as _mido
+        from pysfizz import _sfizz
+    except Exception:
+        return False
+
+    try:
+        mid = _mido.MidiFile(str(midi_path))
+    except Exception:
+        return False
+
+    events: List[Tuple[float, _mido.Message]] = []
+    abs_time = 0.0
+    warned_program_change = False
+    for msg in mid:
+        abs_time += msg.time
+        if msg.type in (
+            "note_on",
+            "note_off",
+            "control_change",
+            "pitchwheel",
+        ):
+            events.append((abs_time, msg))
+        elif msg.type == "program_change" and not warned_program_change:
+            logger_sfizz.debug(
+                "sfizz: dropping program_change events (unsupported by pysfizz)"
+            )
+            warned_program_change = True
+
+    total_seconds = max(1.0, mid.length + 2.0)
+    frames_needed = int(total_seconds * sample_rate)
+
+    try:
+        synth = _sfizz.Synth(sample_rate, _SFIZZ_BLOCK_FRAMES)
+        synth.enable_freewheeling()
+        synth.set_num_voices(max(1, min(polyphony, 512)))
+        if not synth.load_sfz_file(str(sfz_path)):
+            return False
+
+        interleaved: List[float] = []
+        event_index = 0
+        n_events = len(events)
+        rendered = 0
+
+        while rendered < frames_needed:
+            block_start = rendered
+            block_end = rendered + _SFIZZ_BLOCK_FRAMES
+            # Dispatch every event whose sample time falls within this block,
+            # computing the per-event sample delay relative to block_start.
+            while event_index < n_events:
+                msg_time, msg = events[event_index]
+                event_frame = int(msg_time * sample_rate)
+                if event_frame >= block_end:
+                    break
+                delay = max(0, min(_SFIZZ_BLOCK_FRAMES, event_frame - block_start))
+                if msg.type == "note_on" and msg.velocity > 0:
+                    synth.note_on(delay, msg.note, msg.velocity)
+                elif msg.type in ("note_off", "note_on"):
+                    synth.note_off(delay, msg.note, 0)
+                elif msg.type == "control_change":
+                    synth.cc(delay, msg.control, msg.value)
+                elif msg.type == "pitchwheel":
+                    # mido pitch is -8192..8191; sfizz expects the same range.
+                    synth.pitch_wheel(delay, msg.pitch)
+                event_index += 1
+
+            left, right = synth.render_block()
+            for i in range(len(left)):
+                interleaved.append(float(left[i]))
+                interleaved.append(float(right[i]))
+            rendered = len(interleaved) // 2
+    except Exception:
+        return False
+
+    channels = 2
+    samples_needed = frames_needed * channels
+    return _write_int16_wav(interleaved[:samples_needed], output_path, sample_rate)
 
 
 def _measure_stats(wav_path: Path) -> Optional[dict]:
@@ -569,4 +815,31 @@ def _find_soundfont() -> Optional[Path]:
         if base.exists():
             for sf2 in base.glob("*.sf2"):
                 return sf2
+    return None
+
+
+def _find_sfz() -> Optional[Path]:
+    """Locate an SFZ instrument bank for the sfizz backend (SFZ-only engine).
+
+    Independent of _find_soundfont() because sfizz cannot load .sf2. Honours
+    BIRKA_SFZ, then common SFZ locations.
+    """
+    env = os.environ.get("BIRKA_SFZ")
+    if env and Path(env).exists() and Path(env).suffix.lower() == ".sfz":
+        return Path(env)
+    candidates = [
+        Path("/Volumes/External/Code/Birka/data/GeneralUser GS.sfz"),
+        Path("/Volumes/External/Code/Birka/data/GeneralUserGS.sfz"),
+        Path("/opt/homebrew/share/sfz/GeneralUser GS.sfz"),
+    ]
+    for path in candidates:
+        if path.exists():
+            return path
+    for base in [
+        Path("/Volumes/External/Code/Birka/data"),
+        Path("/opt/homebrew/share/sfz"),
+    ]:
+        if base.exists():
+            for sfz in base.rglob("*.sfz"):
+                return sfz
     return None

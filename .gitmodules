@@ -4,3 +4,6 @@
 [submodule "modules/pysfizz"]
 	path = modules/pysfizz
 	url = https://github.com/bivex/pysfizz.git
+[submodule "data/Discord-SFZ-GM-Bank"]
+	path = data/Discord-SFZ-GM-Bank
+	url = https://github.com/sfzinstruments/Discord-SFZ-GM-Bank.git

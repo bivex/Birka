@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import struct
 import tempfile
 import unittest
@@ -9,14 +10,20 @@ from pathlib import Path
 import numpy as np
 
 from birka.infrastructure.midi_renderer import (
+    _SFIZZ_AVAILABLE,
     _TSF_AVAILABLE,
+    _VALID_BACKENDS,
     _backend_name,
     _build_loudnorm_filter,
     _encode_mp3,
+    _find_sfz,
     _find_soundfont,
     _measure_stats,
     _parse_loudnorm_stats,
+    _resolve_backend,
+    _selected_backend,
     _soft_clip_to_int16,
+    _synth_sfizz_to_wav,
     _synth_tsf_to_wav,
     PREVIEW_MP3_BITRATE,
     PREVIEW_POLYPHONY,
@@ -69,8 +76,121 @@ class TestBackend(unittest.TestCase):
     def test_tsf_available(self) -> None:
         self.assertTrue(_TSF_AVAILABLE, "TinySoundFont should be importable")
 
-    def test_backend_name_is_tsf(self) -> None:
-        self.assertEqual(_backend_name(), "tsf")
+    def test_backend_name_is_tsf_by_default(self) -> None:
+        # With no BIRKA_BACKEND override, the default is tsf (when available).
+        from birka.infrastructure import midi_renderer as mr
+        old = os.environ.pop("BIRKA_BACKEND", None)
+        try:
+            self.assertEqual(mr._backend_name(), "tsf")
+        finally:
+            if old is not None:
+                os.environ["BIRKA_BACKEND"] = old
+
+
+class TestBackendSelection(unittest.TestCase):
+    """BIRKA_BACKEND env drives backend selection (tsf|sfizz|fluidsynth|auto)."""
+
+    def setUp(self) -> None:
+        self._old = os.environ.get("BIRKA_BACKEND")
+        os.environ.pop("BIRKA_BACKEND", None)
+
+    def tearDown(self) -> None:
+        if self._old is not None:
+            os.environ["BIRKA_BACKEND"] = self._old
+        else:
+            os.environ.pop("BIRKA_BACKEND", None)
+
+    def test_valid_backends_constant(self) -> None:
+        self.assertEqual(_VALID_BACKENDS, {"auto", "tsf", "sfizz", "fluidsynth"})
+
+    def test_default_is_auto(self) -> None:
+        self.assertEqual(_selected_backend(), "auto")
+
+    def test_auto_resolves_to_tsf_when_available(self) -> None:
+        if not _TSF_AVAILABLE:
+            self.skipTest("tsf unavailable")
+        self.assertEqual(_resolve_backend(), "tsf")
+
+    def test_unknown_value_falls_back_to_auto(self) -> None:
+        os.environ["BIRKA_BACKEND"] = "nonsense"
+        self.assertEqual(_selected_backend(), "auto")
+
+    def test_case_insensitive_and_whitespace(self) -> None:
+        os.environ["BIRKA_BACKEND"] = "  TSF  "
+        self.assertEqual(_selected_backend(), "tsf")
+
+    def test_explicit_tsf_when_available(self) -> None:
+        if not _TSF_AVAILABLE:
+            self.skipTest("tsf unavailable")
+        os.environ["BIRKA_BACKEND"] = "tsf"
+        self.assertEqual(_selected_backend(), "tsf")
+        self.assertEqual(_resolve_backend(), "tsf")
+
+    def test_fluidsynth_always_selectable(self) -> None:
+        os.environ["BIRKA_BACKEND"] = "fluidsynth"
+        self.assertEqual(_selected_backend(), "fluidsynth")
+        self.assertEqual(_resolve_backend(), "fluidsynth")
+
+    def test_sfizz_when_available(self) -> None:
+        if not _SFIZZ_AVAILABLE:
+            self.skipTest("sfizz (pysfizz) not built")
+        os.environ["BIRKA_BACKEND"] = "sfizz"
+        self.assertEqual(_selected_backend(), "sfizz")
+        self.assertEqual(_resolve_backend(), "sfizz")
+
+    def test_sfizz_falls_back_to_auto_when_unbuilt(self) -> None:
+        if _SFIZZ_AVAILABLE:
+            self.skipTest("sfizz is built in this environment")
+        os.environ["BIRKA_BACKEND"] = "sfizz"
+        # Requested sfizz but it's unavailable -> selected falls back to auto,
+        # which then resolves to whatever is available (tsf here).
+        self.assertEqual(_selected_backend(), "auto")
+
+    def test_tsf_falls_back_to_auto_when_unbuilt(self) -> None:
+        if _TSF_AVAILABLE:
+            self.skipTest("tsf is built in this environment")
+        os.environ["BIRKA_BACKEND"] = "tsf"
+        self.assertEqual(_selected_backend(), "auto")
+
+
+class TestFindSfz(unittest.TestCase):
+    """SFZ locator for the sfizz backend (independent of the SF2 soundfont)."""
+
+    def setUp(self) -> None:
+        self._old = os.environ.get("BIRKA_SFZ")
+        os.environ.pop("BIRKA_SFZ", None)
+
+    def tearDown(self) -> None:
+        if self._old is not None:
+            os.environ["BIRKA_SFZ"] = self._old
+        else:
+            os.environ.pop("BIRKA_SFZ", None)
+
+    def test_env_override_existing_sfz(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sfz = Path(tmp) / "inst.sfz"
+            sfz.write_text("<region> sample=kick.wav\n")
+            os.environ["BIRKA_SFZ"] = str(sfz)
+            self.assertEqual(_find_sfz(), sfz)
+
+    def test_env_override_rejects_non_sfz_suffix_falls_back(self) -> None:
+        # A non-.sfz env value is ignored and discovery continues (does not
+        # block the bundled bank or other candidates).
+        with tempfile.TemporaryDirectory() as tmp:
+            other = Path(tmp) / "inst.sf2"
+            other.write_text("not sfz")
+            os.environ["BIRKA_SFZ"] = str(other)
+            # Must not return the .sf2 path.
+            self.assertNotEqual(_find_sfz(), other)
+
+    def test_env_override_missing_file_falls_back(self) -> None:
+        # A missing env path is ignored and discovery continues rather than
+        # leaving the backend with no bank.
+        os.environ["BIRKA_SFZ"] = "/nonexistent/path.sfz"
+        result = _find_sfz()
+        if result is not None:
+            self.assertNotEqual(str(result), "/nonexistent/path.sfz")
+        # If no bank is available at all, None is still acceptable here.
 
 
 # ---------------------------------------------------------------------------
@@ -679,3 +799,101 @@ class TestSoftClipToInt16(unittest.TestCase):
 
     def test_empty_input(self) -> None:
         self.assertEqual(_soft_clip_to_int16([]), [])
+
+
+# ---------------------------------------------------------------------------
+# _synth_sfizz_to_wav (sfizz backend; skips when pysfizz/SFZ unavailable)
+# ---------------------------------------------------------------------------
+
+def _sfizz_test_sfz() -> Optional[Path]:
+    """An SFZ file usable for integration tests: a real GM bank if found, else
+    pysfizz's bundled sine-generator SFZ (sample=*sine, no external samples).
+
+    Lets the sfizz render tests actually run without requiring a downloaded
+    GM soundfont, while preferring a real instrument bank when available.
+    """
+    bank = _find_sfz()
+    if bank is not None:
+        return bank
+    sine = (
+        Path(__file__).resolve().parents[1]
+        / "modules"
+        / "pysfizz"
+        / "external"
+        / "sfizz"
+        / "tests"
+        / "TestFiles"
+        / "dollar_include_sine.sfz"
+    )
+    return sine if sine.exists() else None
+
+
+_SFIZZ_READY = _SFIZZ_AVAILABLE and _sfizz_test_sfz() is not None
+
+
+@unittest.skipUnless(_SFIZZ_READY, "sfizz backend not built or no SFZ bank available")
+class TestSynthSfizzToWav(unittest.TestCase):
+    """Integration tests for the sfizz renderer.
+
+    These exercise the real _sfizz.Synth + an SFZ file (a GM bank if present,
+    else pysfizz's bundled sine-generator SFZ), so they skip unless pysfizz is
+    built. They mirror TestSynthTsfToWav / TestWavFormat so both backends are
+    held to the same output contract.
+    """
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.tmp = Path(self._tmp.name)
+        self.sfz = _sfizz_test_sfz()
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    def test_output_is_16bit_stereo(self) -> None:
+        out = self.tmp / "out.wav"
+        self.assertTrue(_synth_sfizz_to_wav(self.sfz, MIDI_PATH, out))
+        ch, sw, fr, _ = _read_wav_samples(out)
+        self.assertEqual(sw, 2, "Expected 16-bit")
+        self.assertEqual(ch, 2, "Expected stereo")
+        self.assertEqual(fr, 44100)
+
+    def test_output_file_created(self) -> None:
+        out = self.tmp / "out.wav"
+        self.assertTrue(_synth_sfizz_to_wav(self.sfz, MIDI_PATH, out))
+        self.assertTrue(out.exists())
+
+    def test_not_silent(self) -> None:
+        out = self.tmp / "out.wav"
+        self.assertTrue(_synth_sfizz_to_wav(self.sfz, MIDI_PATH, out))
+        _, _, _, data = _read_wav_samples(out)
+        self.assertGreater(int(np.max(np.abs(data))), 0, "Output is silent")
+
+    def test_no_samples_pinned_to_ceiling(self) -> None:
+        """Same crackle regression as tsf: nothing sits on the 16-bit ceiling.
+
+        _synth_sfizz_to_wav must route through _soft_clip_to_int16, so dense
+        polyphony never hard-clips regardless of backend.
+        """
+        out = self.tmp / "out.wav"
+        self.assertTrue(_synth_sfizz_to_wav(self.sfz, MIDI_PATH, out, polyphony=256))
+        _, _, _, data = _read_wav_samples(out)
+        peak = int(np.max(np.abs(data)))
+        self.assertLess(peak, 32767, "Sample pinned to ceiling (hard clip)")
+
+
+class TestSynthSfizzToWavAvailability(unittest.TestCase):
+    """Always-run checks that don't need pysfizz built."""
+
+    def test_returns_false_for_missing_sfz(self) -> None:
+        out = Path(tempfile.mkdtemp()) / "out.wav"
+        # _synth_sfizz_to_wav imports pysfizz lazily; a missing SFZ path can't
+        # be exercised without the native ext, but a bogus midi + bogus sfz
+        # must still return False (not raise) when sfizz is unbuilt.
+        if not _SFIZZ_AVAILABLE:
+            self.assertFalse(
+                _synth_sfizz_to_wav(
+                    Path("/nonexistent.sfz"), Path("/nonexistent.mid"), out
+                )
+            )
+        else:
+            self.skipTest("sfizz is built; covered by TestSynthSfizzToWav")

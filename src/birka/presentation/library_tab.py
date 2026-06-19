@@ -14,6 +14,7 @@ from birka.domain.media import MediaItem, Rating
 from birka.infrastructure.file_scanner import FileSystemScanner
 from birka.infrastructure.metadata_readers import AudioMidiMetadataReader
 from birka.infrastructure.midi_renderer import (
+    _backend_name,
     render_midi_to_mp3_batch,
     render_midi_to_wav_batch,
 )
@@ -708,7 +709,9 @@ class LibraryTab(QtWidgets.QWidget):
                 QtWidgets.QMessageBox.information(
                     self,
                     "MIDI",
-                    "Cannot render MIDI. Check fluidsynth + soundfont.",
+                    f"Cannot render MIDI (backend: {_backend_name()}). "
+                    "Check the synth backend and its instrument file "
+                    "(SF2 soundfont for tsf/fluidsynth, SFZ bank for sfizz).",
                 )
                 self._loading_midi_path = None
             return
