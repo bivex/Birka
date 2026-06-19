@@ -84,11 +84,11 @@ class TestWavFormat(unittest.TestCase):
     def tearDown(self) -> None:
         self._tmp.cleanup()
 
-    def test_wav_is_32bit(self) -> None:
+    def test_wav_is_16bit(self) -> None:
         wav = self.tmp / "out.wav"
         self.assertTrue(render_midi_to_wav(MIDI_PATH, wav))
         _, sw, _, _ = _read_wav_samples(wav)
-        self.assertEqual(sw, 4, "Expected 32-bit (4-byte) samples")
+        self.assertEqual(sw, 2, "Expected 16-bit (2-byte) samples")
 
     def test_wav_is_stereo(self) -> None:
         wav = self.tmp / "out.wav"
@@ -136,15 +136,14 @@ class TestWavContent(unittest.TestCase):
 
     def test_peak_below_clipping(self) -> None:
         peak = int(np.max(np.abs(self.data)))
-        max_32bit = 2_147_483_647
-        self.assertLess(peak, max_32bit, "Audio is clipping at 32-bit ceiling")
+        max_16bit = 32767
+        self.assertLess(peak, max_16bit, "Audio is clipping at 16-bit ceiling")
 
     def test_peak_above_minus20dBFS(self) -> None:
         peak = int(np.max(np.abs(self.data)))
-        max_32bit = 2_147_483_647
-        peak_db = 20 * (peak / max_32bit) ** 0.5  # rough sanity, not precise dB
+        max_16bit = 32767
         # Just assert there is meaningful signal (peak > 1% of full scale)
-        self.assertGreater(peak / max_32bit, 0.01, "Signal too weak (< 1% full scale)")
+        self.assertGreater(peak / max_16bit, 0.01, "Signal too weak (< 1% full scale)")
 
     def test_duration_reasonable(self) -> None:
         """WAV should be at least 1 s and no more than 60 s for a short MIDI."""
@@ -152,6 +151,32 @@ class TestWavContent(unittest.TestCase):
             duration = wf.getnframes() / wf.getframerate()
         self.assertGreaterEqual(duration, 1.0)
         self.assertLessEqual(duration, 60.0)
+
+    def test_no_hard_clipping(self) -> None:
+        """No sample should sit on the 16-bit ceiling (would indicate clipping)."""
+        peak = int(np.max(np.abs(self.data)))
+        self.assertLess(peak, 32767, "Hard clipping at +32767")
+        self.assertGreater(peak, -32768)
+
+    def test_no_channel_discontinuities(self) -> None:
+        """Adjacent same-channel samples should not jump by >50% of full scale.
+
+        Large jumps within a single channel indicate decoder-hostile clicks.
+        (Interleaved L/R differences are not a defect and are ignored here.)
+        """
+        ceiling = 32767
+        left = self.data[0::2]
+        right = self.data[1::2]
+        for name, ch in (("L", left), ("R", right)):
+            if len(ch) < 2:
+                continue
+            jumps = np.abs(np.diff(ch.astype(np.int64)))
+            worst = int(np.max(jumps))
+            self.assertLess(
+                worst,
+                ceiling * 0.5,
+                f"{name} channel has a discontinuity > 50% ({worst})",
+            )
 
 
 # ---------------------------------------------------------------------------

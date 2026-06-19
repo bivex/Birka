@@ -403,24 +403,26 @@ def _synth_tsf_to_wav(
     except Exception:
         return False
     
-    # Scale float samples [-1.0, 1.0] to 32-bit signed integers and clamp
-    int32_samples = []
+    # Scale float samples [-1.0, 1.0] to 16-bit signed integers and clamp.
+    # 16-bit matches the SF2 source material and avoids QMediaPlayer/FFmpeg
+    # decoder artifacts (crackle) seen with 32-bit int (pcm_s32le) WAV.
+    int16_samples = []
     for s in samples[:samples_needed]:
         if s >= 1.0:
-            int32_samples.append(2147483647)
+            int16_samples.append(32767)
         elif s <= -1.0:
-            int32_samples.append(-2147483648)
+            int16_samples.append(-32768)
         else:
-            int32_samples.append(int(s * 2147483647.0))
+            int16_samples.append(int(s * 32767.0))
 
-    if not int32_samples:
+    if not int16_samples:
         return False
     try:
         with wave.open(str(output_path), "wb") as wf:
             wf.setnchannels(2)
-            wf.setsampwidth(4) # 32-bit (4 bytes)
+            wf.setsampwidth(2)  # 16-bit (2 bytes)
             wf.setframerate(sample_rate)
-            wf.writeframes(struct.pack(f"<{len(int32_samples)}i", *int32_samples))
+            wf.writeframes(struct.pack(f"<{len(int16_samples)}h", *int16_samples))
     except Exception:
         return False
     return output_path.exists()
