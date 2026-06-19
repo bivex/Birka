@@ -104,6 +104,8 @@ def render_midi_to_mp3_batch(
         return [], list(midi_paths)
     if not _TSF_AVAILABLE and shutil.which("fluidsynth") is None:
         return [], list(midi_paths)
+    if not midi_paths:
+        return [], []
     if _TSF_AVAILABLE:
         return _render_tsf_to_mp3_batch(
             midi_paths, output_dir, soundfont, on_progress=on_progress
@@ -195,6 +197,8 @@ def _render_tsf_to_mp3_batch(
     soundfont: Path,
     on_progress: Optional[Callable[[int, int, Path, bool], None]] = None,
 ) -> Tuple[List[Path], List[Path]]:
+    if not midi_paths:
+        return [], []
     output_dir.mkdir(parents=True, exist_ok=True)
     max_workers = min(len(midi_paths), os.cpu_count() or 4)
     results: List[Tuple[Path, Optional[Path]]] = []
