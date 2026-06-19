@@ -14,6 +14,7 @@ from birka.infrastructure.midi_renderer import (
     _TSF_AVAILABLE,
     _VALID_BACKENDS,
     _backend_name,
+    _build_discord_gm_sfz,
     _build_loudnorm_filter,
     _encode_mp3,
     _find_sfz,
@@ -897,3 +898,98 @@ class TestSynthSfizzToWavAvailability(unittest.TestCase):
             )
         else:
             self.skipTest("sfizz is built; covered by TestSynthSfizzToWav")
+
+
+# ---------------------------------------------------------------------------
+# _build_discord_gm_sfz (combined-bank generator for the sfizz backend)
+# ---------------------------------------------------------------------------
+
+_DISCORD_BANK = Path("/Volumes/External/Code/Birka/data/Discord-SFZ-GM-Bank")
+
+
+class TestBuildDiscordGmSfz(unittest.TestCase):
+    """Tests for the runtime GM.sfz combiner.
+
+    The Discord bank ships as 149 separate per-instrument files (most are
+    sample=*sine placeholders) with no single GM.sfz. _build_discord_gm_sfz
+    combines the real instruments into one loadable file. These tests pin the
+    three bugs found during development: placeholder inclusion, dangling-opcode
+    handling (commented-out <master> leaving bare opcodes), and per-group
+    default_path resets (which is why sample paths are prefixed directly).
+    """
+
+    def setUp(self) -> None:
+        if not _DISCORD_BANK.is_dir():
+            self.skipTest("Discord-SFZ-GM-Bank submodule not present")
+        self._gm_path = _DISCORD_BANK / "Discord GM" / "GM_combined.sfz"
+        if self._gm_path.exists():
+            self._gm_path.unlink()
+
+    def tearDown(self) -> None:
+        if self._gm_path.exists():
+            self._gm_path.unlink()
+
+    def test_returns_path_and_creates_file(self) -> None:
+        out = _build_discord_gm_sfz(_DISCORD_BANK)
+        self.assertIsNotNone(out)
+        self.assertTrue(Path(out).exists())
+        self.assertEqual(Path(out).name, "GM_combined.sfz")
+
+    def test_no_placeholder_instruments(self) -> None:
+        out = _build_discord_gm_sfz(_DISCORD_BANK)
+        text = Path(out).read_text(encoding="utf-8")
+        self.assertNotIn("sample=*sine", text, "Placeholder instrument leaked in")
+
+    def test_sample_paths_prefixed_with_instrument_dir(self) -> None:
+        out = _build_discord_gm_sfz(_DISCORD_BANK)
+        text = Path(out).read_text(encoding="utf-8")
+        self.assertIn("Melodic/001-Acoustic Grand Piano/", text)
+
+    def test_dangling_opcodes_stripped(self) -> None:
+        """Bare opcodes (under a commented //<master>, before any real header)
+        must be stripped so sfizz doesn't reject the instrument."""
+        out = _build_discord_gm_sfz(_DISCORD_BANK)
+        text = Path(out).read_text(encoding="utf-8")
+        in_body = False
+        for line in text.splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("//"):
+                continue
+            if stripped.startswith("<"):
+                in_body = True
+                continue
+            self.assertTrue(
+                in_body,
+                f"Bare opcode before any header (rejected by sfizz): {stripped}",
+            )
+
+    def test_drums_present_on_channel_10(self) -> None:
+        out = _build_discord_gm_sfz(_DISCORD_BANK)
+        text = Path(out).read_text(encoding="utf-8")
+        self.assertIn("lochan=10 hichan=10", text)
+        self.assertIn("Drums/001-Standard Kit/", text)
+
+    def test_idempotent_rebuild_uses_cache(self) -> None:
+        first = _build_discord_gm_sfz(_DISCORD_BANK)
+        first_mtime = Path(first).stat().st_mtime
+        second = _build_discord_gm_sfz(_DISCORD_BANK)
+        self.assertEqual(Path(first), Path(second))
+        self.assertEqual(Path(second).stat().st_mtime, first_mtime)
+
+
+@unittest.skipUnless(_SFIZZ_AVAILABLE, "sfizz not built")
+class TestDiscordBankLoadsInSfizz(unittest.TestCase):
+    """The generated GM_combined.sfz must load into sfizz with real regions."""
+
+    def setUp(self) -> None:
+        if not _DISCORD_BANK.is_dir():
+            self.skipTest("Discord-SFZ-GM-Bank submodule not present")
+
+    def test_combined_bank_has_regions(self) -> None:
+        from pysfizz import _sfizz
+
+        sfz = _build_discord_gm_sfz(_DISCORD_BANK)
+        synth = _sfizz.Synth(44100, 1024)
+        synth.enable_freewheeling()
+        self.assertTrue(synth.load_sfz_file(str(sfz)))
+        self.assertGreater(synth.get_num_regions(), 0, "Combined bank loaded 0 regions")
