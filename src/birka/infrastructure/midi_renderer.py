@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import shutil
@@ -403,17 +404,16 @@ def _synth_tsf_to_wav(
     except Exception:
         return False
     
-    # Scale float samples [-1.0, 1.0] to 16-bit signed integers and clamp.
-    # 16-bit matches the SF2 source material and avoids QMediaPlayer/FFmpeg
-    # decoder artifacts (crackle) seen with 32-bit int (pcm_s32le) WAV.
+    # Soft-clip (tanh) then scale to 16-bit signed integers.
+    # When many voices sum together the float output can exceed [-1.0, 1.0];
+    # a hard clamp produces audible clicks (samples pinned to the ceiling).
+    # tanh is near-linear below ~0.7 and smoothly limits peaks above that,
+    # so quiet passages stay exact and only the overshoot is rounded off.
     int16_samples = []
     for s in samples[:samples_needed]:
-        if s >= 1.0:
-            int16_samples.append(32767)
-        elif s <= -1.0:
-            int16_samples.append(-32768)
-        else:
-            int16_samples.append(int(s * 32767.0))
+        if s > 1.0 or s < -1.0:
+            s = math.tanh(s)
+        int16_samples.append(max(-32768, min(32767, int(s * 32767.0))))
 
     if not int16_samples:
         return False

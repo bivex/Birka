@@ -498,3 +498,48 @@ class TestRenderMidiPreviewMp3(unittest.TestCase):
             mp3 = self.tmp / f"{midi.stem}.mp3"
             self.assertTrue(render_midi_preview_mp3(midi, mp3), f"Failed: {midi.name}")
             self.assertGreater(mp3.stat().st_size, 0)
+
+
+# ---------------------------------------------------------------------------
+# Soft-clipping (regression: dense polyphony must not pin samples to ceiling)
+# ---------------------------------------------------------------------------
+
+class TestSoftClipping(unittest.TestCase):
+    """A dense chord should sum past full scale; the render must not hard-clip.
+
+    Regression for the crackle bug: with many simultaneous voices the float
+    output exceeds [-1.0, 1.0]. A hard clamp pins those samples to ±32767,
+    producing audible clicks. The tanh soft-clip should keep no sample flat
+    against the ceiling even when the source overshoots.
+    """
+
+    def _dense_midi(self, path: Path) -> None:
+        import mido
+
+        mid = mido.MidiFile(ticks_per_beat=480)
+        track = mido.MidiTrack()
+        mid.tracks.append(track)
+        # 12 notes spanning several octaves, all on at once -> sum overshoots 1.0
+        notes = [36, 43, 48, 55, 60, 67, 72, 79, 84, 91, 96, 103]
+        for n in notes:
+            track.append(mido.Message("note_on", note=n, velocity=127, time=0))
+        # hold for ~2 seconds
+        track.append(mido.Message("note_off", note=notes[0], velocity=0, time=960))
+        for n in notes[1:]:
+            track.append(mido.Message("note_off", note=n, velocity=0, time=0))
+        mid.save(str(path))
+
+    def test_no_samples_pinned_to_ceiling(self) -> None:
+        tmp = tempfile.TemporaryDirectory()
+        try:
+            midi = Path(tmp.name) / "dense.mid"
+            self._dense_midi(midi)
+            out = Path(tmp.name) / "dense.wav"
+            self.assertTrue(render_midi_to_wav(midi, out, polyphony=256))
+            _, _, _, data = _read_wav_samples(out)
+            peak = int(np.max(np.abs(data)))
+            # The whole point of soft-clip: nothing sits flat on the ceiling.
+            self.assertLess(peak, 32767, "Sample pinned to +ceiling (hard clip)")
+            self.assertGreater(peak, 32767 * 0.5, "Signal unexpectedly quiet")
+        finally:
+            tmp.cleanup()
