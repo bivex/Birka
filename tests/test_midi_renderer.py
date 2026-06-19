@@ -26,7 +26,7 @@ class MidiRendererTests(unittest.TestCase):
             # Verify WAV properties
             with wave.open(str(wav_path), "rb") as wf:
                 self.assertEqual(wf.getnchannels(), 2)
-                self.assertEqual(wf.getsampwidth(), 2)
+                self.assertEqual(wf.getsampwidth(), 4)
                 self.assertGreater(wf.getnframes(), 0)
 
     def test_render_midi_to_mp3(self) -> None:

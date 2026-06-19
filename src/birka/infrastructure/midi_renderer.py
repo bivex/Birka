@@ -272,7 +272,7 @@ def _synth_tsf_to_wav(
             for ch in range(16):
                 synth.channel_set_preset_number(ch, 0, midi_drums=(ch == 9))
 
-            samples: List[int] = []
+            samples: List[float] = []
             event_index = 0
             channels = 2
             samples_needed = frames_needed * channels
@@ -299,18 +299,28 @@ def _synth_tsf_to_wav(
                     elif msg.type == "pitchwheel":
                         synth.channel_set_pitchwheel(msg.channel, msg.pitch + 8192)
                     event_index += 1
-                samples.extend(synth.render_short(_TSF_BUFFER_FRAMES))
+                samples.extend(synth.render_float(_TSF_BUFFER_FRAMES))
     except Exception:
         return False
-    int16 = samples[:samples_needed]
-    if not int16:
+    
+    # Scale float samples [-1.0, 1.0] to 32-bit signed integers and clamp
+    int32_samples = []
+    for s in samples[:samples_needed]:
+        if s >= 1.0:
+            int32_samples.append(2147483647)
+        elif s <= -1.0:
+            int32_samples.append(-2147483648)
+        else:
+            int32_samples.append(int(s * 2147483647.0))
+
+    if not int32_samples:
         return False
     try:
         with wave.open(str(output_path), "wb") as wf:
             wf.setnchannels(2)
-            wf.setsampwidth(2)
+            wf.setsampwidth(4) # 32-bit (4 bytes)
             wf.setframerate(sample_rate)
-            wf.writeframes(struct.pack(f"<{len(int16)}h", *int16))
+            wf.writeframes(struct.pack(f"<{len(int32_samples)}i", *int32_samples))
     except Exception:
         return False
     return output_path.exists()
