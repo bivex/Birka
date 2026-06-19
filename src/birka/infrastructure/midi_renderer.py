@@ -589,19 +589,66 @@ def _write_int16_wav(
     return output_path.exists()
 
 
+def _write_float_wav(
+    interleaved: List[float], output_path: Path, sample_rate: int
+) -> bool:
+    """Write a flat interleaved float buffer as a 32-bit IEEE_FLOAT stereo WAV.
+
+    Skips integer quantization entirely, so sfizz's native float output is
+    preserved at full precision. Faster than the int16 path (no per-sample
+    tanh/min/max/int conversion), and avoids the QMediaPlayer crackle that
+    32-bit *int* (pcm_s32le) caused -- IEEE_FLOAT (format 0x0003) decodes
+    cleanly in Qt's FFmpeg backend.
+
+    Soft-clip (tanh) is still applied via numpy so dense polyphony never
+    exceeds [-1, 1], but at float precision (no ceiling pinning).
+    """
+    try:
+        import numpy as np
+    except Exception:
+        return _write_int16_wav(interleaved, output_path, sample_rate)
+
+    if not interleaved:
+        return False
+    # Soft-clip in place at float precision: tanh keeps peaks within [-1, 1]
+    # without the int16 ceiling-pinning that hard clamping would cause.
+    arr = np.tanh(np.asarray(interleaved, dtype=np.float32))
+    raw = arr.tobytes()  # little-endian float32, interleaved stereo
+
+    channels = 2
+    byte_rate = sample_rate * channels * 4
+    try:
+        with open(str(output_path), "wb") as f:
+            f.write(b"RIFF")
+            f.write(struct.pack("<I", 36 + len(raw)))
+            f.write(b"WAVE")
+            # fmt: WAVE_FORMAT_IEEE_FLOAT (3), stereo, 32 bits/sample
+            f.write(b"fmt ")
+            f.write(struct.pack("<IHHIIHH", 16, 3, channels, sample_rate, byte_rate, channels * 4, 32))
+            f.write(b"data")
+            f.write(struct.pack("<I", len(raw)))
+            f.write(raw)
+    except Exception:
+        return False
+    return output_path.exists()
+
+
 def _synth_sfizz_to_wav(
     sfz_path: Path,
     midi_path: Path,
     output_path: Path,
     sample_rate: int = 44100,
     polyphony: int = 256,
+    bit_depth: int = 32,
 ) -> bool:
-    """Render a MIDI to a 16-bit stereo WAV via the sfizz engine (SFZ bank).
+    """Render a MIDI to a stereo WAV via the sfizz engine (SFZ bank).
 
     Mirrors _synth_tsf_to_wav's event-driven approach but drives pysfizz's
     low-level _sfizz.Synth block API. pysfizz renders planar (left, right)
-    float32 blocks; we interleave them and reuse _write_int16_wav for the same
-    16-bit output + soft-clip as tsf.
+    float32 blocks; we interleave them. Output defaults to 32-bit IEEE_FLOAT
+    (bit_depth=32): preserves sfizz's native float precision, skips integer
+    quantization (faster than int16), and decodes cleanly in QMediaPlayer
+    (unlike 32-bit int). Pass bit_depth=16 for the int16 path.
 
     Caveat: pysfizz does not expose program_change/bank selection. SFZ GM banks
     map channels/programs to regions up front, so program_change events are
@@ -685,7 +732,10 @@ def _synth_sfizz_to_wav(
 
     channels = 2
     samples_needed = frames_needed * channels
-    return _write_int16_wav(interleaved[:samples_needed], output_path, sample_rate)
+    buf = interleaved[:samples_needed]
+    if bit_depth == 32:
+        return _write_float_wav(buf, output_path, sample_rate)
+    return _write_int16_wav(buf, output_path, sample_rate)
 
 
 def _measure_stats(wav_path: Path) -> Optional[dict]:

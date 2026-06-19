@@ -44,7 +44,11 @@ MIDI_DIR = Path("/Volumes/External/Code/Birka/data/library/midi")
 # ---------------------------------------------------------------------------
 
 def _read_wav_samples(wav_path: Path) -> tuple[int, int, int, np.ndarray]:
-    """Return (channels, sampwidth, framerate, int32 data array)."""
+    """Return (channels, sampwidth, framerate, int data array).
+
+    Works for int16/int32 PCM. For IEEE_FLOAT (32-bit float) output use
+    _read_wav_float instead -- Python's wave module cannot read format 3.
+    """
     with wave.open(str(wav_path), "rb") as wf:
         ch = wf.getnchannels()
         sw = wf.getsampwidth()
@@ -52,6 +56,36 @@ def _read_wav_samples(wav_path: Path) -> tuple[int, int, int, np.ndarray]:
         raw = wf.readframes(wf.getnframes())
     dtype = np.int32 if sw == 4 else np.int16
     return ch, sw, fr, np.frombuffer(raw, dtype=dtype)
+
+
+def _read_wav_float(wav_path: Path) -> tuple[int, int, np.ndarray]:
+    """Read an IEEE_FLOAT (32-bit) WAV: return (channels, framerate, float32 array).
+
+    Parses the RIFF/WAVE container manually because the stdlib wave module
+    rejects format code 3 (IEEE_FLOAT). Returns the interleaved float samples.
+    """
+    import struct
+
+    with open(str(wav_path), "rb") as f:
+        data = f.read()
+    assert data[:4] == b"RIFF" and data[8:12] == b"WAVE", "not a WAVE file"
+    # Walk chunks; find fmt (format tag) and data.
+    fmt_tag = None
+    channels = framerate = 0
+    pos = 12
+    audio = b""
+    while pos + 8 <= len(data):
+        cid = data[pos : pos + 4]
+        csize = struct.unpack("<I", data[pos + 4 : pos + 8])[0]
+        body = data[pos + 8 : pos + 8 + csize]
+        if cid == b"fmt ":
+            fmt_tag, channels = struct.unpack("<HH", body[:4])
+            framerate = struct.unpack("<I", body[4:8])[0]
+        elif cid == b"data":
+            audio = body
+        pos += 8 + csize + (csize & 1)  # chunks are word-aligned
+    assert fmt_tag == 3, f"expected IEEE_FLOAT (fmt tag 3), got {fmt_tag}"
+    return channels, framerate, np.frombuffer(audio, dtype=np.float32)
 
 
 def _make_silence_wav(path: Path, duration_s: float = 1.0, sr: int = 44100) -> None:
@@ -850,13 +884,17 @@ class TestSynthSfizzToWav(unittest.TestCase):
     def tearDown(self) -> None:
         self._tmp.cleanup()
 
-    def test_output_is_16bit_stereo(self) -> None:
+    def test_output_is_32bit_float_stereo(self) -> None:
+        """Default sfizz output is 32-bit IEEE_FLOAT (sfizz's native format).
+
+        Float preserves DSP precision, skips integer quantization (faster), and
+        decodes cleanly in QMediaPlayer (unlike 32-bit int)."""
         out = self.tmp / "out.wav"
         self.assertTrue(_synth_sfizz_to_wav(self.sfz, MIDI_PATH, out))
-        ch, sw, fr, _ = _read_wav_samples(out)
-        self.assertEqual(sw, 2, "Expected 16-bit")
+        ch, fr, data = _read_wav_float(out)
         self.assertEqual(ch, 2, "Expected stereo")
         self.assertEqual(fr, 44100)
+        self.assertEqual(data.dtype, np.float32)
 
     def test_output_file_created(self) -> None:
         out = self.tmp / "out.wav"
@@ -866,20 +904,32 @@ class TestSynthSfizzToWav(unittest.TestCase):
     def test_not_silent(self) -> None:
         out = self.tmp / "out.wav"
         self.assertTrue(_synth_sfizz_to_wav(self.sfz, MIDI_PATH, out))
-        _, _, _, data = _read_wav_samples(out)
-        self.assertGreater(int(np.max(np.abs(data))), 0, "Output is silent")
+        _, _, data = _read_wav_float(out)
+        self.assertGreater(float(np.max(np.abs(data))), 0.0, "Output is silent")
 
     def test_no_samples_pinned_to_ceiling(self) -> None:
-        """Same crackle regression as tsf: nothing sits on the 16-bit ceiling.
+        """Crackle regression: float output must not hard-clip.
 
-        _synth_sfizz_to_wav must route through _soft_clip_to_int16, so dense
-        polyphony never hard-clips regardless of backend.
+        _write_float_wav applies tanh soft-clip at float precision, so dense
+        polyphony never exceeds [-1, 1] and no sample sits flat on the ceiling.
         """
         out = self.tmp / "out.wav"
         self.assertTrue(_synth_sfizz_to_wav(self.sfz, MIDI_PATH, out, polyphony=256))
-        _, _, _, data = _read_wav_samples(out)
-        peak = int(np.max(np.abs(data)))
-        self.assertLess(peak, 32767, "Sample pinned to ceiling (hard clip)")
+        _, _, data = _read_wav_float(out)
+        peak = float(np.max(np.abs(data)))
+        self.assertLessEqual(peak, 1.0, "Float output exceeded [-1, 1]")
+        self.assertGreater(peak, 0.0, "Output silent")
+        # No sample pinned exactly at +/-1.0 (would indicate hard clipping).
+        at_ceiling = int(np.sum(np.abs(data) >= 1.0))
+        self.assertEqual(at_ceiling, 0, "Sample pinned to +/-1.0 ceiling")
+
+    def test_bit_depth_16_still_supported(self) -> None:
+        """The int16 path remains available via bit_depth=16."""
+        out = self.tmp / "out16.wav"
+        self.assertTrue(_synth_sfizz_to_wav(self.sfz, MIDI_PATH, out, bit_depth=16))
+        ch, sw, fr, data = _read_wav_samples(out)
+        self.assertEqual(sw, 2, "Expected 16-bit")
+        self.assertEqual(ch, 2)
 
 
 class TestSynthSfizzToWavAvailability(unittest.TestCase):

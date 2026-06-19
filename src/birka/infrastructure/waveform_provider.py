@@ -13,6 +13,12 @@ class WaveformProvider:
         effective_points = points or self.POINTS_DEFAULT
         if path.suffix.lower() != ".wav":
             return []
+        # IEEE_FLOAT WAVs (WAVE_FORMAT_IEEE_FLOAT, fmt tag 3) -- written by the
+        # sfizz backend -- are rejected by the stdlib wave module, so detect and
+        # parse them manually. Falls through to the wave module for PCM int.
+        float_samples = _maybe_read_float_wav(path)
+        if float_samples is not None:
+            return _downsample_float(float_samples, effective_points)
         try:
             with wave.open(str(path), "rb") as wav:
                 frames = wav.getnframes()
@@ -74,4 +80,63 @@ def _downsample(samples: List[int], points: int, max_value: float) -> List[float
             continue
         peak = max(abs(min(chunk)), abs(max(chunk)))
         result.append(min(1.0, peak / max_value))
+    return result[:points]
+
+
+def _maybe_read_float_wav(path: Path) -> List[float] | None:
+    """Parse a 32-bit IEEE_FLOAT WAV and return mono peak-normalized samples.
+
+    Returns None if the file is not an IEEE_FLOAT WAV (so PCM-int files fall
+    back to the wave-module path). Mixes stereo to mono by averaging channels.
+    """
+    import struct as _struct
+
+    try:
+        with open(str(path), "rb") as f:
+            data = f.read()
+    except OSError:
+        return None
+    if len(data) < 12 or data[:4] != b"RIFF" or data[8:12] != b"WAVE":
+        return None
+    fmt_tag = None
+    channels = 0
+    audio = b""
+    pos = 12
+    while pos + 8 <= len(data):
+        cid = data[pos : pos + 4]
+        csize = _struct.unpack("<I", data[pos + 4 : pos + 8])[0]
+        body = data[pos + 8 : pos + 8 + csize]
+        if cid == b"fmt " and len(body) >= 8:
+            fmt_tag, channels = _struct.unpack("<HH", body[:4])
+        elif cid == b"data":
+            audio = body
+        pos += 8 + csize + (csize & 1)  # word-aligned chunks
+    if fmt_tag != 3 or channels <= 0 or not audio:
+        return None  # not IEEE_FLOAT (or empty) -> defer to caller
+
+    count = len(audio) // 4
+    floats = list(_struct.unpack(f"<{count}f", audio[: count * 4]))
+    # Mix down to mono by averaging channels.
+    mono: List[float] = []
+    for i in range(0, len(floats) - channels + 1, channels):
+        frame = floats[i : i + channels]
+        mono.append(sum(frame) / len(frame))
+    return mono
+
+
+def _downsample_float(samples: List[float], points: int) -> List[float]:
+    """Downsample float samples to *points* peak values in [0, 1].
+
+    Float samples are already in [-1, 1] (no max_value scaling needed); we just
+    take the per-bucket peak absolute amplitude.
+    """
+    if points <= 0 or not samples:
+        return []
+    bucket = max(1, len(samples) // points)
+    result: List[float] = []
+    for i in range(0, len(samples), bucket):
+        chunk = samples[i : i + bucket]
+        if not chunk:
+            continue
+        result.append(min(1.0, max(abs(min(chunk)), abs(max(chunk)))))
     return result[:points]
