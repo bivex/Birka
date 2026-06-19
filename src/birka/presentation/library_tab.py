@@ -13,7 +13,10 @@ from birka.application.user_metadata import UserMetadata, UserMetadataStore
 from birka.domain.media import MediaItem, Rating
 from birka.infrastructure.file_scanner import FileSystemScanner
 from birka.infrastructure.metadata_readers import AudioMidiMetadataReader
-from birka.infrastructure.midi_renderer import render_midi_to_mp3_batch
+from birka.infrastructure.midi_renderer import (
+    render_midi_to_mp3_batch,
+    render_midi_to_wav_batch,
+)
 from birka.infrastructure.waveform_provider import WaveformProvider
 from birka.presentation.media_presenter import MediaPresenter
 from birka.presentation.file_drag_table import FileDragTableView
@@ -80,6 +83,25 @@ class _RenderWorker(QtCore.QObject):
             self.progress.emit(completed, total)
 
         successful, failed = render_midi_to_mp3_batch(
+            self._midi_paths, self._output_dir, on_progress=on_progress
+        )
+        self.finished.emit(successful, failed)
+
+
+class _RenderWavWorker(QtCore.QObject):
+    progress = QtCore.pyqtSignal(int, int)
+    finished = QtCore.pyqtSignal(list, list)
+
+    def __init__(self, midi_paths: list[Path], output_dir: Path) -> None:
+        super().__init__()
+        self._midi_paths = midi_paths
+        self._output_dir = output_dir
+
+    def run(self) -> None:
+        def on_progress(completed: int, total: int, _: Path, __: bool) -> None:
+            self.progress.emit(completed, total)
+
+        successful, failed = render_midi_to_wav_batch(
             self._midi_paths, self._output_dir, on_progress=on_progress
         )
         self.finished.emit(successful, failed)
@@ -403,6 +425,9 @@ class LibraryTab(QtWidgets.QWidget):
         self._render_button = QtWidgets.QPushButton("Render MIDI\u2192MP3", self)
         self._render_button.setObjectName("renderButton")
         self._render_button.clicked.connect(self._render_midi)
+        self._render_wav_button = QtWidgets.QPushButton("Render MIDI\u2192WAV", self)
+        self._render_wav_button.setObjectName("renderWavButton")
+        self._render_wav_button.clicked.connect(self._render_midi_wav)
 
     def _init_pager_controls(self) -> None:
         self._count_label = QtWidgets.QLabel("Files: 0", self)
@@ -517,7 +542,8 @@ class LibraryTab(QtWidgets.QWidget):
         grid.addWidget(self._delete_button, 2, 0)
         grid.addWidget(self._sort_button, 2, 1)
         grid.addWidget(self._open_folder_button, 2, 2)
-        grid.addWidget(self._render_button, 2, 3, 1, 2)
+        grid.addWidget(self._render_button, 2, 3)
+        grid.addWidget(self._render_wav_button, 2, 4)
 
         return grid
 
@@ -708,11 +734,23 @@ class LibraryTab(QtWidgets.QWidget):
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(self.root)))
 
     def _render_midi(self) -> None:
+        self._start_render("mp3")
+
+    def _render_midi_wav(self) -> None:
+        self._start_render("wav")
+
+    def _start_render(self, fmt: str) -> None:
         midi_items = self._filtered_midi_selection()
         if midi_items is None:
             return
-        output_dir = self.root / "rendered_mp3"
+        if fmt == "wav":
+            output_dir = self.root / "rendered_wav"
+            worker_cls = _RenderWavWorker
+        else:
+            output_dir = self.root / "rendered_mp3"
+            worker_cls = _RenderWorker
         midi_paths = [item.path for item in midi_items]
+        self._render_format = fmt
 
         self._render_progress = QtWidgets.QProgressDialog(
             "Rendering MIDI files...",
@@ -725,7 +763,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._render_progress.setMinimumDuration(0)
         self._render_progress.setValue(0)
 
-        worker = _RenderWorker(midi_paths, output_dir)
+        worker = worker_cls(midi_paths, output_dir)
         thread = QtCore.QThread()
         worker.moveToThread(thread)
         worker.progress.connect(self._on_render_progress)
@@ -777,7 +815,8 @@ class LibraryTab(QtWidgets.QWidget):
                 f"Failed:\n" + "\n".join(p.name for p in failed),
             )
         if successful:
-            output_dir = self.root / "rendered_mp3"
+            fmt = getattr(self, "_render_format", "mp3")
+            output_dir = self.root / ("rendered_wav" if fmt == "wav" else "rendered_mp3")
             QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(output_dir)))
 
     def _open_selected_folder(self) -> None:

@@ -144,6 +144,52 @@ def render_midi_to_mp3_batch(
     return successful, failed
 
 
+def render_midi_to_wav_batch(
+    midi_paths: List[Path],
+    output_dir: Path,
+    on_progress: Optional[Callable[[int, int, Path, bool], None]] = None,
+    sample_rate: int = 44100,
+    polyphony: int = 256,
+) -> Tuple[List[Path], List[Path]]:
+    """Render multiple MIDI files to WAV in parallel. No normalization (fast)."""
+    soundfont = _find_soundfont()
+    if soundfont is None:
+        return [], list(midi_paths)
+    if not _TSF_AVAILABLE and shutil.which("fluidsynth") is None:
+        return [], list(midi_paths)
+    if not midi_paths:
+        return [], []
+    output_dir.mkdir(parents=True, exist_ok=True)
+    max_workers = min(len(midi_paths), os.cpu_count() or 4)
+    results: List[Tuple[Path, Optional[Path]]] = []
+
+    def _render_one(midi_path: Path) -> Tuple[Path, Optional[Path]]:
+        wav_path = output_dir / (midi_path.stem + ".wav")
+        if render_midi_to_wav(
+            midi_path,
+            wav_path,
+            sample_rate=sample_rate,
+            polyphony=polyphony,
+        ):
+            return midi_path, wav_path
+        return midi_path, None
+
+    completed = 0
+    total = len(midi_paths)
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = {pool.submit(_render_one, p): p for p in midi_paths}
+        for future in as_completed(futures):
+            midi_path, wav_path = future.result()
+            completed += 1
+            if on_progress:
+                on_progress(completed, total, midi_path, wav_path is not None)
+            results.append((midi_path, wav_path))
+
+    successful = [wav for _, wav in results if wav is not None]
+    failed = [mid for mid, wav in results if wav is None]
+    return successful, failed
+
+
 def _synth_to_wav(
     soundfont: Path,
     midi_path: Path,
