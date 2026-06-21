@@ -866,6 +866,24 @@ def _synth_sfizz_to_wav(
     channels = 2
     samples_needed = frames_needed * channels
     buf = interleaved[:samples_needed]
+
+    # Normalize the mix so it uses the available headroom. The per-channel
+    # instances each render their own instrument independently and are summed,
+    # but the sum rarely approaches full scale (a single instrument peaks
+    # ~0.05-0.3, and only a few overlap at once). Without normalization the
+    # output sits at -20 dBFS or quieter and sounds like channels are missing.
+    # Peak-normalize to -1 dBFS (0.89), then rely on each writer's tanh
+    # soft-clip to guarantee no ceiling-pinning if a later block overshoots.
+    try:
+        import numpy as _np
+        arr = _np.asarray(buf, dtype=_np.float32)
+        peak = float(_np.max(_np.abs(arr))) if arr.size else 0.0
+        if peak > 1e-6:
+            arr = arr * (0.89 / peak)
+            buf = arr.tolist()
+    except Exception:
+        pass
+
     if bit_depth == 32:
         return _write_float_wav(buf, output_path, sample_rate)
     if bit_depth == 24:
