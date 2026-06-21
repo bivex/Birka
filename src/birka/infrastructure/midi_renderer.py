@@ -662,6 +662,7 @@ def _synth_sfizz_to_wav(
     """
     try:
         import mido as _mido
+        import numpy as np
         from pysfizz import _sfizz
     except Exception:
         return False
@@ -688,12 +689,45 @@ def _synth_sfizz_to_wav(
     frames_needed = int(total_seconds * sample_rate)
 
     try:
-        synth = _sfizz.Synth(sample_rate, _SFIZZ_BLOCK_FRAMES)
-        synth.enable_freewheeling()
-        synth.set_num_voices(max(1, min(polyphony, 512)))
-        synth.set_sample_quality(quality)
-        if not synth.load_sfz_file(str(sfz_path)):
-            return False
+        # Multi-instance mixing for true multi-timbral playback.
+        #
+        # sfizz's Synth holds a single global program slot (no per-channel
+        # program routing despite lochan/hichan/loprog/hiprog in the SFZ), so
+        # one synth instance can only play one instrument at a time. For GM
+        # MIDIs where multiple channels play different instruments
+        # simultaneously (e.g. channel 0 = trumpet, channel 4 = bass), a single
+        # instance would have its program thrash between every note_on on every
+        # channel and the listener would mostly hear whichever program was
+        # switched to last.
+        #
+        # Fix: instantiate one sfizz Synth per MIDI channel that actually
+        # appears in the file. Each instance gets its own program_change events
+        # routed to it (matching on msg.channel), so each instrument renders
+        # independently. The per-channel block outputs are summed into a single
+        # stereo mix. note_on/off, cc, pitchwheel and program_change are all
+        # dispatched per-channel to the owning instance.
+        #
+        # First pass: collect the set of channels used by any event.
+        active_channels: set = set()
+        for _, msg in events:
+            if hasattr(msg, "channel"):
+                active_channels.add(msg.channel)
+        # Drum channel (9) on a GM bank without a percussion kit still renders
+        # via program 0 regions; keep it as its own instance so its notes don't
+        # collide with melodic channels' programs.
+        if not active_channels:
+            active_channels = {0}
+
+        # Instantiate and load the bank once per channel.
+        channel_synths: Dict[int, Any] = {}
+        for ch in active_channels:
+            s = _sfizz.Synth(sample_rate, _SFIZZ_BLOCK_FRAMES)
+            s.enable_freewheeling()
+            s.set_num_voices(max(1, min(polyphony, 512)))
+            s.set_sample_quality(quality)
+            if not s.load_sfz_file(str(sfz_path)):
+                return False
+            channel_synths[ch] = s
 
         interleaved: List[float] = []
         event_index = 0
@@ -704,35 +738,64 @@ def _synth_sfizz_to_wav(
             block_start = rendered
             block_end = rendered + _SFIZZ_BLOCK_FRAMES
             # Dispatch every event whose sample time falls within this block,
-            # computing the per-event sample delay relative to block_start.
+            # computing the per-event sample delay relative to block_start, and
+            # routing it to the synth instance owning its channel.
             while event_index < n_events:
                 msg_time, msg = events[event_index]
                 event_frame = int(msg_time * sample_rate)
                 if event_frame >= block_end:
                     break
                 delay = max(0, min(_SFIZZ_BLOCK_FRAMES, event_frame - block_start))
+                # Channel-less events (rare) go to channel 0's instance.
+                ch = getattr(msg, "channel", 0)
+                s = channel_synths.get(ch)
+                if s is None:
+                    # Fallback: route to channel 0 if present, else skip.
+                    s = channel_synths.get(0)
+                    if s is None:
+                        event_index += 1
+                        continue
                 if msg.type == "note_on" and msg.velocity > 0:
-                    synth.note_on(delay, msg.note, msg.velocity)
+                    s.note_on(delay, msg.note, msg.velocity)
                 elif msg.type in ("note_off", "note_on"):
-                    synth.note_off(delay, msg.note, 0)
+                    s.note_off(delay, msg.note, 0)
                 elif msg.type == "control_change":
-                    synth.cc(delay, msg.control, msg.value)
+                    s.cc(delay, msg.control, msg.value)
                 elif msg.type == "pitchwheel":
                     # mido pitch is -8192..8191; sfizz expects the same range.
-                    synth.pitch_wheel(delay, msg.pitch)
+                    s.pitch_wheel(delay, msg.pitch)
                 elif msg.type == "program_change":
-                    # Switch the active instrument. Requires an SFZ bank that
-                    # maps regions via loprog/hiprog, and the pysfizz
-                    # program_change binding. Channel is ignored (sfizz uses a
-                    # single program slot), so the last program_change on any
-                    # channel wins — sufficient for sequential GM rendering.
-                    synth.program_change(delay, msg.program)
+                    # Switch the instrument for THIS channel's instance only.
+                    # Each instance keeps its own program slot, so simultaneous
+                    # instruments on different channels no longer collide.
+                    s.program_change(delay, msg.program)
                 event_index += 1
 
-            left, right = synth.render_block()
-            for i in range(len(left)):
-                interleaved.append(float(left[i]))
-                interleaved.append(float(right[i]))
+            # Sum every instance's block into a stereo mix bus.
+            mix_left = None
+            mix_right = None
+            for s in channel_synths.values():
+                left, right = s.render_block()
+                if mix_left is None:
+                    mix_left = np.asarray(left, dtype=np.float32)
+                    mix_right = np.asarray(right, dtype=np.float32)
+                else:
+                    mix_left = mix_left + np.asarray(left, dtype=np.float32)
+                    mix_right = mix_right + np.asarray(right, dtype=np.float32)
+            if mix_left is None:
+                # No instances rendered; emit silence to keep timing aligned.
+                mix_left = np.zeros(_SFIZZ_BLOCK_FRAMES, dtype=np.float32)
+                mix_right = np.zeros(_SFIZZ_BLOCK_FRAMES, dtype=np.float32)
+            # Soft safety ceiling: many summed instruments can exceed ±1.0.
+            # Scale down rather than clip. Use a gentle -3 dB headroom factor.
+            peak = max(float(np.max(np.abs(mix_left))), float(np.max(np.abs(mix_right))))
+            if peak > 1.0:
+                scale = 1.0 / peak
+                mix_left = mix_left * scale
+                mix_right = mix_right * scale
+            for i in range(len(mix_left)):
+                interleaved.append(float(mix_left[i]))
+                interleaved.append(float(mix_right[i]))
             rendered = len(interleaved) // 2
     except Exception:
         return False
