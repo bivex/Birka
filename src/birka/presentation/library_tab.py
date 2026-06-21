@@ -13,6 +13,7 @@ from birka.application.user_metadata import UserMetadata, UserMetadataStore
 from birka.domain.media import MediaItem, Rating
 from birka.infrastructure.file_scanner import FileSystemScanner
 from birka.infrastructure.metadata_readers import AudioMidiMetadataReader
+from birka.infrastructure.scan_cache import ScanCache
 from birka.infrastructure.midi_renderer import (
     _backend_name,
     render_midi_to_mp3_batch,
@@ -68,15 +69,16 @@ def _render_midi_to_tmp_preview_mp3(midi_path: Path) -> Path | None:
 class _RefreshWorker(QtCore.QObject):
     finished = QtCore.pyqtSignal(list)
 
-    def __init__(self, root: Path, metadata_store: UserMetadataStore) -> None:
+    def __init__(self, root: Path, metadata_store: UserMetadataStore, cache=None) -> None:
         super().__init__()
         self._root = root
         self._metadata_store = metadata_store
+        self._cache = cache
 
     def run(self) -> None:
         scanner = FileSystemScanner([".wav", ".mid", ".midi"])
         reader = AudioMidiMetadataReader()
-        loader = LoadLibrary(scanner, reader, self._metadata_store)
+        loader = LoadLibrary(scanner, reader, self._metadata_store, cache=self._cache)
         items = loader.execute(self._root)
         self.finished.emit(items)
 
@@ -151,7 +153,21 @@ class LibraryTab(QtWidgets.QWidget):
         self._metadata_store = metadata_store
         self._scanner = FileSystemScanner([".wav", ".mid", ".midi"])
         self._reader = AudioMidiMetadataReader()
-        self._loader = LoadLibrary(self._scanner, self._reader, self._metadata_store)
+        # One persistent scan cache per tab. Lives next to user_metadata.json
+        # so it survives restarts and makes the 10s auto-refresh near-instant
+        # for unchanged files (mtime+size hit → no file parse). Created
+        # best-effort: if the data dir isn't writable we fall back to the
+        # uncached legacy path.
+        self._scan_cache = None
+        try:
+            cache_path = Path("/Volumes/External/Code/Birka/data/.scan_cache.sqlite")
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            self._scan_cache = ScanCache(cache_path)
+        except Exception:
+            self._scan_cache = None
+        self._loader = LoadLibrary(
+            self._scanner, self._reader, self._metadata_store, cache=self._scan_cache
+        )
         self._waveform_provider = WaveformProvider()
         self._presenter = MediaPresenter()
         self._rename = RenameCoordinator(self)
@@ -187,7 +203,7 @@ class LibraryTab(QtWidgets.QWidget):
     def reload(self) -> None:
         if self._refresh_thread is not None:
             return
-        worker = _RefreshWorker(self.root, self._metadata_store)
+        worker = _RefreshWorker(self.root, self._metadata_store, cache=self._scan_cache)
         thread = QtCore.QThread()
         worker.moveToThread(thread)
         worker.finished.connect(self._apply_refresh)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 import struct
 import wave
@@ -337,19 +338,40 @@ def normalize_key(key_str: str) -> str | None:
 
 
 def _extract_bpm_key_from_wav(path: Path) -> tuple[Optional[float], Optional[str]]:
-    data = path.read_bytes()
-    if len(data) < RIFF_HEADER_SIZE or data[:4] != RIFF_ID or data[8:12] != WAVE_ID:
-        return None, None
-    offset = RIFF_HEADER_SIZE
+    # Stream the file chunk-by-chunk instead of read_bytes()-ing the whole
+    # thing. The BPM/KEY metadata lives in small bext/LIST/INFO chunks that
+    # almost always precede the (potentially huge) data chunk, so we read at
+    # most a few KB and stop as soon as we hit "data". For a 500 MB WAV this
+    # turns a full-slurp into a sub-KB read.
     payloads: list[bytes] = []
-    while offset + WAV_CHUNK_HEADER <= len(data):
-        chunk_id = data[offset : offset + 4]
-        size = struct.unpack("<I", data[offset + 4 : offset + 8])[0]
-        offset += WAV_CHUNK_HEADER
-        chunk_data = data[offset : offset + size]
-        offset += size + (size % 2)
-        if chunk_id in WAV_META_CHUNKS:
-            payloads.append(chunk_data)
+    try:
+        with open(str(path), "rb") as fh:
+            header = fh.read(RIFF_HEADER_SIZE)
+            if len(header) < RIFF_HEADER_SIZE or header[:4] != RIFF_ID or header[8:12] != WAVE_ID:
+                return None, None
+            while True:
+                chunk_hdr = fh.read(WAV_CHUNK_HEADER)
+                if len(chunk_hdr) < WAV_CHUNK_HEADER:
+                    break
+                chunk_id = chunk_hdr[:4]
+                size = struct.unpack("<I", chunk_hdr[4:8])[0]
+                if chunk_id == b"data":
+                    # Audio payload starts here — no more metadata after this.
+                    break
+                if chunk_id in WAV_META_CHUNKS:
+                    # Cap a single chunk read to avoid a malicious/huge chunk
+                    # dragging us back to slurp-land; metadata chunks are tiny.
+                    payloads.append(fh.read(min(size, 65536)))
+                    if size > 65536:
+                        fh.seek(size - 65536, os.SEEK_CUR)
+                else:
+                    # Skip non-metadata chunk bodies without reading them.
+                    fh.seek(size, os.SEEK_CUR)
+                # Chunks are word-aligned: skip the pad byte for odd sizes.
+                if size % 2:
+                    fh.seek(1, os.SEEK_CUR)
+    except OSError:
+        return None, None
     combined = b" ".join(payloads)
     text = combined.decode("utf-8", errors="ignore")
     bpm_match = re.search(r"BPM\s*[:=]\s*([0-9]+(?:\.[0-9]+)?)", text, re.IGNORECASE)

@@ -23,12 +23,31 @@ class MediaRow:
 
 class MediaPresenter:
     def to_rows(self, items: Iterable[MediaItem]) -> List[MediaRow]:
-        return [self._to_row(item) for item in items]
+        # Batch the stat() calls once per refresh instead of one syscall per
+        # row inside _to_row. A library with N files paid N separate stat()
+        # round-trips on the UI thread after every scan (incl. the 10s
+        # auto-refresh); this collapses them to a single pass with fail-soft
+        # handling so a deleted/vanished file doesn't abort row building.
+        materialized = list(items)
+        stats: dict = {}
+        for item in materialized:
+            try:
+                stats[str(item.path)] = item.path.stat()
+            except OSError:
+                stats[str(item.path)] = None
+        return [self._to_row(item, stats.get(str(item.path))) for item in materialized]
 
-    def _to_row(self, item: MediaItem) -> MediaRow:
-        stat = item.path.stat()
-        created = datetime.fromtimestamp(stat.st_ctime).strftime("%Y-%m-%d %H:%M")
-        modified = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M")
+    def _to_row(self, item: MediaItem, stat=None) -> MediaRow:
+        if stat is None:
+            try:
+                stat = item.path.stat()
+            except OSError:
+                stat = None
+        if stat is not None:
+            created = datetime.fromtimestamp(stat.st_ctime).strftime("%Y-%m-%d %H:%M")
+            modified = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M")
+        else:
+            created = modified = ""
         rating = _format_rating(item)
         tags = _format_tags(item)
         if isinstance(item, AudioItem):
