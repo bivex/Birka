@@ -673,7 +673,6 @@ def _synth_sfizz_to_wav(
 
     events: List[Tuple[float, _mido.Message]] = []
     abs_time = 0.0
-    warned_program_change = False
     for msg in mid:
         abs_time += msg.time
         if msg.type in (
@@ -681,13 +680,9 @@ def _synth_sfizz_to_wav(
             "note_off",
             "control_change",
             "pitchwheel",
+            "program_change",
         ):
             events.append((abs_time, msg))
-        elif msg.type == "program_change" and not warned_program_change:
-            logger_sfizz.debug(
-                "sfizz: dropping program_change events (unsupported by pysfizz)"
-            )
-            warned_program_change = True
 
     total_seconds = max(1.0, mid.length + 2.0)
     frames_needed = int(total_seconds * sample_rate)
@@ -725,6 +720,13 @@ def _synth_sfizz_to_wav(
                 elif msg.type == "pitchwheel":
                     # mido pitch is -8192..8191; sfizz expects the same range.
                     synth.pitch_wheel(delay, msg.pitch)
+                elif msg.type == "program_change":
+                    # Switch the active instrument. Requires an SFZ bank that
+                    # maps regions via loprog/hiprog, and the pysfizz
+                    # program_change binding. Channel is ignored (sfizz uses a
+                    # single program slot), so the last program_change on any
+                    # channel wins — sufficient for sequential GM rendering.
+                    synth.program_change(delay, msg.program)
                 event_index += 1
 
             left, right = synth.render_block()
