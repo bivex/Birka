@@ -603,14 +603,25 @@ def _synth_tsf_to_wav(
 
 
 def _write_int16_wav(
-    interleaved: List[float], output_path: Path, sample_rate: int
+    interleaved: List[float], output_path: Path, sample_rate: int, soft_clip: bool = True
 ) -> bool:
-    """Soft-clip a flat interleaved float buffer and write a 16-bit stereo WAV.
+    """Soft-clip or linearly scale a flat interleaved float buffer and write a 16-bit stereo WAV.
 
     Shared by the tsf and sfizz renderers so both get identical output format
-    (16-bit stereo) and the same crackle-preventing soft-clip.
+    (16-bit stereo).
     """
-    int16_samples = _soft_clip_to_int16(interleaved)
+    if soft_clip:
+        int16_samples = _soft_clip_to_int16(interleaved)
+    else:
+        try:
+            import numpy as np
+            arr = np.asarray(interleaved, dtype=np.float32)
+            int16_samples = (arr * 32767.0).astype(np.int16).tolist()
+        except ImportError:
+            int16_samples = [
+                max(-32768, min(32767, int(s * 32767.0)))
+                for s in interleaved
+            ]
     if not int16_samples:
         return False
     try:
@@ -625,18 +636,27 @@ def _write_int16_wav(
 
 
 def _write_int24_wav(
-    interleaved: List[float], output_path: Path, sample_rate: int
+    interleaved: List[float], output_path: Path, sample_rate: int, soft_clip: bool = True
 ) -> bool:
-    """Soft-clip a flat interleaved float buffer and write a 24-bit stereo WAV.
+    """Soft-clip or linearly scale a flat interleaved float buffer and write a 24-bit stereo WAV.
 
     24-bit gives ~144 dB dynamic range (vs 96 dB for 16-bit) while staying
     integer PCM (decodable everywhere, including QMediaPlayer's FFmpeg
     backend). The stdlib `wave` module only supports 8/16/24/32-bit via
     setsampwidth, so we pack each sample as 3 signed little-endian bytes.
-    Soft-clipping (tanh) is shared with the int16 path for the same
-    crackle-prevention reason.
     """
-    int24_samples = _soft_clip_to_int24(interleaved)
+    if soft_clip:
+        int24_samples = _soft_clip_to_int24(interleaved)
+    else:
+        try:
+            import numpy as np
+            arr = np.asarray(interleaved, dtype=np.float32)
+            int24_samples = (arr * 8388607.0).astype(np.int32).tolist()
+        except ImportError:
+            int24_samples = [
+                max(-8388608, min(8388607, int(s * 8388607.0)))
+                for s in interleaved
+            ]
     if not int24_samples:
         return False
     try:
@@ -662,7 +682,7 @@ def _write_int24_wav(
 
 
 def _write_float_wav(
-    interleaved: List[float], output_path: Path, sample_rate: int
+    interleaved: List[float], output_path: Path, sample_rate: int, soft_clip: bool = True
 ) -> bool:
     """Write a flat interleaved float buffer as a 32-bit IEEE_FLOAT stereo WAV.
 
@@ -671,20 +691,17 @@ def _write_float_wav(
     tanh/min/max/int conversion), and avoids the QMediaPlayer crackle that
     32-bit *int* (pcm_s32le) caused -- IEEE_FLOAT (format 0x0003) decodes
     cleanly in Qt's FFmpeg backend.
-
-    Soft-clip (tanh) is still applied via numpy so dense polyphony never
-    exceeds [-1, 1], but at float precision (no ceiling pinning).
     """
     try:
         import numpy as np
     except Exception:
-        return _write_int16_wav(interleaved, output_path, sample_rate)
+        return _write_int16_wav(interleaved, output_path, sample_rate, soft_clip)
 
     if not interleaved:
         return False
-    # Soft-clip in place at float precision: tanh keeps peaks within [-1, 1]
-    # without the int16 ceiling-pinning that hard clamping would cause.
-    arr = np.tanh(np.asarray(interleaved, dtype=np.float32))
+    arr = np.asarray(interleaved, dtype=np.float32)
+    if soft_clip:
+        arr = np.tanh(arr)
     raw = arr.tobytes()  # little-endian float32, interleaved stereo
 
     channels = 2
@@ -835,10 +852,10 @@ def _synth_sfizz_to_wav(
         pass
 
     if bit_depth == 32:
-        return _write_float_wav(buf, output_path, sample_rate)
+        return _write_float_wav(buf, output_path, sample_rate, soft_clip=False)
     if bit_depth == 24:
-        return _write_int24_wav(buf, output_path, sample_rate)
-    return _write_int16_wav(buf, output_path, sample_rate)
+        return _write_int24_wav(buf, output_path, sample_rate, soft_clip=False)
+    return _write_int16_wav(buf, output_path, sample_rate, soft_clip=False)
 
 
 def _measure_stats(wav_path: Path) -> Optional[dict]:
