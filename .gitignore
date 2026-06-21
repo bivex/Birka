@@ -31,3 +31,6 @@ htmlcov/
 # SoundFonts
 /data/*.sf2
 /dpy_report
+data/.scan_cache.sqlite
+data/.scan_cache.sqlite-shm
+data/.scan_cache.sqlite-wal

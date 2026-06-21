@@ -186,9 +186,21 @@ def render_midi_to_mp3(midi_path: Path, output_dir: Path, quality: int = 2) -> O
 
 
 def render_midi_to_wav(
-    midi_path: Path, output_path: Path, sample_rate: int = 44100, polyphony: int = 256, quality: int = 2
+    midi_path: Path,
+    output_path: Path,
+    sample_rate: int = 44100,
+    polyphony: int = 256,
+    quality: int = 2,
+    bit_depth: int = 24,
 ) -> bool:
-    """Render a single MIDI to WAV via the selected backend. No normalization."""
+    """Render a single MIDI to WAV via the selected backend. No normalization.
+
+    bit_depth selects the sfizz output format: 32 = IEEE_FLOAT, 24 = signed
+    24-bit PCM, 16 = signed 16-bit PCM. Defaults to 24-bit for high dynamic
+    range while staying integer PCM (decodable by QMediaPlayer's FFmpeg
+    backend). The tsf/fluidsynth fallback paths ignore bit_depth and always
+    write 16-bit (their existing contract).
+    """
     backend = _resolve_backend()
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -196,7 +208,13 @@ def render_midi_to_wav(
         sfz = _find_sfz()
         if sfz is not None:
             return _synth_sfizz_to_wav(
-                sfz, midi_path, output_path, sample_rate=sample_rate, polyphony=polyphony, quality=quality
+                sfz,
+                midi_path,
+                output_path,
+                sample_rate=sample_rate,
+                polyphony=polyphony,
+                quality=quality,
+                bit_depth=bit_depth,
             )
         # no SFZ bank -> fall through to auto resolution
         backend = "tsf" if _TSF_AVAILABLE else "fluidsynth"
@@ -491,6 +509,19 @@ def _soft_clip_to_int16(samples: List[float]) -> List[int]:
     ]
 
 
+def _soft_clip_to_int24(samples: List[float]) -> List[int]:
+    """Convert float samples to 24-bit ints with tanh soft-clipping.
+
+    Same rationale as _soft_clip_to_int16: tanh over the whole signal so summed
+    synth voices never pin flat to the 24-bit ceiling. 24-bit range is signed
+    [-8388608, 8388607].
+    """
+    return [
+        max(-8388608, min(8388607, int(math.tanh(s) * 8388607.0)))
+        for s in samples
+    ]
+
+
 def _synth_tsf_to_wav(
     soundfont: Path,
     midi_path: Path,
@@ -587,6 +618,38 @@ def _write_int16_wav(
             wf.setsampwidth(2)  # 16-bit (2 bytes)
             wf.setframerate(sample_rate)
             wf.writeframes(struct.pack(f"<{len(int16_samples)}h", *int16_samples))
+    except Exception:
+        return False
+    return output_path.exists()
+
+
+def _write_int24_wav(
+    interleaved: List[float], output_path: Path, sample_rate: int
+) -> bool:
+    """Soft-clip a flat interleaved float buffer and write a 24-bit stereo WAV.
+
+    24-bit gives ~144 dB dynamic range (vs 96 dB for 16-bit) while staying
+    integer PCM (decodable everywhere, including QMediaPlayer's FFmpeg
+    backend). The stdlib `wave` module only supports 8/16/24/32-bit via
+    setsampwidth, so we pack each sample as 3 signed little-endian bytes.
+    Soft-clipping (tanh) is shared with the int16 path for the same
+    crackle-prevention reason.
+    """
+    int24_samples = _soft_clip_to_int24(interleaved)
+    if not int24_samples:
+        return False
+    try:
+        # Pack as little-endian signed 24-bit. struct has no '3-byte' code, so
+        # pack each as a 32-bit int and take the low 3 bytes — equivalent and
+        # faster than per-sample byte math.
+        packed = b"".join(
+            v.to_bytes(3, byteorder="little", signed=True) for v in int24_samples
+        )
+        with wave.open(str(output_path), "wb") as wf:
+            wf.setnchannels(2)
+            wf.setsampwidth(3)  # 24-bit (3 bytes)
+            wf.setframerate(sample_rate)
+            wf.writeframes(packed)
     except Exception:
         return False
     return output_path.exists()
@@ -805,6 +868,8 @@ def _synth_sfizz_to_wav(
     buf = interleaved[:samples_needed]
     if bit_depth == 32:
         return _write_float_wav(buf, output_path, sample_rate)
+    if bit_depth == 24:
+        return _write_int24_wav(buf, output_path, sample_rate)
     return _write_int16_wav(buf, output_path, sample_rate)
 
 
