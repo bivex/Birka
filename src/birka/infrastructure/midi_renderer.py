@@ -499,15 +499,17 @@ def _soft_clip_to_int16(samples: List[float]) -> List[int]:
     curve is continuous and monotonic: near-linear at low levels (identity at
     the origin, slope 1) and smoothly limiting at high levels, so nothing is
     ever pinned flat to the ceiling.
-
-    Applying tanh only above a threshold (e.g. >1.0) is *wrong*: it creates a
-    notch at the crossing (just-under-1.0 -> ~32439, just-over-1.0 -> ~25000),
-    which is itself a click.
     """
-    return [
-        max(-32768, min(32767, int(math.tanh(s) * 32767.0)))
-        for s in samples
-    ]
+    try:
+        import numpy as np
+        arr = np.asarray(samples, dtype=np.float32)
+        arr = np.tanh(arr)
+        return (arr * 32767.0).astype(np.int16).tolist()
+    except ImportError:
+        return [
+            max(-32768, min(32767, int(math.tanh(s) * 32767.0)))
+            for s in samples
+        ]
 
 
 def _soft_clip_to_int24(samples: List[float]) -> List[int]:
@@ -517,10 +519,16 @@ def _soft_clip_to_int24(samples: List[float]) -> List[int]:
     synth voices never pin flat to the 24-bit ceiling. 24-bit range is signed
     [-8388608, 8388607].
     """
-    return [
-        max(-8388608, min(8388607, int(math.tanh(s) * 8388607.0)))
-        for s in samples
-    ]
+    try:
+        import numpy as np
+        arr = np.asarray(samples, dtype=np.float32)
+        arr = np.tanh(arr)
+        return (arr * 8388607.0).astype(np.int32).tolist()
+    except ImportError:
+        return [
+            max(-8388608, min(8388607, int(math.tanh(s) * 8388607.0)))
+            for s in samples
+        ]
 
 
 def _synth_tsf_to_wav(
@@ -722,6 +730,9 @@ def _write_float_wav(
     return output_path.exists()
 
 
+_SFIZZ_SYNTH_CACHE = {}
+
+
 def _synth_sfizz_to_wav(
     sfz_path: Path,
     midi_path: Path,
@@ -783,14 +794,20 @@ def _synth_sfizz_to_wav(
         # than the reference render because the per-channel program slots
         # interacted badly with sfizz's global region matching; the single-
         # instance path matches the reference output sample-for-sample.)
-        synth = _sfizz.Synth(sample_rate, _SFIZZ_BLOCK_FRAMES)
-        synth.enable_freewheeling()
-        synth.set_num_voices(max(1, min(polyphony, 512)))
-        synth.set_sample_quality(quality)
-        if not synth.load_sfz_file(str(sfz_path)):
-            return False
+        cache_key = (str(sfz_path), sample_rate, polyphony, quality)
+        if cache_key in _SFIZZ_SYNTH_CACHE:
+            synth = _SFIZZ_SYNTH_CACHE[cache_key]
+            synth.all_sound_off()
+        else:
+            synth = _sfizz.Synth(sample_rate, _SFIZZ_BLOCK_FRAMES)
+            synth.enable_freewheeling()
+            synth.set_num_voices(max(1, min(polyphony, 512)))
+            synth.set_sample_quality(quality)
+            if not synth.load_sfz_file(str(sfz_path)):
+                return False
+            _SFIZZ_SYNTH_CACHE[cache_key] = synth
 
-        interleaved: List[float] = []
+        interleaved_blocks: List[np.ndarray] = []
         event_index = 0
         n_events = len(events)
         rendered = 0
@@ -823,16 +840,18 @@ def _synth_sfizz_to_wav(
                 event_index += 1
 
             left, right = synth.render_block()
-            for i in range(len(left)):
-                interleaved.append(float(left[i]))
-                interleaved.append(float(right[i]))
-            rendered = len(interleaved) // 2
+            left_arr = np.asarray(left, dtype=np.float32)
+            right_arr = np.asarray(right, dtype=np.float32)
+            block = np.column_stack((left_arr, right_arr)).flatten()
+            interleaved_blocks.append(block)
+            rendered += len(left_arr)
     except Exception:
         return False
 
-    channels = 2
-    samples_needed = frames_needed * channels
-    buf = interleaved[:samples_needed]
+    if interleaved_blocks:
+        buf_arr = np.concatenate(interleaved_blocks)[:frames_needed * 2]
+    else:
+        buf_arr = np.zeros(0, dtype=np.float32)
 
     # Normalize the mix so it uses the available headroom. The per-channel
     # instances each render their own instrument independently and are summed,
@@ -842,14 +861,12 @@ def _synth_sfizz_to_wav(
     # Peak-normalize to -1 dBFS (0.89), then rely on each writer's tanh
     # soft-clip to guarantee no ceiling-pinning if a later block overshoots.
     try:
-        import numpy as _np
-        arr = _np.asarray(buf, dtype=_np.float32)
-        peak = float(_np.max(_np.abs(arr))) if arr.size else 0.0
+        peak = float(np.max(np.abs(buf_arr))) if buf_arr.size else 0.0
         if peak > 1e-6:
-            arr = arr * (0.89 / peak)
-            buf = arr.tolist()
+            buf_arr = buf_arr * (0.89 / peak)
     except Exception:
         pass
+    buf = buf_arr.tolist()
 
     if bit_depth == 32:
         return _write_float_wav(buf, output_path, sample_rate, soft_clip=False)

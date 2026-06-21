@@ -12,6 +12,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 from pysfizz import _sfizz
 from birka.infrastructure.midi_renderer import _find_sfz, _write_float_wav
 
+_SFIZZ_SYNTH_CACHE = {}
+
 def render_with_quality(midi_path, sfz_path, out_path, quality, sample_rate=44100, polyphony=256):
     mid = mido.MidiFile(str(midi_path))
     events = []
@@ -25,17 +27,21 @@ def render_with_quality(midi_path, sfz_path, out_path, quality, sample_rate=4410
     frames_needed = int(total_seconds * sample_rate)
 
     block_frames = 1024
-    synth = _sfizz.Synth(sample_rate, block_frames)
-    synth.enable_freewheeling()
-    synth.set_num_voices(max(1, min(polyphony, 512)))
     
-    # Set the sample quality
-    synth.set_sample_quality(quality)
-    
-    if not synth.load_sfz_file(str(sfz_path)):
-        raise RuntimeError("Failed to load SFZ file")
+    cache_key = (str(sfz_path), sample_rate, polyphony, quality)
+    if cache_key in _SFIZZ_SYNTH_CACHE:
+        synth = _SFIZZ_SYNTH_CACHE[cache_key]
+        synth.all_sound_off()
+    else:
+        synth = _sfizz.Synth(sample_rate, block_frames)
+        synth.enable_freewheeling()
+        synth.set_num_voices(max(1, min(polyphony, 512)))
+        synth.set_sample_quality(quality)
+        if not synth.load_sfz_file(str(sfz_path)):
+            raise RuntimeError("Failed to load SFZ file")
+        _SFIZZ_SYNTH_CACHE[cache_key] = synth
 
-    interleaved = []
+    interleaved_blocks = []
     event_index = 0
     n_events = len(events)
     rendered = 0
@@ -60,13 +66,13 @@ def render_with_quality(midi_path, sfz_path, out_path, quality, sample_rate=4410
             event_index += 1
 
         left, right = synth.render_block()
-        for i in range(len(left)):
-            interleaved.append(float(left[i]))
-            interleaved.append(float(right[i]))
-        rendered = len(interleaved) // 2
+        left_arr = np.asarray(left, dtype=np.float32)
+        right_arr = np.asarray(right, dtype=np.float32)
+        block = np.column_stack((left_arr, right_arr)).flatten()
+        interleaved_blocks.append(block)
+        rendered += len(left_arr)
 
-    samples_needed = frames_needed * 2
-    buf = interleaved[:samples_needed]
+    buf = np.concatenate(interleaved_blocks)[:frames_needed * 2].tolist()
     _write_float_wav(buf, out_path, sample_rate)
 
 def main():
@@ -81,31 +87,30 @@ def main():
     print(f"MIDI File: {midi_path}")
     print(f"SFZ Bank: {sfz_path}")
 
-    # Benchmark Quality 10 (Sinc72)
-    print("\n[1/3] Rendering with Quality 10 (kInterpolatorSinc72 - Default Freewheeling)...")
-    out_10 = Path("tmp/rendered_q10.wav")
+    # Benchmark Quality 2 (kInterpolatorHermite3 - Cold Load)
+    print("\n[1/3] Rendering with Quality 2 (Hermite3) - COLD LOAD (loads bank from disk)...")
+    out_2_cold = Path("tmp/rendered_q2_cold.wav")
     start = time.perf_counter()
-    render_with_quality(midi_path, sfz_path, out_10, quality=10)
-    time_10 = time.perf_counter() - start
-    print(f"  Finished in {time_10:.3f} seconds.")
+    render_with_quality(midi_path, sfz_path, out_2_cold, quality=2)
+    time_2_cold = time.perf_counter() - start
+    print(f"  Finished in {time_2_cold:.3f} seconds.")
 
-    # Benchmark Quality 2 (kInterpolatorHermite3 - Default Live)
-    print("\n[2/3] Rendering with Quality 2 (kInterpolatorHermite3)...")
-    out_2 = Path("tmp/rendered_q2.wav")
+    # Benchmark Quality 2 (kInterpolatorHermite3 - Warm Reuse)
+    print("\n[2/3] Rendering with Quality 2 (Hermite3) - WARM REUSE (reuses loaded bank)...")
+    out_2_warm = Path("tmp/rendered_q2_warm.wav")
     start = time.perf_counter()
-    render_with_quality(midi_path, sfz_path, out_2, quality=2)
-    time_2 = time.perf_counter() - start
-    print(f"  Finished in {time_2:.3f} seconds.")
-    print(f"  Speedup vs Q10: {time_10 / time_2:.2f}x faster")
+    render_with_quality(midi_path, sfz_path, out_2_warm, quality=2)
+    time_2_warm = time.perf_counter() - start
+    print(f"  Finished in {time_2_warm:.3f} seconds.")
+    print(f"  Speedup: {time_2_cold / time_2_warm:.2f}x faster (warm)")
 
-    # Benchmark Quality 1 (kInterpolatorLinear)
-    print("\n[3/3] Rendering with Quality 1 (kInterpolatorLinear)...")
+    # Benchmark Quality 1 (kInterpolatorLinear - Cold Load)
+    print("\n[3/3] Rendering with Quality 1 (Linear) - COLD LOAD (loads bank from disk because quality changed)...")
     out_1 = Path("tmp/rendered_q1.wav")
     start = time.perf_counter()
     render_with_quality(midi_path, sfz_path, out_1, quality=1)
     time_1 = time.perf_counter() - start
     print(f"  Finished in {time_1:.3f} seconds.")
-    print(f"  Speedup vs Q10: {time_10 / time_1:.2f}x faster")
 
 if __name__ == "__main__":
     main()
