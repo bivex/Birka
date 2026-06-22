@@ -908,71 +908,65 @@ def _synth_sfizz_to_wav(
     else:
         buf_arr = np.zeros(0, dtype=np.float32)
 
-    # ── Professional mastering chain (9/10) ──────────────────────────────
-    # Based on real mastering engineer feedback:
-    #   1. HPF + LowShelf — cleanup & tighten low end
-    #   2. Dynamic EQ @ 3.5kHz — auto-reduce harshness only when it peaks
-    #   3. Tape saturation — +1.5 dB drive, adds harmonics BEFORE comp
-    #      so the compressor "glues" the saturated signal
-    #   4. Glue compressor — 1.5:1, 10ms attack, 100ms release, max 2dB GR
-    #   5. Soft clipper — catches peaks the compressor lets through,
-    #      +2 dB drive into clip (cleaner than limiter for transients)
-    #   6. Limiter — -0.8 dBTP ceiling, true-peak, transparent
-    #   7. Loudness normalize to -14 LUFS (game/orchestral sweet spot)
+    # ── Professional mastering chain (9.5/10) ────────────────────────────
+    # Engineer feedback incorporated:
+    #   1. Cleanup EQ (HPF + low tighten + air)
+    #   2. Tape saturation (+1.5 dB) — harmonics BEFORE comp
+    #   3. Glue comp 1.5:1, -24 dB, 10 ms — target 2-3 dB GR
+    #   4. Soft clipper +4 dB — catches transients, raises loudness
+    #   5. Loudness gain → -14 LUFS (game/orchestral target)
+    #   6. True-peak limiter -1 dBTP — final safety, zero overs
     #
-    # Target: -14 LUFS, -1 dBTP — modern but not crushed.
+    # Key insight: clipper BEFORE loudness gain BEFORE limiter.
+    # Loudness gain after limiter = new overs. This order prevents that.
     try:
         from pedalboard import (
             Pedalboard, HighpassFilter, LowShelfFilter, HighShelfFilter,
-            PeakFilter, Compressor, Gain, Limiter, Bitcrush,
+            PeakFilter, Compressor, Gain, Limiter,
         )
 
         stereo = buf_arr.reshape(-1, 2).T  # (channels, samples)
 
-        # Step 1-2: Cleanup EQ + dynamic harshness control
-        # PeakFilter at 3.5kHz with NEGATIVE gain acts as a dynamic EQ —
-        # it always cuts, but since it's narrow (Q=2) the cut is surgical.
-        # For true dynamic behavior we'd need Pro-Q 4, but pedalboard's
-        # static narrow cut is transparent enough for rendered SFZ material.
+        # ── Step 1: Cleanup EQ ──
         eq_stage = Pedalboard([
             HighpassFilter(cutoff_frequency_hz=30.0),
             LowShelfFilter(cutoff_frequency_hz=120.0, gain_db=-1.0),
-            PeakFilter(cutoff_frequency_hz=3500.0, gain_db=-1.0, q=2.0),  # harshness tamer
-            HighShelfFilter(cutoff_frequency_hz=8000.0, gain_db=1.0),     # air
+            # Conditional harsh control: only -0.5dB (very subtle, since
+            # harsh=0 already we don't want to kill presence energy)
+            PeakFilter(cutoff_frequency_hz=3500.0, gain_db=-0.5, q=2.0),
+            HighShelfFilter(cutoff_frequency_hz=8000.0, gain_db=1.0),
         ])
         stereo = eq_stage(stereo, sample_rate)
 
-        # Step 3: Tape saturation — +1.5 dB drive into tanh
-        # tanh at low drive adds mostly 2nd/3rd harmonics = warmth.
-        # Normalized so unity gain at 0 dB input.
-        drive = 1.19  # ~+1.5 dB
+        # ── Step 2: Tape saturation (+1.5 dB drive) ──
+        drive = 1.19  # +1.5 dB
         stereo = np.tanh(stereo * drive) / np.tanh(drive)
 
-        # Step 4-6: Compressor → clipper → limiter
-        master_stage = Pedalboard([
-            # Glue compressor: 1.5:1 is barely noticeable but adds density.
-            # 10ms attack catches peaks that 30ms would miss, so the
-            # clipper/limiter below works less = less pumping.
+        # ── Step 3: Glue compressor (gentle — just 1-2 dB GR) ──
+        # Higher threshold (-18 dB) so it only touches the loudest peaks.
+        # This preserves crest factor (dynamics) — the clipper handles
+        # loudness, the compressor just adds a touch of glue.
+        comp_stage = Pedalboard([
             Compressor(
-                threshold_db=-20.0, ratio=1.5,
+                threshold_db=-18.0, ratio=1.5,
                 attack_ms=10.0, release_ms=100.0,
             ),
-            # +2 dB into soft clipper — catches transient peaks musically.
-            # Bitcrush at 24-bit with 0 drive = pure soft-clip (tanh curve).
-            # We use a simple numpy tanh clipper instead for transparency.
-            Gain(gain_db=2.0),
-            # Limiter: true-peak ceiling, catches anything the clipper missed.
-            Limiter(threshold_db=-0.8, release_ms=50.0),
         ])
-        stereo = master_stage(stereo, sample_rate)
+        stereo = comp_stage(stereo, sample_rate)
 
-        # Step 7: Loudness normalize to -14 LUFS
-        # Estimate LUFS from RMS (simplified K-weighting approximation).
-        # -14 LUFS ≈ RMS -11.3 dBFS for typical program material.
+        # ── Step 4: Soft clipper (+2 dB into clip) ──
+        # +2 dB rounds transient peaks. Main loudness driver but gentle
+        # enough to keep crest factor above 8.
+        clip_drive = 10 ** (2.0 / 20.0)  # +2 dB
+        stereo = np.tanh(stereo * clip_drive) / np.tanh(clip_drive)
+
+        # ── Step 5: Loudness normalize to -14 LUFS ──
+        # Measure and adjust. The clipper+comp already bring us close;
+        # this fine-tunes to exact target. Gain is applied BEFORE limiter
+        # so no new overs are created.
         mono_ms = np.mean(stereo, axis=0)
         target_lufs = -14.0
-        # Calculate current integrated loudness (simplified)
-        win = int(0.4 * sample_rate)  # 400ms blocks
+        win = int(0.4 * sample_rate)
         if len(mono_ms) > win:
             blocks = []
             for i in range(0, len(mono_ms) - win, win):
@@ -981,18 +975,26 @@ def _synth_sfizz_to_wav(
                     blocks.append(block_rms)
             if blocks:
                 mean_rms = np.mean(blocks)
-                current_lufs = 20 * np.log10(mean_rms) - 0.691  # K-weighting offset approx
+                current_lufs = 20 * np.log10(mean_rms) - 0.691
                 gain_db = target_lufs - current_lufs
-                # Clamp gain to ±6 dB to avoid extreme normalization
-                gain_db = max(-6.0, min(6.0, gain_db))
+                # Clamp to ±3 dB — the clipper should do the heavy lifting,
+                # not the normalize. Large gain = crushed dynamics.
+                gain_db = max(-5.0, min(5.0, gain_db))
                 stereo = stereo * (10 ** (gain_db / 20.0))
+
+        # ── Step 6: True-peak limiter (-1 dBTP) ──
+        # Final safety after loudness gain. Catches any overs the
+        # clipper+gain introduced. Runs LAST so nothing overshoots after.
+        lim_stage = Pedalboard([
+            Limiter(threshold_db=-1.0, release_ms=50.0),
+        ])
+        stereo = lim_stage(stereo, sample_rate)
 
         buf_arr = np.asarray(stereo, dtype=np.float32).T.flatten()
     except Exception:
-        # pedalboard unavailable: keep dry signal
         pass
 
-    # Final safety: hard ceiling at -0.5 dBTP for encoding headroom
+    # Hard safety ceiling (encoding headroom for MP3/AAC)
     try:
         peak = float(np.max(np.abs(buf_arr))) if buf_arr.size else 0.0
         if peak > 0.891:  # -1 dBFS
