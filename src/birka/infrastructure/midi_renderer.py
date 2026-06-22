@@ -954,10 +954,26 @@ def _synth_sfizz_to_wav(
         ])
         stereo = comp_stage(stereo, sample_rate)
 
-        # ── Step 4: Soft clipper (+2 dB into clip) ──
-        # +2 dB rounds transient peaks. Main loudness driver but gentle
-        # enough to keep crest factor above 8.
-        clip_drive = 10 ** (2.0 / 20.0)  # +2 dB
+        # ── Step 4: Adaptive soft clipper ──
+        # Clip drive adapts to crest factor (dynamics) of the signal:
+        #   crest > 10 (classical/sparse) → +4 dB (needs more loudness push)
+        #   crest 7-10 (cinematic)         → +3 dB
+        #   crest < 7  (modern/dense)      → +2 dB (already loud, gentle)
+        # This gives consistent LUFS target across different material
+        # without over-crushing quiet pieces or under-driving dense ones.
+        pre_clip_mono = np.mean(stereo, axis=0)
+        pre_peak = float(np.max(np.abs(pre_clip_mono)))
+        pre_rms = float(np.sqrt(np.mean(pre_clip_mono ** 2)))
+        crest = pre_peak / (pre_rms + 1e-9) if pre_rms > 1e-9 else 10.0
+
+        if crest > 10.0:
+            clip_db = 4.0   # sparse/classical — push harder for loudness
+        elif crest > 7.0:
+            clip_db = 3.0   # cinematic — balanced
+        else:
+            clip_db = 2.0   # dense/modern — already loud, be gentle
+
+        clip_drive = 10 ** (clip_db / 20.0)
         stereo = np.tanh(stereo * clip_drive) / np.tanh(clip_drive)
 
         # ── Step 5: Loudness normalize to -14 LUFS ──
