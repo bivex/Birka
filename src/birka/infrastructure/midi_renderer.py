@@ -890,6 +890,28 @@ def _synth_sfizz_to_wav(
             buf_arr = buf_arr * (0.89 / peak)
     except Exception:
         pass
+
+    # Studio post-processing: reverb + delay. Without this the sfizz render is
+    # bone-dry (each instrument sounds isolated "in a vacuum"), especially for
+    # sustained timbres like strings/ensembles. The chain mirrors the Python
+    # renderer's (render_sfz_midi_gm.py) so the sfizz backend sounds as rich.
+    # Effects are applied to the normalized signal; the reverb's wet tail can
+    # push peaks back up, so we leave headroom at 0.89 above and the writers'
+    # tanh soft-clip catches any overshoot.
+    try:
+        from pedalboard import Pedalboard, Reverb, Delay
+
+        stereo = buf_arr.reshape(-1, 2).T  # (channels, samples)
+        board = Pedalboard([
+            Reverb(room_size=0.75, wet_level=0.30, dry_level=0.70),
+            Delay(delay_seconds=0.370, feedback=0.18, mix=0.10),
+        ])
+        processed = board(stereo, sample_rate)
+        buf_arr = np.asarray(processed, dtype=np.float32).T.flatten()
+    except Exception:
+        # pedalboard unavailable or effect failed: keep the dry normalized mix.
+        pass
+
     buf = buf_arr.tolist()
 
     if bit_depth == 32:
