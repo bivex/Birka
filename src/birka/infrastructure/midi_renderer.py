@@ -733,6 +733,30 @@ def _write_float_wav(
 _SFIZZ_SYNTH_CACHE = {}
 
 
+def dispose_sfizz_cache() -> None:
+    """Release all cached sfizz Synth instances.
+
+    pysfizz's Synth is a nanobind-bound C++ object that holds threads and
+    file handles. Leaving instances in the module-level cache at interpreter
+    shutdown triggers "nanobind: leaked N instances" warnings (and may delay
+    process exit while the synth's background load/gc threads are reaped).
+    Call this from the application's aboutToQuit handler to drop the cache
+    before Python finalization.
+    """
+    for synth in _SFIZZ_SYNTH_CACHE.values():
+        try:
+            synth.all_sound_off()
+        except Exception:
+            pass
+        # nanobind objects release the underlying C++ instance when the Python
+        # wrapper is garbage-collected; del here drops our last reference.
+        try:
+            del synth
+        except Exception:
+            pass
+    _SFIZZ_SYNTH_CACHE.clear()
+
+
 def _synth_sfizz_to_wav(
     sfz_path: Path,
     midi_path: Path,
