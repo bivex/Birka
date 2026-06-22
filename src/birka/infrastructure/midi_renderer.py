@@ -897,8 +897,8 @@ def _synth_sfizz_to_wav(
             # raises the sustain floor to match the my-py renderer's louder,
             # denser mix (which plays samples at native level without sfizz's
             # internal attenuation). Calibrated to hit RMS ≈ 0.12 on Il_Ritorno.
-            Compressor(threshold_db=-30.0, ratio=4.0, attack_ms=5.0, release_ms=50.0),
-            Gain(gain_db=12.0),
+            Compressor(threshold_db=-24.0, ratio=2.0, attack_ms=20.0, release_ms=150.0),
+            Gain(gain_db=10.0),
             Reverb(room_size=0.75, wet_level=0.30, dry_level=0.70),
             Delay(delay_seconds=0.370, feedback=0.18, mix=0.10),
         ])
