@@ -174,7 +174,7 @@ def render_midi_to_mp3(midi_path: Path, output_dir: Path, quality: int = 2) -> O
     mp3_path = output_dir / (midi_path.stem + ".mp3")
     tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
     try:
-        if not _synth_to_wav_for_backend(backend, midi_path, tmp_wav, 44100, 256, quality=quality):
+        if not _synth_to_wav_for_backend(backend, midi_path, tmp_wav, 96000, 256, quality=quality):
             return None
         stats = _measure_stats(tmp_wav)
         af = _build_loudnorm_filter(stats)
@@ -188,7 +188,7 @@ def render_midi_to_mp3(midi_path: Path, output_dir: Path, quality: int = 2) -> O
 def render_midi_to_wav(
     midi_path: Path,
     output_path: Path,
-    sample_rate: int = 44100,
+    sample_rate: int = 96000,
     polyphony: int = 256,
     quality: int = 2,
     bit_depth: int = 32,
@@ -324,7 +324,7 @@ def render_midi_to_mp3_batch(
         mp3_path = output_dir / (midi_path.stem + ".mp3")
         tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
         try:
-            if not _synth_to_wav_for_backend(backend, midi_path, tmp_wav, 44100, 256, quality=quality):
+            if not _synth_to_wav_for_backend(backend, midi_path, tmp_wav, 96000, 256, quality=quality):
                 return midi_path, None
             stats = _measure_stats(tmp_wav)
             af = _build_loudnorm_filter(stats)
@@ -354,7 +354,7 @@ def render_midi_to_wav_batch(
     midi_paths: List[Path],
     output_dir: Path,
     on_progress: Optional[Callable[[int, int, Path, bool], None]] = None,
-    sample_rate: int = 44100,
+    sample_rate: int = 96000,
     polyphony: int = 256,
     quality: int = 2,
 ) -> Tuple[List[Path], List[Path]]:
@@ -405,7 +405,7 @@ def _synth_to_wav(
     soundfont: Path,
     midi_path: Path,
     output_path: Path,
-    sample_rate: int = 44100,
+    sample_rate: int = 96000,
     polyphony: int = 256,
 ) -> bool:
     """Run fluidsynth to render MIDI to a WAV file."""
@@ -535,7 +535,7 @@ def _synth_tsf_to_wav(
     soundfont: Path,
     midi_path: Path,
     output_path: Path,
-    sample_rate: int = 44100,
+    sample_rate: int = 96000,
     polyphony: int = 256,
 ) -> bool:
     try:
@@ -761,7 +761,7 @@ def _synth_sfizz_to_wav(
     sfz_path: Path,
     midi_path: Path,
     output_path: Path,
-    sample_rate: int = 44100,
+    sample_rate: int = 96000,
     polyphony: int = 256,
     bit_depth: int = 32,
     quality: int = 2,

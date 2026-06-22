@@ -50,7 +50,7 @@ def _render_midi_to_tmp_wav(midi_path: Path) -> Path | None:
 
     tmp_dir = Path(tempfile.mkdtemp(prefix="birka_midi_"))
     wav_path = tmp_dir / (midi_path.stem + ".wav")
-    if render_midi_to_wav(midi_path, wav_path, sample_rate=44100, polyphony=64, bit_depth=24):
+    if render_midi_to_wav(midi_path, wav_path, sample_rate=96000, polyphony=64, bit_depth=24):
         return wav_path
     return None
 
