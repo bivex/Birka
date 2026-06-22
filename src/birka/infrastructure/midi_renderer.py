@@ -883,35 +883,9 @@ def _synth_sfizz_to_wav(
     #
     # Pre-gain: sfizz renders samples ~4× quieter than the raw sample amplitude
     # (internal engine attenuation, no API to disable). Boost by ~12 dB (4×)
-    # before FX so the effective per-note loudness matches the my-py renderer,
-    # which plays samples at their native level. Without this the mix sits at
-    # -22 LUFS vs the my-py renderer's -18 LUFS for the same MIDI.
-    try:
-        from pedalboard import Pedalboard, Reverb, Delay, Compressor, Gain
-
-        stereo = buf_arr.reshape(-1, 2).T  # (channels, samples)
-        board = Pedalboard([
-            # Compressor + makeup gain: sfizz renders with a high crest factor
-            # (~10: peaks are 10× louder than RMS), so peak-normalize leaves
-            # the sustain quiet. Compressing then boosting the makeup gain
-            # raises the sustain floor to match the my-py renderer's louder,
-            # denser mix (which plays samples at native level without sfizz's
-            # internal attenuation). Calibrated to hit RMS ≈ 0.12 on Il_Ritorno.
-            Compressor(threshold_db=-24.0, ratio=2.0, attack_ms=20.0, release_ms=150.0),
-            Gain(gain_db=10.0),
-            Reverb(room_size=0.75, wet_level=0.30, dry_level=0.70),
-            Delay(delay_seconds=0.370, feedback=0.18, mix=0.10),
-        ])
-        processed = board(stereo, sample_rate)
-        buf_arr = np.asarray(processed, dtype=np.float32).T.flatten()
-    except Exception:
-        # pedalboard unavailable or effect failed: keep the dry mix.
-        pass
-
-    # Final peak-normalize AFTER effects, to 0.95 (matching my-py renderer).
-    # This runs last so the output uses the full headroom regardless of how
-    # much the pre-gain + reverb added. The writers' tanh soft-clip catches
-    # any sub-sample overshoot during int quantization.
+    # No post-processing FX — samples are already processed through the
+    # 12-plugin VST chain in process_samples_vst.py. sfizz output goes
+    # directly to WAV as-is (only peak-normalized).
     try:
         peak = float(np.max(np.abs(buf_arr))) if buf_arr.size else 0.0
         if peak > 1e-6:
