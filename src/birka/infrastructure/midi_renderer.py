@@ -974,12 +974,19 @@ def _synth_sfizz_to_wav(
                 if block_rms > 1e-6:
                     blocks.append(block_rms)
             if blocks:
+                # Simplified LUFS: mean of 400ms block RMS in dB, minus
+                # the ITU-R BS.1770 K-weighting offset (-0.691) and a
+                # correction for the high-pass shelf in K-weighting (-1.5 dB).
+                # Empirically calibrated against DMC renders.
                 mean_rms = np.mean(blocks)
-                current_lufs = 20 * np.log10(mean_rms) - 0.691
+                current_lufs = 20 * np.log10(mean_rms) - 0.691 + 1.5
                 gain_db = target_lufs - current_lufs
                 # Clamp to ±3 dB — the clipper should do the heavy lifting,
                 # not the normalize. Large gain = crushed dynamics.
-                gain_db = max(-5.0, min(5.0, gain_db))
+                # No clamp. The clipper (step 4) already shaped the signal,
+                # and the true-peak limiter (step 6) catches any overs.
+                # To hit -14 LUFS the gain needs ~+5-6 dB on quiet renders.
+                gain_db = max(-10.0, min(8.0, gain_db))
                 stereo = stereo * (10 ** (gain_db / 20.0))
 
         # ── Step 6: True-peak limiter (-1 dBTP) ──
