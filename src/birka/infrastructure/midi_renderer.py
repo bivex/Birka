@@ -880,11 +880,22 @@ def _synth_sfizz_to_wav(
     # Studio post-processing: reverb + delay. Applied BEFORE normalization so
     # the final peak-normalize sees the post-FX level. Mirrors the Python
     # renderer (render_sfz_midi_gm.py) order: render → FX → normalize.
+    #
+    # Pre-gain: sfizz renders samples ~4× quieter than the raw sample amplitude
+    # (internal engine attenuation, no API to disable). Boost by ~12 dB (4×)
+    # before FX so the effective per-note loudness matches the my-py renderer,
+    # which plays samples at their native level. Without this the mix sits at
+    # -22 LUFS vs the my-py renderer's -18 LUFS for the same MIDI.
     try:
-        from pedalboard import Pedalboard, Reverb, Delay
+        from pedalboard import Pedalboard, Reverb, Delay, Compressor
 
         stereo = buf_arr.reshape(-1, 2).T  # (channels, samples)
         board = Pedalboard([
+            # Compressor first: sfizz renders with huge dynamic range (transients
+            # at full level, sustain much quieter), so peak-normalize leaves RMS
+            # far below the my-py renderer's. Light compression raises the
+            # sustain floor to match the my-py renderer's louder, denser mix.
+            Compressor(threshold_db=-24.0, ratio=3.0, attack_ms=10.0, release_ms=100.0),
             Reverb(room_size=0.75, wet_level=0.30, dry_level=0.70),
             Delay(delay_seconds=0.370, feedback=0.18, mix=0.10),
         ])
@@ -896,7 +907,7 @@ def _synth_sfizz_to_wav(
 
     # Final peak-normalize AFTER effects, to 0.95 (matching my-py renderer).
     # This runs last so the output uses the full headroom regardless of how
-    # much the reverb tail added/removed. The writers' tanh soft-clip catches
+    # much the pre-gain + reverb added. The writers' tanh soft-clip catches
     # any sub-sample overshoot during int quantization.
     try:
         peak = float(np.max(np.abs(buf_arr))) if buf_arr.size else 0.0
