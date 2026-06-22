@@ -877,27 +877,9 @@ def _synth_sfizz_to_wav(
     else:
         buf_arr = np.zeros(0, dtype=np.float32)
 
-    # Normalize the mix so it uses the available headroom. The per-channel
-    # instances each render their own instrument independently and are summed,
-    # but the sum rarely approaches full scale (a single instrument peaks
-    # ~0.05-0.3, and only a few overlap at once). Without normalization the
-    # output sits at -20 dBFS or quieter and sounds like channels are missing.
-    # Peak-normalize to -1 dBFS (0.89), then rely on each writer's tanh
-    # soft-clip to guarantee no ceiling-pinning if a later block overshoots.
-    try:
-        peak = float(np.max(np.abs(buf_arr))) if buf_arr.size else 0.0
-        if peak > 1e-6:
-            buf_arr = buf_arr * (0.89 / peak)
-    except Exception:
-        pass
-
-    # Studio post-processing: reverb + delay. Without this the sfizz render is
-    # bone-dry (each instrument sounds isolated "in a vacuum"), especially for
-    # sustained timbres like strings/ensembles. The chain mirrors the Python
-    # renderer's (render_sfz_midi_gm.py) so the sfizz backend sounds as rich.
-    # Effects are applied to the normalized signal; the reverb's wet tail can
-    # push peaks back up, so we leave headroom at 0.89 above and the writers'
-    # tanh soft-clip catches any overshoot.
+    # Studio post-processing: reverb + delay. Applied BEFORE normalization so
+    # the final peak-normalize sees the post-FX level. Mirrors the Python
+    # renderer (render_sfz_midi_gm.py) order: render → FX → normalize.
     try:
         from pedalboard import Pedalboard, Reverb, Delay
 
@@ -909,7 +891,18 @@ def _synth_sfizz_to_wav(
         processed = board(stereo, sample_rate)
         buf_arr = np.asarray(processed, dtype=np.float32).T.flatten()
     except Exception:
-        # pedalboard unavailable or effect failed: keep the dry normalized mix.
+        # pedalboard unavailable or effect failed: keep the dry mix.
+        pass
+
+    # Final peak-normalize AFTER effects, to 0.95 (matching my-py renderer).
+    # This runs last so the output uses the full headroom regardless of how
+    # much the reverb tail added/removed. The writers' tanh soft-clip catches
+    # any sub-sample overshoot during int quantization.
+    try:
+        peak = float(np.max(np.abs(buf_arr))) if buf_arr.size else 0.0
+        if peak > 1e-6:
+            buf_arr = buf_arr * (0.95 / peak)
+    except Exception:
         pass
 
     buf = buf_arr.tolist()
