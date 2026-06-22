@@ -810,14 +810,15 @@ def _synth_sfizz_to_wav(
     frames_needed = int(total_seconds * sample_rate)
 
     try:
-        # Single synth instance. sfizz applies program_change to whichever
-        # voices start after the event, so sequential program_changes between
-        # note_ons route each note to the correct instrument without per-channel
-        # instances. (An earlier multi-instance attempt — one Synth per MIDI
-        # channel summed into a mix bus — produced a brighter, thinner spectrum
-        # than the reference render because the per-channel program slots
-        # interacted badly with sfizz's global region matching; the single-
-        # instance path matches the reference output sample-for-sample.)
+        # Two synth instances: melodic + drums.
+        #
+        # sfizz's note_on(delay, note, velocity) has NO channel parameter,
+        # so all notes route to a single channel. Drum notes (ch10 in GM)
+        # must go to a SEPARATE sfizz instance loaded with a drum-only SFZ
+        # (key-mapped, no loprog/midi_channel filtering). The renderer
+        # checks msg.channel == 9 (MIDI ch10) and sends those notes to the
+        # drum synth; all other notes go to the melodic synth. Both outputs
+        # are summed into the final mix.
         cache_key = (str(sfz_path), sample_rate, polyphony, quality)
         if cache_key in _SFIZZ_SYNTH_CACHE:
             synth = _SFIZZ_SYNTH_CACHE[cache_key]
@@ -830,6 +831,25 @@ def _synth_sfizz_to_wav(
             if not synth.load_sfz_file(str(sfz_path)):
                 return False
             _SFIZZ_SYNTH_CACHE[cache_key] = synth
+
+        # Drum synth: load drum-only SFZ that sits next to the main bank.
+        # Falls back to melodic synth (no separate drums) if file is absent.
+        drum_sfz = Path(sfz_path).parent / "General_MIDI_sfizz_drums.sfz"
+        drum_synth = None
+        if drum_sfz.exists():
+            drum_cache_key = (str(drum_sfz), sample_rate, polyphony, quality)
+            if drum_cache_key in _SFIZZ_SYNTH_CACHE:
+                drum_synth = _SFIZZ_SYNTH_CACHE[drum_cache_key]
+                drum_synth.all_sound_off()
+            else:
+                drum_synth = _sfizz.Synth(sample_rate, _SFIZZ_BLOCK_FRAMES)
+                drum_synth.enable_freewheeling()
+                drum_synth.set_num_voices(64)
+                drum_synth.set_sample_quality(quality)
+                if drum_synth.load_sfz_file(str(drum_sfz)):
+                    _SFIZZ_SYNTH_CACHE[drum_cache_key] = drum_synth
+                else:
+                    drum_synth = None
 
         interleaved_blocks: List[np.ndarray] = []
         event_index = 0
@@ -847,25 +867,29 @@ def _synth_sfizz_to_wav(
                 if event_frame >= block_end:
                     break
                 delay = max(0, min(_SFIZZ_BLOCK_FRAMES, event_frame - block_start))
+                # Channel 10 (index 9) = GM drums → route to drum synth
+                is_drum = getattr(msg, "channel", None) == 9 and drum_synth is not None
+                target = drum_synth if is_drum else synth
                 if msg.type == "note_on" and msg.velocity > 0:
-                    synth.note_on(delay, msg.note, msg.velocity)
+                    target.note_on(delay, msg.note, msg.velocity)
                 elif msg.type in ("note_off", "note_on"):
-                    synth.note_off(delay, msg.note, 0)
+                    target.note_off(delay, msg.note, 0)
                 elif msg.type == "control_change":
-                    synth.cc(delay, msg.control, msg.value)
+                    target.cc(delay, msg.control, msg.value)
                 elif msg.type == "pitchwheel":
-                    # mido pitch is -8192..8191; sfizz expects the same range.
-                    synth.pitch_wheel(delay, msg.pitch)
-                elif msg.type == "program_change":
-                    # Switch the active instrument. Requires an SFZ bank that
-                    # maps regions via loprog/hiprog, and the pysfizz
-                    # program_change binding.
+                    target.pitch_wheel(delay, msg.pitch)
+                elif msg.type == "program_change" and not is_drum:
                     synth.program_change(delay, msg.program)
                 event_index += 1
 
+            # Render both synths and sum into a stereo mix
             left, right = synth.render_block()
             left_arr = np.asarray(left, dtype=np.float32)
             right_arr = np.asarray(right, dtype=np.float32)
+            if drum_synth is not None:
+                d_left, d_right = drum_synth.render_block()
+                left_arr = left_arr + np.asarray(d_left, dtype=np.float32)
+                right_arr = right_arr + np.asarray(d_right, dtype=np.float32)
             block = np.column_stack((left_arr, right_arr)).flatten()
             interleaved_blocks.append(block)
             rendered += len(left_arr)
