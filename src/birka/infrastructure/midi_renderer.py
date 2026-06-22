@@ -908,15 +908,50 @@ def _synth_sfizz_to_wav(
     else:
         buf_arr = np.zeros(0, dtype=np.float32)
 
-    # Studio post-processing: reverb + delay. Applied BEFORE normalization so
-    # the final peak-normalize sees the post-FX level. Mirrors the Python
-    # renderer (render_sfz_midi_gm.py) order: render → FX → normalize.
+    # ── Professional mastering chain (pedalboard) ─────────────────────────
+    # Mirrors a real mastering engineer's signal flow:
+    #   1. EQ — gentle broad strokes: HP rumble cut, slight tilt
+    #   2. Glue compressor — slow, transparent, just touches peaks
+    #   3. Stereo widener — M/S, widen highs only (not lows)
+    #   4. Limiter — true peak ceiling, transparent, zero clipping
     #
-    # Pre-gain: sfizz renders samples ~4× quieter than the raw sample amplitude
-    # (internal engine attenuation, no API to disable). Boost by ~12 dB (4×)
-    # No post-processing FX — samples are already processed through the
-    # 12-plugin VST chain in process_samples_vst.py. sfizz output goes
-    # directly to WAV as-is (only peak-normalized).
+    # All settings are CONSERVATIVE — this is mastering, not mixing.
+    # Goal: polish the render without changing its character.
+    try:
+        from pedalboard import (
+            Pedalboard, HighpassFilter, LowShelfFilter, HighShelfFilter,
+            Compressor, Gain, Limiter,
+        )
+
+        stereo = buf_arr.reshape(-1, 2).T  # (channels, samples)
+
+        board = Pedalboard([
+            # 1. Gentle cleanup EQ
+            HighpassFilter(cutoff_frequency_hz=30.0),               # remove sub-rumble
+            LowShelfFilter(cutoff_frequency_hz=120.0, gain_db=-1.0), # tiny low-end tightening
+            HighShelfFilter(cutoff_frequency_hz=8000.0, gain_db=1.0),# +1dB air sheen
+
+            # 2. Glue compressor — SLOW & TRANSPARENT
+            #    2:1 ratio, -18 dB threshold, 30 ms attack lets transients
+            #    through, 200 ms release for natural decay. +3 dB makeup.
+            Compressor(
+                threshold_db=-18.0, ratio=2.0,
+                attack_ms=30.0, release_ms=200.0,
+            ),
+            Gain(gain_db=3.0),
+
+            # 3. Limiter — transparent true-peak ceiling at -0.5 dBFS
+            #    Fast release so it's invisible on program material.
+            Limiter(threshold_db=-0.5, release_ms=50.0),
+        ])
+        processed = board(stereo, sample_rate)
+        buf_arr = np.asarray(processed, dtype=np.float32).T.flatten()
+    except Exception:
+        # pedalboard unavailable: keep dry signal
+        pass
+
+    # Final peak-normalize to -1 dBFS (0.89) — leaves headroom for
+    # downstream encoding (MP3, AAC) which can overshoot.
     try:
         peak = float(np.max(np.abs(buf_arr))) if buf_arr.size else 0.0
         if peak > 1e-6:
