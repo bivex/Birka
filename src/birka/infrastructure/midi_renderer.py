@@ -890,6 +890,13 @@ def _synth_sfizz_to_wav(
                 d_left, d_right = drum_synth.render_block()
                 left_arr = left_arr + np.asarray(d_left, dtype=np.float32)
                 right_arr = right_arr + np.asarray(d_right, dtype=np.float32)
+            # Tanh soft-clip per block: prevents polyphony sum from creating
+            # harsh flat-top clipping inside sfizz's output. tanh maps the
+            # summed signal smoothly to [-1, 1], so even when 5-6 notes
+            # overlap the result stays musical instead of harshly clipped.
+            # Applied at 0.7 drive so signals below ~0.5 pass nearly linear.
+            left_arr = np.tanh(left_arr * 0.7) / np.tanh(0.7)
+            right_arr = np.tanh(right_arr * 0.7) / np.tanh(0.7)
             block = np.column_stack((left_arr, right_arr)).flatten()
             interleaved_blocks.append(block)
             rendered += len(left_arr)
