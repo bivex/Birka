@@ -887,15 +887,18 @@ def _synth_sfizz_to_wav(
     # which plays samples at their native level. Without this the mix sits at
     # -22 LUFS vs the my-py renderer's -18 LUFS for the same MIDI.
     try:
-        from pedalboard import Pedalboard, Reverb, Delay, Compressor
+        from pedalboard import Pedalboard, Reverb, Delay, Compressor, Gain
 
         stereo = buf_arr.reshape(-1, 2).T  # (channels, samples)
         board = Pedalboard([
-            # Compressor first: sfizz renders with huge dynamic range (transients
-            # at full level, sustain much quieter), so peak-normalize leaves RMS
-            # far below the my-py renderer's. Light compression raises the
-            # sustain floor to match the my-py renderer's louder, denser mix.
-            Compressor(threshold_db=-24.0, ratio=3.0, attack_ms=10.0, release_ms=100.0),
+            # Compressor + makeup gain: sfizz renders with a high crest factor
+            # (~10: peaks are 10× louder than RMS), so peak-normalize leaves
+            # the sustain quiet. Compressing then boosting the makeup gain
+            # raises the sustain floor to match the my-py renderer's louder,
+            # denser mix (which plays samples at native level without sfizz's
+            # internal attenuation). Calibrated to hit RMS ≈ 0.12 on Il_Ritorno.
+            Compressor(threshold_db=-30.0, ratio=4.0, attack_ms=5.0, release_ms=50.0),
+            Gain(gain_db=12.0),
             Reverb(room_size=0.75, wet_level=0.30, dry_level=0.70),
             Delay(delay_seconds=0.370, feedback=0.18, mix=0.10),
         ])
