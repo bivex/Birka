@@ -314,32 +314,38 @@ def _q_to_val(q):
 
 def _configure_kotelnikov_ge(kotelnikov):
     # TDR Kotelnikov GE (indices verified via live dump). Wide-band glue
-    # compressor. Premium "invisible glue" settings: gentle ratio, slow-ish
-    # RMS release, sidechain high-passed so the bass isn't over-compressed.
+    # compressor in PARALLEL (New York) configuration: a deeper wet threshold
+    # creates real gain reduction, blended back against an unprocessed dry path.
+    # Result: density and lift on sustained material while original transients
+    # pass through the dry leg uncompressed.
     #
     # idx: 0 Threshold | 1 Peak-Crest | 2 Soft Knee | 3 Max GR | 4 Max GR En
     #      5 Ratio | 6 Attack | 7 Release Peak | 8 Release RMS | 10 Makeup
     #      11 Dry Mix | 12 Dry Wet (INVERTED: 0.0=100% wet, 1.0=0% wet/dry!)
     #      14 Out Gain | 15 SC HP Freq | 16 SC HP Slope
     #
+    # Threshold mapping is LINEAR: 0.020 per dB (0.40 = -20 dB, verified).
+    # Dry Mix (idx 11) is dry-leg attenuation in dB: 0.0=off (wet only),
+    # 0.75=dry@-15dB (~18% power blend), 1.0=dry@0dB (full parallel).
+    #
     # CRITICAL FIX: idx 12 (Dry Wet) was 1.0 = "0.0" = 0% processed signal,
     # so the entire compressor was bypassed. 0.0 = 100% wet (full processing).
-    kotelnikov.set_parameter(0, 0.26)  # Threshold = -13 dB (premium: gentler)
+    kotelnikov.set_parameter(0, 0.40)  # Threshold = -20 dB (deeper: GR ~3-4 dB)
     kotelnikov.set_parameter(1, 0.4091)  # Peak-Crest = RMS (smooth, musical)
     kotelnikov.set_parameter(2, 0.0625)  # Soft Knee = 1.0 (gentle onset)
     kotelnikov.set_parameter(5, 0.35)  # Ratio = 1.6:1 (premium "expensive movement")
-    kotelnikov.set_parameter(6, 0.58)  # Attack ~38 ms (let transients breathe)
-    kotelnikov.set_parameter(7, 0.50)  # Release Peak ~140 ms
-    kotelnikov.set_parameter(8, 0.53)  # Release RMS ~240 ms (slow, smooth recovery)
+    kotelnikov.set_parameter(6, 0.58)  # Attack ~28 ms (let transients breathe)
+    kotelnikov.set_parameter(7, 0.50)  # Release Peak ~141 ms
+    kotelnikov.set_parameter(8, 0.53)  # Release RMS ~230 ms (slow, smooth recovery)
     kotelnikov.set_parameter(
         10, 0.48
     )  # Makeup ~unity (iterated: 0.45→-1.0dB, 0.48 target ~0dB)
-    kotelnikov.set_parameter(11, 0.0)  # Dry Mix = off
+    kotelnikov.set_parameter(11, 0.75)  # Dry Mix = -15 dB (~18% dry, New York parallel)
     kotelnikov.set_parameter(12, 0.0)  # Dry Wet = 100% wet (FIXED: was 1.0 = bypassed)
     kotelnikov.set_parameter(14, 0.55)  # Out Gain = 0 dB
     kotelnikov.set_parameter(
         15, 0.65
-    )  # SC HP Freq = 180 Hz (premium: bass looser/warmer)
+    )  # SC HP Freq = 175 Hz (premium: bass looser/warmer)
     kotelnikov.set_parameter(16, 0.1667)  # SC HP Slope = 3.0
 
 
