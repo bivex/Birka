@@ -16,6 +16,7 @@ def main() -> int:
     # process exit (their background file-pool threads delay shutdown and
     # emit "nanobind: leaked N instances" warnings).
     app.aboutToQuit.connect(_dispose_sfizz)
+    app.aboutToQuit.connect(_dispose_vst_chain)
     window = AudioBrowserWindow([project_root / "data" / "library"])
     window.show()
     return app.exec()
@@ -26,6 +27,15 @@ def _dispose_sfizz() -> None:
         from birka.infrastructure.midi_renderer import dispose_sfizz_cache
 
         dispose_sfizz_cache()
+    except Exception:
+        pass
+
+
+def _dispose_vst_chain() -> None:
+    try:
+        from birka.infrastructure.midi_renderer import dispose_vst_chain_cache
+
+        dispose_vst_chain_cache()
     except Exception:
         pass
 
