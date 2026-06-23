@@ -436,6 +436,27 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
             _VST_ENGINE.render(duration)
             out = _VST_ENGINE.get_audio("limiter")
 
+            try:
+                mono = np.mean(out, axis=0)
+                win = int(0.4 * _VST_SAMPLE_RATE)
+                blocks = []
+                for i in range(0, max(1, len(mono) - win), win):
+                    rms = float(np.sqrt(np.mean(mono[i : i + win] ** 2)))
+                    if rms > 1e-6:
+                        blocks.append(rms)
+                if blocks:
+                    mean_rms = float(np.mean(blocks))
+                    current_lufs = 20.0 * np.log10(mean_rms) - 0.691
+                    target_lufs = -14.0
+                    gain_db = target_lufs - current_lufs
+                    gain_db = max(-6.0, min(4.0, gain_db))
+                    out = out * (10.0 ** (gain_db / 20.0))
+                    peak = float(np.max(np.abs(out)))
+                    if peak > 0.891:
+                        out = out * (0.891 / peak)
+            except Exception:
+                pass
+
             success = _write_float_wav(
                 out.T.flatten(), output_path, sample_rate, soft_clip=False
             )
