@@ -261,24 +261,28 @@ _VST_NEUTRAL_PRESET = {
     # A1StereoControl removed: stereo widening now in Pro-Q 4 per-band
     # (B2 bass → Mid, B6 air → Side). No standalone stereo plugin needed.
     "fresh_air": {"bypass": False, "mid": 0.02, "high": 0.12},
-    # Pro-MB multiband. Band 1 anchors the scene by mono-ing bass below 120Hz
-    # (fundamental low-end that otherwise "floats" in stereo and blurs the
-    # whole mix). Band 2 provides mid-bass glue. Both verified against live
-    # parameter dump.
+    # Pro-MB multiband. Band 1 anchors the scene by compressing bass below
+    # 120 Hz on the Mid signal (fundamental low-end that otherwise "floats" in
+    # stereo and blurs the whole mix). Band 2 provides mid-bass glue. Both
+    # verified against live parameter dump.
     "pro_mb": {
         "bypass": False,
         "params": {
-            # Band 1: mono bass below 120Hz — scene anchor
-            0: 0.5,  # State = Enabled (0.5 verified for Band 2)
-            1: 0.0,  # Low Crossover 30Hz (full lower edge, below bass)
-            3: 0.2007,  # High Crossover 120Hz (upper boundary of bass mono)
+            # Band 1: mono bass below 120 Hz — scene anchor.
+            # Stereo Link is 100% (idx 19) / Mode Mid (idx 20) by default, so
+            # the band processes the mono sum: compression only reacts to (and
+            # reduces) center-image bass. Ratio 1.5:1 (idx 8 = 0.30) — gentle,
+            # preserves bass transient weight. NB: Pro-MB's Ratio mapping is
+            # LOGARITHMIC (0.40→2:1, 0.50→2.75:1, 0.60→4:1, 1.0→100:1), NOT
+            # the linear (r-1)/99 formula an earlier comment assumed.
+            0: 0.5,  # State = Enabled
+            1: 0.0,  # Low Crossover 30 Hz (full lower edge, below bass)
+            3: 0.2007,  # High Crossover 120 Hz (upper boundary of bass band)
             6: 0.70,  # Threshold -18 dB
-            8: 0.0101,  # Ratio 2:1 ((2-1)/(100-1))
+            8: 0.30,  # Ratio 1.5:1 (log-mapped; verified live)
             9: 0.15,  # Attack 15%
             10: 0.30,  # Release 30%
             11: 0.125,  # Knee 6 dB (6/48)
-            # Pan left at default 0.5 (stereo) — bass below 120Hz is already
-            # "mono" via shared band compression (both channels get same GR).
             # Band 2: mid-bass glue (120–320 Hz region, unchanged)
             22: 0.5,
             23: 0.3427,
@@ -521,12 +525,16 @@ def _apply_vst_preset(
     pro_q.set_parameter(28, 0.10)  # Low Shelf
     pro_q.set_parameter(30, 0.7)  # Mid (mono bass)
     # Band 3: dynamic bell at 290 Hz (only cuts when energy builds up) — Stereo
+    # Band 3: dynamic bell at 290 Hz (only cuts when energy builds up) — Mid.
+    # Routing the low-mid cleanup to Mid only removes "boxy" center buildup
+    # while leaving the stereo width of the band untouched: the cut tightens
+    # the center image rather than narrowing the whole scene.
     pro_q.set_parameter(47, 1.0)
     pro_q.set_parameter(48, _freq_to_val(eq_settings["b2_freq"]))
     pro_q.set_parameter(49, _gain_to_val(eq_settings["b2_gain"]))
     pro_q.set_parameter(50, _q_to_val(eq_settings["b2_q"]))
     pro_q.set_parameter(51, 0.0)  # Bell
-    pro_q.set_parameter(53, 0.5)  # Stereo
+    pro_q.set_parameter(53, 0.7)  # Mid (center-only cleanup, width preserved)
     b2_dyn = eq_settings.get("b2_dyn", 0.0)
     if abs(b2_dyn) > 1e-4:
         pro_q.set_parameter(55, _gain_to_val(b2_dyn))  # Dyn Range (base46+9=55)
