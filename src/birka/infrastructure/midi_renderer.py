@@ -112,21 +112,21 @@ _VST_PLUGIN_PATHS = {
 
 _VST_NEUTRAL_PRESET = {
     "bypass": False,
-    "tape": {0: 0.889, 1: 0.5, 2: 1.0, 16: 0.15, 17: 0.20, 18: 0.5, 8: 0.5, 9: 0.5},
-    "sdrr": {"bypass": True, "mode": 0.0, "drive": 0.20, "mix": 0.50},
+    "tape": {0: 0.889, 1: 0.5, 2: 1.0, 16: 0.28, 17: 0.35, 18: 0.5, 8: 0.5, 9: 0.5},
+    "sdrr": {"bypass": False, "mode": 0.0, "drive": 0.20, "mix": 0.40},
     "spiff": {"bypass": True, "mode": 1.0, "boost": 0.0, "cut": 0.0, "sens": 0.5},
     "soothe": {"bypass": True, "depth": 0.35, "sharpness": 0.50, "selectivity": 0.40},
     "eq": {
-        "hp_freq": 30.0,
+        "hp_freq": 35.0,
         "b1_freq": 250.0,
-        "b1_gain": 0.0,
-        "b1_q": 0.5,
+        "b1_gain": -1.2,
+        "b1_q": 0.6,
         "b1_dyn": -2.0,
-        "b3_freq": 3000.0,
+        "b3_freq": 3200.0,
         "b3_gain": 0.0,
         "b3_q": 0.5,
         "b4_freq": 10000.0,
-        "b4_gain": 0.0,
+        "b4_gain": 1.4,
         "b4_q": 0.5,
     },
     "reverb": {
@@ -141,8 +141,8 @@ _VST_NEUTRAL_PRESET = {
         13: 1.0,
     },
     "chorus_wet": 0.0,
-    "stereo": {3: 0.55, 19: 1.0},
-    "fresh_air": {"bypass": True, "mid": 0.0, "high": 0.0},
+    "stereo": {3: 0.62, 19: 1.0},
+    "fresh_air": {"bypass": False, "mid": 0.06, "high": 0.14},
     "pro_mb": {"bypass": True, "params": {}},
 }
 
