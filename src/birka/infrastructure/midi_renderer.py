@@ -143,40 +143,11 @@ _VST_NEUTRAL_PRESET = {
         "b4_gain": 0.2,
         "b4_q": 0.35,
     },
-    "reverb": {
-        2: 0.93,
-        3: 0.03,
-        5: 0.02,
-        6: 0.05,
-        8: 0.10,
-        9: 0.18,
-        10: 0.7,
-        11: 0.10,
-        13: 1.0,
-    },
+    "reverb": {2: 0.93, 8: 0.10, 9: 0.18},
     "chorus_wet": 0.0,
     "stereo": {3: 0.72, 19: 1.0},
     "fresh_air": {"bypass": False, "mid": 0.04, "high": 0.16},
-    "pro_mb": {
-        "bypass": False,
-        "params": {
-            0: 1.0,
-            1: 0.22,
-            3: 0.20,
-            6: 0.15,
-            7: 0.40,
-            22: 1.0,
-            23: 0.28,
-            25: 0.23,
-            28: 0.20,
-            29: 0.35,
-            44: 1.0,
-            45: 0.60,
-            47: 0.15,
-            50: 0.10,
-            51: 0.30,
-        },
-    },
+    "pro_mb": {"bypass": True, "params": {}},
 }
 
 
@@ -256,7 +227,7 @@ def _apply_vst_preset(
         soothe.set_parameter(53, 1.0)
     else:
         soothe.set_parameter(53, 0.0)
-        soothe.set_parameter(3, 0.0)
+        soothe.set_parameter(3, 0.40)
         soothe.set_parameter(4, soothe_settings["depth"])
         soothe.set_parameter(5, soothe_settings["sharpness"])
         soothe.set_parameter(6, soothe_settings["selectivity"])
@@ -464,10 +435,6 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
             duration = audio_2d.shape[1] / _VST_SAMPLE_RATE
             _VST_ENGINE.render(duration)
             out = _VST_ENGINE.get_audio("limiter")
-
-            peak = float(np.max(np.abs(out)))
-            if peak > 1e-6:
-                out = out * (0.95 / peak)
 
             success = _write_float_wav(
                 out.T.flatten(), output_path, sample_rate, soft_clip=False
