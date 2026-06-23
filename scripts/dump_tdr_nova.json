@@ -1,0 +1,1370 @@
+[
+  {
+    "index": 0,
+    "name": "Band 1 selected",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 1,
+    "name": "Band 1 Active",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 2,
+    "name": "Band 1 Gain",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.0",
+    "min": "-18.0",
+    "max": "18.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 3,
+    "name": "Band 1 Q",
+    "text": "0.40",
+    "currentValText": "0.40",
+    "defaultValue": 0.33858761191368103,
+    "defaultValueText": "0.40",
+    "min": "0.10",
+    "max": "6.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.012000000104308128
+    ]
+  },
+  {
+    "index": 4,
+    "name": "Band 1 Frequency",
+    "text": "80",
+    "currentValText": "80",
+    "defaultValue": 0.25071486830711365,
+    "defaultValueText": "80",
+    "min": "10",
+    "max": "40000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 5,
+    "name": "Band 1 Type",
+    "text": "Bell",
+    "currentValText": "Bell",
+    "defaultValue": 0.5,
+    "defaultValueText": "Bell",
+    "min": "Low S",
+    "max": "High S",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 6,
+    "name": "Band 1 Dyn",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "Sticky",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 7,
+    "name": "Band 1 Threshold",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 1.0,
+    "defaultValueText": "0.0",
+    "min": "-50.0",
+    "max": "0.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 8,
+    "name": "Band 1 Ratio",
+    "text": "2.0",
+    "currentValText": "2.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "2.0",
+    "min": "0.5",
+    "max": "inf",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.061000000685453415
+    ]
+  },
+  {
+    "index": 9,
+    "name": "Band 1 Split",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 10,
+    "name": "Band 1 Attack",
+    "text": "20",
+    "currentValText": "20",
+    "defaultValue": 0.4466758668422699,
+    "defaultValueText": "20",
+    "min": "0.10",
+    "max": "500",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.05700000002980232
+    ]
+  },
+  {
+    "index": 11,
+    "name": "Band 1 Release",
+    "text": "200",
+    "currentValText": "200",
+    "defaultValue": 0.5252185463905334,
+    "defaultValueText": "200",
+    "min": "10",
+    "max": "3000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.008999999612569809
+    ]
+  },
+  {
+    "index": 12,
+    "name": "Band 2 selected",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 13,
+    "name": "Band 2 Active",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 14,
+    "name": "Band 2 Gain",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.0",
+    "min": "-18.0",
+    "max": "18.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 15,
+    "name": "Band 2 Q",
+    "text": "0.60",
+    "currentValText": "0.60",
+    "defaultValue": 0.4376181364059448,
+    "defaultValueText": "0.60",
+    "min": "0.10",
+    "max": "6.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.012000000104308128
+    ]
+  },
+  {
+    "index": 16,
+    "name": "Band 2 Frequency",
+    "text": "400",
+    "currentValText": "400",
+    "defaultValue": 0.4447621703147888,
+    "defaultValueText": "400",
+    "min": "10",
+    "max": "40000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 17,
+    "name": "Band 2 Type",
+    "text": "Bell",
+    "currentValText": "Bell",
+    "defaultValue": 0.5,
+    "defaultValueText": "Bell",
+    "min": "Low S",
+    "max": "High S",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 18,
+    "name": "Band 2 Dyn",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "Sticky",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 19,
+    "name": "Band 2 Threshold",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 1.0,
+    "defaultValueText": "0.0",
+    "min": "-50.0",
+    "max": "0.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 20,
+    "name": "Band 2 Ratio",
+    "text": "2.0",
+    "currentValText": "2.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "2.0",
+    "min": "0.5",
+    "max": "inf",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.061000000685453415
+    ]
+  },
+  {
+    "index": 21,
+    "name": "Band 2 Split",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 22,
+    "name": "Band 2 Attack",
+    "text": "10.0",
+    "currentValText": "10.0",
+    "defaultValue": 0.3751353621482849,
+    "defaultValueText": "10.0",
+    "min": "0.10",
+    "max": "500",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.05700000002980232
+    ]
+  },
+  {
+    "index": 23,
+    "name": "Band 2 Release",
+    "text": "180",
+    "currentValText": "180",
+    "defaultValue": 0.5067464709281921,
+    "defaultValueText": "180",
+    "min": "10",
+    "max": "3000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.008999999612569809
+    ]
+  },
+  {
+    "index": 24,
+    "name": "Band 3 selected",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 25,
+    "name": "Band 3 Active",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 26,
+    "name": "Band 3 Gain",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.0",
+    "min": "-18.0",
+    "max": "18.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 27,
+    "name": "Band 3 Q",
+    "text": "0.50",
+    "currentValText": "0.50",
+    "defaultValue": 0.39308804273605347,
+    "defaultValueText": "0.50",
+    "min": "0.10",
+    "max": "6.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.012000000104308128
+    ]
+  },
+  {
+    "index": 28,
+    "name": "Band 3 Frequency",
+    "text": "2200",
+    "currentValText": "2200",
+    "defaultValue": 0.6503008604049683,
+    "defaultValueText": "2200",
+    "min": "10",
+    "max": "40000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 29,
+    "name": "Band 3 Type",
+    "text": "Bell",
+    "currentValText": "Bell",
+    "defaultValue": 0.5,
+    "defaultValueText": "Bell",
+    "min": "Low S",
+    "max": "High S",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 30,
+    "name": "Band 3 Dyn",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "Sticky",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 31,
+    "name": "Band 3 Threshold",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 1.0,
+    "defaultValueText": "0.0",
+    "min": "-50.0",
+    "max": "0.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 32,
+    "name": "Band 3 Ratio",
+    "text": "2.0",
+    "currentValText": "2.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "2.0",
+    "min": "0.5",
+    "max": "inf",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.061000000685453415
+    ]
+  },
+  {
+    "index": 33,
+    "name": "Band 3 Split",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 34,
+    "name": "Band 3 Attack",
+    "text": "5.0",
+    "currentValText": "5.0",
+    "defaultValue": 0.31465035676956177,
+    "defaultValueText": "5.0",
+    "min": "0.10",
+    "max": "500",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.05700000002980232
+    ]
+  },
+  {
+    "index": 35,
+    "name": "Band 3 Release",
+    "text": "160",
+    "currentValText": "160",
+    "defaultValue": 0.48609650135040283,
+    "defaultValueText": "160",
+    "min": "10",
+    "max": "3000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.008999999612569809
+    ]
+  },
+  {
+    "index": 36,
+    "name": "Band 4 selected",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 37,
+    "name": "Band 4 Active",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 38,
+    "name": "Band 4 Gain",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.0",
+    "min": "-18.0",
+    "max": "18.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 39,
+    "name": "Band 4 Q",
+    "text": "0.60",
+    "currentValText": "0.60",
+    "defaultValue": 0.4376181364059448,
+    "defaultValueText": "0.60",
+    "min": "0.10",
+    "max": "6.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.012000000104308128
+    ]
+  },
+  {
+    "index": 40,
+    "name": "Band 4 Frequency",
+    "text": "6000",
+    "currentValText": "6000",
+    "defaultValue": 0.7712673544883728,
+    "defaultValueText": "6000",
+    "min": "10",
+    "max": "40000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 41,
+    "name": "Band 4 Type",
+    "text": "High S",
+    "currentValText": "High S",
+    "defaultValue": 1.0,
+    "defaultValueText": "High S",
+    "min": "Low S",
+    "max": "High S",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 42,
+    "name": "Band 4 Dyn",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "Sticky",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 43,
+    "name": "Band 4 Threshold",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 1.0,
+    "defaultValueText": "0.0",
+    "min": "-50.0",
+    "max": "0.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 44,
+    "name": "Band 4 Ratio",
+    "text": "2.0",
+    "currentValText": "2.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "2.0",
+    "min": "0.5",
+    "max": "inf",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.061000000685453415
+    ]
+  },
+  {
+    "index": 45,
+    "name": "Band 4 Split",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 46,
+    "name": "Band 4 Attack",
+    "text": "4.0",
+    "currentValText": "4.0",
+    "defaultValue": 0.2971976399421692,
+    "defaultValueText": "4.0",
+    "min": "0.10",
+    "max": "500",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.05700000002980232
+    ]
+  },
+  {
+    "index": 47,
+    "name": "Band 4 Release",
+    "text": "23",
+    "currentValText": "23",
+    "defaultValue": 0.14602750539779663,
+    "defaultValueText": "23",
+    "min": "10",
+    "max": "3000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.008999999612569809
+    ]
+  },
+  {
+    "index": 48,
+    "name": "HP Selected",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 49,
+    "name": "HP Active",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 50,
+    "name": "HP Frequency",
+    "text": "15",
+    "currentValText": "15",
+    "defaultValue": 0.048886265605688095,
+    "defaultValueText": "15",
+    "min": "10",
+    "max": "40000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 51,
+    "name": "HP Type",
+    "text": "24dB/oct",
+    "currentValText": "24dB/oct",
+    "defaultValue": 0.6666666865348816,
+    "defaultValueText": "24dB/oct",
+    "min": "6dB/oct",
+    "max": "72dB/oct",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 52,
+    "name": "LP Selected",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 53,
+    "name": "LP Active",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 54,
+    "name": "LP Frequency",
+    "text": "30000",
+    "currentValText": "30000",
+    "defaultValue": 0.9653146266937256,
+    "defaultValueText": "30000",
+    "min": "10",
+    "max": "40000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 55,
+    "name": "LP Type",
+    "text": "24dB/oct",
+    "currentValText": "24dB/oct",
+    "defaultValue": 0.6666666865348816,
+    "defaultValueText": "24dB/oct",
+    "min": "6dB/oct",
+    "max": "72dB/oct",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 56,
+    "name": "Wide Band Gain",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.0",
+    "min": "-18.0",
+    "max": "18.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 57,
+    "name": "Wide Band Dyn",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 58,
+    "name": "Wide Band Threshold",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 1.0,
+    "defaultValueText": "0.0",
+    "min": "-50.0",
+    "max": "0.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 59,
+    "name": "Wide Band Ratio",
+    "text": "1.5",
+    "currentValText": "1.5",
+    "defaultValue": 0.4444444477558136,
+    "defaultValueText": "1.5",
+    "min": "0.5",
+    "max": "inf",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.061000000685453415
+    ]
+  },
+  {
+    "index": 60,
+    "name": "Wide Band Attack",
+    "text": "8.0",
+    "currentValText": "8.0",
+    "defaultValue": 0.35455694794654846,
+    "defaultValueText": "8.0",
+    "min": "0.10",
+    "max": "500",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.05700000002980232
+    ]
+  },
+  {
+    "index": 61,
+    "name": "Wide Band Release",
+    "text": "200",
+    "currentValText": "200",
+    "defaultValue": 0.5252185463905334,
+    "defaultValueText": "200",
+    "min": "10",
+    "max": "3000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.008999999612569809
+    ]
+  },
+  {
+    "index": 62,
+    "name": "Master bypass",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 63,
+    "name": "Dynamic delta",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 64,
+    "name": "Dry Mix",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.0",
+    "min": "0.0",
+    "max": "100.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 65,
+    "name": "Output Gain",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.0",
+    "min": "-20.0",
+    "max": "20.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 66,
+    "name": "EQ Auto Gain",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 67,
+    "name": "Quality",
+    "text": "Precise-",
+    "currentValText": "Precise-",
+    "defaultValue": 1.0,
+    "defaultValueText": "Precise-",
+    "min": "Eco",
+    "max": "Precise-",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 68,
+    "name": "Channels",
+    "text": "Stereo",
+    "currentValText": "Stereo",
+    "defaultValue": 0.1666666716337204,
+    "defaultValueText": "Stereo",
+    "min": "Mono",
+    "max": "Dual Mono",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 7,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.08399999886751175
+    ]
+  },
+  {
+    "index": 69,
+    "name": "Analyzer Mode",
+    "text": "Analyzer: In",
+    "currentValText": "Analyzer: In",
+    "defaultValue": 0.0,
+    "defaultValueText": "Analyzer: In",
+    "min": "Analyzer: In",
+    "max": "Display: Hidden",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 70,
+    "name": "Display EQ Range",
+    "text": "-/+ 12 dB",
+    "currentValText": "-/+ 12 dB",
+    "defaultValue": 0.0,
+    "defaultValueText": "-/+ 12 dB",
+    "min": "-/+ 12 dB",
+    "max": "-/+ 24 dB",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 71,
+    "name": "Display FFT Floor",
+    "text": "48 dB",
+    "currentValText": "48 dB",
+    "defaultValue": 0.0,
+    "defaultValueText": "48 dB",
+    "min": "48 dB",
+    "max": "96 dB",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 72,
+    "name": "Sidechain Mode",
+    "text": "Int SC",
+    "currentValText": "Int SC",
+    "defaultValue": 0.0,
+    "defaultValueText": "Int SC",
+    "min": "Int SC",
+    "max": "Int SC (Flat)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 73,
+    "name": "Analyzer Speed",
+    "text": "Normal",
+    "currentValText": "Normal",
+    "defaultValue": 0.5,
+    "defaultValueText": "Normal",
+    "min": "Fast",
+    "max": "Original",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 74,
+    "name": "Solo",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 75,
+    "name": "Program",
+    "text": "Default",
+    "currentValText": "Default",
+    "defaultValue": 0.0,
+    "defaultValueText": "Default",
+    "min": "Default",
+    "max": "USER060",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 73,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.007000000216066837
+    ]
+  }
+]

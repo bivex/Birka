@@ -1,0 +1,362 @@
+[
+  {
+    "index": 0,
+    "name": "Buffer Size",
+    "text": "512",
+    "currentValText": "512",
+    "defaultValue": 0.0,
+    "defaultValueText": "0",
+    "min": "0",
+    "max": "32768",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 32768,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 1,
+    "name": "Sample Rate",
+    "text": "96000.000000",
+    "currentValText": "96000.000000",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.000000",
+    "min": "0.000000",
+    "max": "384000.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 2,
+    "name": "Dry Level",
+    "text": "80.000000",
+    "currentValText": "80.000000",
+    "defaultValue": 0.800000011920929,
+    "defaultValueText": "80.000000",
+    "min": "0.000000",
+    "max": "100.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 3,
+    "name": "Early Level",
+    "text": "10.000000",
+    "currentValText": "10.000000",
+    "defaultValue": 0.10000000149011612,
+    "defaultValueText": "10.000000",
+    "min": "0.000000",
+    "max": "100.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 4,
+    "name": "Late Level",
+    "text": "20.000000",
+    "currentValText": "20.000000",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "20.000000",
+    "min": "0.000000",
+    "max": "100.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 5,
+    "name": "Size",
+    "text": "24.000000",
+    "currentValText": "24.000000",
+    "defaultValue": 0.2800000011920929,
+    "defaultValueText": "24.000000",
+    "min": "10.000000",
+    "max": "60.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 6,
+    "name": "Width",
+    "text": "100.000000",
+    "currentValText": "100.000000",
+    "defaultValue": 0.5,
+    "defaultValueText": "100.000000",
+    "min": "50.000000",
+    "max": "150.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 7,
+    "name": "Predelay",
+    "text": "4.000000",
+    "currentValText": "4.000000",
+    "defaultValue": 0.03999999910593033,
+    "defaultValueText": "4.000000",
+    "min": "0.000000",
+    "max": "100.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 8,
+    "name": "Diffuse",
+    "text": "90.000000",
+    "currentValText": "90.000000",
+    "defaultValue": 0.8999999761581421,
+    "defaultValueText": "90.000000",
+    "min": "0.000000",
+    "max": "100.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 9,
+    "name": "Low Cut",
+    "text": "4.000000",
+    "currentValText": "4.000000",
+    "defaultValue": 0.019999999552965164,
+    "defaultValueText": "4.000000",
+    "min": "0.000000",
+    "max": "200.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 10,
+    "name": "Low Cross",
+    "text": "500.000000",
+    "currentValText": "500.000000",
+    "defaultValue": 0.30000001192092896,
+    "defaultValueText": "500.000000",
+    "min": "200.000000",
+    "max": "1200.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 11,
+    "name": "Low Mult",
+    "text": "1.300000",
+    "currentValText": "1.300000",
+    "defaultValue": 0.3999999761581421,
+    "defaultValueText": "1.300000",
+    "min": "0.500000",
+    "max": "2.500000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 12,
+    "name": "High Cut",
+    "text": "7600.000000",
+    "currentValText": "7600.000000",
+    "defaultValue": 0.4399999976158142,
+    "defaultValueText": "7600.000000",
+    "min": "1000.000000",
+    "max": "16000.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 13,
+    "name": "High Cross",
+    "text": "5500.000000",
+    "currentValText": "5500.000000",
+    "defaultValue": 0.30000001192092896,
+    "defaultValueText": "5500.000000",
+    "min": "1000.000000",
+    "max": "16000.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 14,
+    "name": "High Mult",
+    "text": "0.500000",
+    "currentValText": "0.500000",
+    "defaultValue": 0.30000001192092896,
+    "defaultValueText": "0.500000",
+    "min": "0.200000",
+    "max": "1.200000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 15,
+    "name": "Spin",
+    "text": "3.300000",
+    "currentValText": "3.300000",
+    "defaultValue": 0.32999998331069946,
+    "defaultValueText": "3.300000",
+    "min": "0.000000",
+    "max": "10.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 16,
+    "name": "Wander",
+    "text": "15.000000",
+    "currentValText": "15.000000",
+    "defaultValue": 0.375,
+    "defaultValueText": "15.000000",
+    "min": "0.000000",
+    "max": "40.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 17,
+    "name": "Decay",
+    "text": "1.300000",
+    "currentValText": "1.300000",
+    "defaultValue": 0.12121211737394333,
+    "defaultValueText": "1.300000",
+    "min": "0.100000",
+    "max": "10.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 18,
+    "name": "Early Send",
+    "text": "20.000000",
+    "currentValText": "20.000000",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "20.000000",
+    "min": "0.000000",
+    "max": "100.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 19,
+    "name": "Modulation",
+    "text": "15.000001",
+    "currentValText": "15.000001",
+    "defaultValue": 0.15000000596046448,
+    "defaultValueText": "15.000001",
+    "min": "0.000000",
+    "max": "100.000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  }
+]
