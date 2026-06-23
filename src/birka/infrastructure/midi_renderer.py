@@ -136,6 +136,7 @@ def _df_highcut(hz):
     # Dragonfly High Cut: 1000-16000Hz linear
     return max(0.0, min(1.0, (float(hz) - 1000.0) / 15000.0))
 
+
 _VST_NEUTRAL_PRESET = {
     "bypass": False,
     "tape": {
@@ -154,12 +155,12 @@ _VST_NEUTRAL_PRESET = {
     # 40 Compression(0-1 lin), 41 Bass(±12dB, 0.5=0), 42 Treble, 49 Mix(0-100%).
     "sdrr": {
         "bypass": False,
-        "mode": 1.0,        # DESK
-        "drive": 0.16,      # 1.6  (linear 0-10)
+        "mode": 1.0,  # DESK
+        "drive": 0.16,  # 1.6  (linear 0-10)
         "compression": 0.22,  # 2.2
-        "bass": 0.5167,     # +0.4 dB  (0.5 + 0.4/24)
-        "treble": 0.4667,   # -0.8 dB  (0.5 - 0.8/24)
-        "mix": 0.32,        # 32%
+        "bass": 0.5167,  # +0.4 dB  (0.5 + 0.4/24)
+        "treble": 0.4667,  # -0.8 dB  (0.5 - 0.8/24)
+        "mix": 0.32,  # 32%
     },
     # spiff softer (premium): Amount -12% (cut value 1.2), Sensitivity 3.1.
     # spiff cut depth idx1 = value 0-10 linear; sens idx3 = 0-10 linear.
@@ -182,7 +183,7 @@ _VST_NEUTRAL_PRESET = {
         "b1_freq": 110.0,
         "b1_gain": 1.1,
         "b1_q": 0.7,
-        "b1_dyn": 0.0,        # dyn bell moved to 290Hz on Band 2 (below)
+        "b1_dyn": 0.0,  # dyn bell moved to 290Hz on Band 2 (below)
         "b2_freq": 290.0,
         "b2_gain": -1.2,
         "b2_q": 1.0,
@@ -224,14 +225,14 @@ _VST_NEUTRAL_PRESET = {
     "pro_mb": {
         "bypass": False,
         "params": {
-            22: 0.5,      # Band 2 State = Enabled
-            23: 0.3427,   # Band 2 Low Crossover = 320 Hz
-            28: 0.833,    # Threshold = -10 dB
-            29: 0.45,     # Range = -3 dB (max gain reduction)
-            30: 0.40,     # Ratio = 2:1
-            31: 0.3,      # Attack = 30%
-            32: 0.4,      # Release = 40%
-            133: 0.5,     # Mix = 100%
+            22: 0.5,  # Band 2 State = Enabled
+            23: 0.3427,  # Band 2 Low Crossover = 320 Hz
+            28: 0.833,  # Threshold = -10 dB
+            29: 0.45,  # Range = -3 dB (max gain reduction)
+            30: 0.40,  # Ratio = 2:1
+            31: 0.3,  # Attack = 30%
+            32: 0.4,  # Release = 40%
+            133: 0.5,  # Mix = 100%
         },
     },
 }
@@ -264,18 +265,22 @@ def _configure_kotelnikov_ge(kotelnikov):
     #
     # CRITICAL FIX: idx 12 (Dry Wet) was 1.0 = "0.0" = 0% processed signal,
     # so the entire compressor was bypassed. 0.0 = 100% wet (full processing).
-    kotelnikov.set_parameter(0, 0.26)   # Threshold = -13 dB (premium: gentler)
-    kotelnikov.set_parameter(1, 0.4091) # Peak-Crest = RMS (smooth, musical)
-    kotelnikov.set_parameter(2, 0.0625) # Soft Knee = 1.0 (gentle onset)
-    kotelnikov.set_parameter(5, 0.35)   # Ratio = 1.6:1 (premium "expensive movement")
-    kotelnikov.set_parameter(6, 0.58)   # Attack ~38 ms (let transients breathe)
-    kotelnikov.set_parameter(7, 0.50)   # Release Peak ~140 ms
-    kotelnikov.set_parameter(8, 0.53)   # Release RMS ~240 ms (slow, smooth recovery)
-    kotelnikov.set_parameter(10, 0.58)  # Makeup +1 dB
-    kotelnikov.set_parameter(11, 0.0)   # Dry Mix = off
-    kotelnikov.set_parameter(12, 0.0)   # Dry Wet = 100% wet (FIXED: was 1.0 = bypassed)
+    kotelnikov.set_parameter(0, 0.26)  # Threshold = -13 dB (premium: gentler)
+    kotelnikov.set_parameter(1, 0.4091)  # Peak-Crest = RMS (smooth, musical)
+    kotelnikov.set_parameter(2, 0.0625)  # Soft Knee = 1.0 (gentle onset)
+    kotelnikov.set_parameter(5, 0.35)  # Ratio = 1.6:1 (premium "expensive movement")
+    kotelnikov.set_parameter(6, 0.58)  # Attack ~38 ms (let transients breathe)
+    kotelnikov.set_parameter(7, 0.50)  # Release Peak ~140 ms
+    kotelnikov.set_parameter(8, 0.53)  # Release RMS ~240 ms (slow, smooth recovery)
+    kotelnikov.set_parameter(
+        10, 0.48
+    )  # Makeup ~unity (iterated: 0.45→-1.0dB, 0.48 target ~0dB)
+    kotelnikov.set_parameter(11, 0.0)  # Dry Mix = off
+    kotelnikov.set_parameter(12, 0.0)  # Dry Wet = 100% wet (FIXED: was 1.0 = bypassed)
     kotelnikov.set_parameter(14, 0.55)  # Out Gain = 0 dB
-    kotelnikov.set_parameter(15, 0.65)  # SC HP Freq = 180 Hz (premium: bass looser/warmer)
+    kotelnikov.set_parameter(
+        15, 0.65
+    )  # SC HP Freq = 180 Hz (premium: bass looser/warmer)
     kotelnikov.set_parameter(16, 0.1667)  # SC HP Slope = 3.0
 
 
@@ -293,17 +298,21 @@ def _configure_limiter(limiter):
     #   - Lookahead 0.0360 was 0.18 ms (audible distortion on transients).
     #     1.0 ms (norm 0.2) is the transparent standard; 32x oversampling on a
     #     slow limiter is overkill and doubles render time without benefit.
-    limiter.set_parameter(0, 0.0)       # Gain = 0 dB
-    limiter.set_parameter(1, 0.0)       # Style = "Transparent" (cleanest for AAC)
-    limiter.set_parameter(2, 0.28)      # Lookahead = 1.4 ms (premium transparent)
-    limiter.set_parameter(3, 0.28)      # Attack ~60 ms (smooth gain riding)
-    limiter.set_parameter(4, 0.3878)    # Release ~420 ms (smooth, no pumping)
-    limiter.set_parameter(9, 0.5)       # Oversampling = 8x (premium/CD quality)
-    limiter.set_parameter(10, 1.0)      # True Peak Limiting = On (catches inter-sample peaks)
-    limiter.set_parameter(17, 0.0)      # Bypass = Off
-    limiter.set_parameter(18, 0.9667)   # Output Level = -1.0 dBTP (Apple Music / streaming safe)
-    limiter.set_parameter(19, 1.0)      # Lock Output = Locked
-    limiter.set_parameter(22, 1.0)      # True Peak Metering = Show True Peaks
+    limiter.set_parameter(0, 0.0)  # Gain = 0 dB
+    limiter.set_parameter(1, 0.0)  # Style = "Transparent" (cleanest for AAC)
+    limiter.set_parameter(2, 0.28)  # Lookahead = 1.4 ms (premium transparent)
+    limiter.set_parameter(3, 0.28)  # Attack ~60 ms (smooth gain riding)
+    limiter.set_parameter(4, 0.3878)  # Release ~420 ms (smooth, no pumping)
+    limiter.set_parameter(9, 0.5)  # Oversampling = 8x (premium/CD quality)
+    limiter.set_parameter(
+        10, 1.0
+    )  # True Peak Limiting = On (catches inter-sample peaks)
+    limiter.set_parameter(17, 0.0)  # Bypass = Off
+    limiter.set_parameter(
+        18, 0.9667
+    )  # Output Level = -1.0 dBTP (Apple Music / streaming safe)
+    limiter.set_parameter(19, 1.0)  # Lock Output = Locked
+    limiter.set_parameter(22, 1.0)  # True Peak Metering = Show True Peaks
 
 
 def _configure_nova(nova):
@@ -318,32 +327,32 @@ def _configure_nova(nova):
     # +8 Ratio. Band bases: B1=0, B2=12, B3=24, B4=36. Bypass=62.
     nova.set_parameter(62, 0.0)  # Master Bypass = Off
     # Band 1: 240 Hz, Q 0.9, dyn cut -1.8 dB
-    nova.set_parameter(1, 1.0)                          # Active
-    nova.set_parameter(4, 0.3832)                       # Freq = 240 Hz
-    nova.set_parameter(3, _nova_q_to_val(0.9))          # Q = 0.9
-    nova.set_parameter(2, _nova_gain_to_val(-1.8))      # Gain = -1.8 dB
-    nova.set_parameter(6, 0.5)                          # Dyn = On
-    nova.set_parameter(7, _nova_thr_to_val(-6.0))       # Threshold = -6 dB
+    nova.set_parameter(1, 1.0)  # Active
+    nova.set_parameter(4, 0.3832)  # Freq = 240 Hz
+    nova.set_parameter(3, _nova_q_to_val(0.9))  # Q = 0.9
+    nova.set_parameter(2, _nova_gain_to_val(-1.8))  # Gain = -1.8 dB
+    nova.set_parameter(6, 0.5)  # Dyn = On
+    nova.set_parameter(7, _nova_thr_to_val(-6.0))  # Threshold = -6 dB
     # Band 2: 2.8 kHz, Q 1.6, dyn cut -1.5 dB
     nova.set_parameter(13, 1.0)
-    nova.set_parameter(16, 0.6794)                      # Freq = 2.8 kHz
+    nova.set_parameter(16, 0.6794)  # Freq = 2.8 kHz
     nova.set_parameter(15, _nova_q_to_val(1.6))
     nova.set_parameter(14, _nova_gain_to_val(-1.5))
-    nova.set_parameter(18, 0.5)                         # Dyn = On
+    nova.set_parameter(18, 0.5)  # Dyn = On
     nova.set_parameter(19, _nova_thr_to_val(-6.0))
     # Band 3: 6.5 kHz, Q 2.2, dyn cut -2.0 dB
     nova.set_parameter(25, 1.0)
-    nova.set_parameter(28, 0.7809)                      # Freq = 6.5 kHz
+    nova.set_parameter(28, 0.7809)  # Freq = 6.5 kHz
     nova.set_parameter(27, _nova_q_to_val(2.2))
     nova.set_parameter(26, _nova_gain_to_val(-2.0))
-    nova.set_parameter(30, 0.5)                         # Dyn = On
+    nova.set_parameter(30, 0.5)  # Dyn = On
     nova.set_parameter(31, _nova_thr_to_val(-6.0))
     # Band 4: 11 kHz, high shelf +0.8 dB (static air)
     nova.set_parameter(37, 1.0)
-    nova.set_parameter(40, 0.8443)                      # Freq = 11 kHz
-    nova.set_parameter(41, 1.0)                         # Type = High Shelf
-    nova.set_parameter(38, _nova_gain_to_val(0.8))      # Gain = +0.8 dB
-    nova.set_parameter(42, 0.0)                         # Dyn = Off (static shelf)
+    nova.set_parameter(40, 0.8443)  # Freq = 11 kHz
+    nova.set_parameter(41, 1.0)  # Type = High Shelf
+    nova.set_parameter(38, _nova_gain_to_val(0.8))  # Gain = +0.8 dB
+    nova.set_parameter(42, 0.0)  # Dyn = Off (static shelf)
 
 
 def _nova_q_to_val(q):
@@ -439,21 +448,21 @@ def _apply_vst_preset(
     # Premium tonal balance (AirPods Max aware):
     #   B1 HPF 24Hz | B2 Low Shelf 110Hz +1.1 (Mid) | B3 Dyn Bell 290Hz -1.2
     #   B4 Bell 3.4k -0.6 | B5 Bell 6.8k -0.7 | B6 High Shelf 13k +0.6 (Side)
-    pro_q.set_parameter(0, 1.0)   # global
+    pro_q.set_parameter(0, 1.0)  # global
     pro_q.set_parameter(1, 1.0)
     # Band 1: HPF (Low Cut) — full stereo, just removes sub rumble
     pro_q.set_parameter(1, 1.0)
     pro_q.set_parameter(2, _freq_to_val(eq_settings["hp_freq"]))
     pro_q.set_parameter(3, _gain_to_val(0.0))
     pro_q.set_parameter(5, 0.20)  # Low Cut
-    pro_q.set_parameter(7, 0.5)   # Stereo (full)
+    pro_q.set_parameter(7, 0.5)  # Stereo (full)
     # Band 2: Low Shelf 110Hz — Mid only (mono bass, phase-stable)
     pro_q.set_parameter(24, 1.0)
     pro_q.set_parameter(25, _freq_to_val(eq_settings["b1_freq"]))
     pro_q.set_parameter(26, _gain_to_val(eq_settings["b1_gain"]))
     pro_q.set_parameter(27, _q_to_val(eq_settings["b1_q"]))
     pro_q.set_parameter(28, 0.10)  # Low Shelf
-    pro_q.set_parameter(30, 0.7)   # Mid (mono bass)
+    pro_q.set_parameter(30, 0.7)  # Mid (mono bass)
     # Band 3: dynamic bell at 290 Hz (only cuts when energy builds up) — Stereo
     pro_q.set_parameter(47, 1.0)
     pro_q.set_parameter(48, _freq_to_val(eq_settings["b2_freq"]))
@@ -464,8 +473,8 @@ def _apply_vst_preset(
     b2_dyn = eq_settings.get("b2_dyn", 0.0)
     if abs(b2_dyn) > 1e-4:
         pro_q.set_parameter(55, _gain_to_val(b2_dyn))  # Dyn Range (base46+9=55)
-        pro_q.set_parameter(56, 1.0)                    # Dynamics Enabled (base46+10=56)
-        pro_q.set_parameter(57, 0.0)                    # Dynamics Manual (base46+11=57)
+        pro_q.set_parameter(56, 1.0)  # Dynamics Enabled (base46+10=56)
+        pro_q.set_parameter(57, 0.0)  # Dynamics Manual (base46+11=57)
         pro_q.set_parameter(58, _gain_to_val(abs(b2_dyn)))  # Threshold (base46+12=58)
     else:
         pro_q.set_parameter(55, _gain_to_val(0.0))
@@ -494,7 +503,7 @@ def _apply_vst_preset(
     pro_q.set_parameter(118, _gain_to_val(eq_settings["b5_gain"]))
     pro_q.set_parameter(119, _q_to_val(eq_settings["b5_q"]))
     pro_q.set_parameter(120, 0.30)  # High Shelf
-    pro_q.set_parameter(122, 1.0)   # Side (wide air — widens only the top end)
+    pro_q.set_parameter(122, 1.0)  # Side (wide air — widens only the top end)
     pro_q.set_parameter(124, _gain_to_val(0.0))
     pro_q.set_parameter(125, 0.0)
 
@@ -510,16 +519,20 @@ def _apply_vst_preset(
         # Audio-engineer spec: cinematic expensive tail. Size 28m, Decay 1.45s,
         # Predelay 110ms, Diffuse 82%, Low Cut 180Hz, High Cut 7.8k, mostly dry
         # (93%) with a whisper of early reflection (4%) and tail (7%).
-        reverb.set_parameter(2, rvb_settings.get("dry", 0.93))         # Dry 93%
-        reverb.set_parameter(3, rvb_settings.get("early", 0.04))       # Early 4%
-        reverb.set_parameter(4, rvb_settings.get("late", 0.07))        # Late 7%
-        reverb.set_parameter(5, rvb_settings.get("size", _df_size(28)))   # Size 28m
-        reverb.set_parameter(17, rvb_settings.get("decay", _df_decay(1.45)))  # Decay 1.45s
-        reverb.set_parameter(7, rvb_settings.get("predelay", _df_predelay(110)))  # Predelay 110ms
-        reverb.set_parameter(8, rvb_settings.get("diffuse", 0.82))     # Diffuse 82%
-        reverb.set_parameter(9, _df_lowcut(180))                       # Low Cut 180Hz
-        reverb.set_parameter(12, _df_highcut(7800))                    # High Cut 7.8k
-        reverb.set_parameter(6, rvb_settings.get("width", 1.0))        # Width 100%
+        reverb.set_parameter(2, rvb_settings.get("dry", 0.93))  # Dry 93%
+        reverb.set_parameter(3, rvb_settings.get("early", 0.04))  # Early 4%
+        reverb.set_parameter(4, rvb_settings.get("late", 0.07))  # Late 7%
+        reverb.set_parameter(5, rvb_settings.get("size", _df_size(28)))  # Size 28m
+        reverb.set_parameter(
+            17, rvb_settings.get("decay", _df_decay(1.45))
+        )  # Decay 1.45s
+        reverb.set_parameter(
+            7, rvb_settings.get("predelay", _df_predelay(110))
+        )  # Predelay 110ms
+        reverb.set_parameter(8, rvb_settings.get("diffuse", 0.82))  # Diffuse 82%
+        reverb.set_parameter(9, _df_lowcut(180))  # Low Cut 180Hz
+        reverb.set_parameter(12, _df_highcut(7800))  # High Cut 7.8k
+        reverb.set_parameter(6, rvb_settings.get("width", 1.0))  # Width 100%
     else:
         reverb.set_parameter(2, 1.0)  # all dry = bypassed-equivalent
         reverb.set_parameter(3, 0.0)
