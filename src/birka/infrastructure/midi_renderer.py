@@ -123,7 +123,7 @@ _VST_NEUTRAL_PRESET = {
         9: 0.48,
     },
     "sdrr": {"bypass": True, "mode": 0.0, "drive": 0.20, "mix": 0.40},
-    "spiff": {"bypass": True, "mode": 1.0, "boost": 0.0, "cut": 0.0, "sens": 0.5},
+    "spiff": {"bypass": False, "mode": 0.0, "boost": 0.0, "cut": 0.18, "sens": 0.42},
     "soothe": {
         "bypass": False,
         "depth": 0.25,
@@ -136,6 +136,9 @@ _VST_NEUTRAL_PRESET = {
         "b1_gain": 0.8,
         "b1_q": 0.4,
         "b1_dyn": -1.5,
+        "b3_freq": 4200.0,
+        "b3_gain": -0.5,
+        "b3_q": 1.3,
         "b4_freq": 7500.0,
         "b4_gain": -0.5,
         "b4_q": 1.55,
@@ -264,6 +267,9 @@ def _apply_vst_preset(
     pro_q.set_parameter(46, 1.0)
     pro_q.set_parameter(47, 1.0)
     pro_q.set_parameter(51, 0.0)
+    pro_q.set_parameter(48, _freq_to_val(eq_settings["b3_freq"]))
+    pro_q.set_parameter(49, _gain_to_val(eq_settings["b3_gain"]))
+    pro_q.set_parameter(50, _q_to_val(eq_settings["b3_q"]))
     pro_q.set_parameter(55, _gain_to_val(0.0))
     pro_q.set_parameter(56, 0.0)
     pro_q.set_parameter(69, 1.0)
