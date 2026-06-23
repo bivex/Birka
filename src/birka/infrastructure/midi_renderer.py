@@ -9,6 +9,7 @@ import struct
 import subprocess
 import tempfile
 import wave
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
@@ -22,6 +23,7 @@ try:
         from tsfpy import TinySoundFont, TSF_STEREO_INTERLEAVED
     except ImportError:
         import sys
+
         # Search parent directories for tsfpy.py and add its directory to sys.path
         _current = Path(__file__).resolve().parent
         _found = False
@@ -57,6 +59,7 @@ try:
         from pysfizz import _sfizz as _sfizz_check  # noqa: F401
     except ImportError:
         import sys as _sys
+
         _sfizz_root = Path(__file__).resolve().parent
         _added = False
         for _ancestor in _sfizz_root.parents:
@@ -88,6 +91,327 @@ PREVIEW_POLYPHONY = 64
 _TSF_BUFFER_FRAMES = 2048
 _SFIZZ_BLOCK_FRAMES = 1024
 _VALID_BACKENDS = {"auto", "tsf", "sfizz", "fluidsynth"}
+
+_VST_SAMPLE_RATE = 96000
+_VST_BUFFER_SIZE = 512
+
+_VST_PLUGIN_PATHS = {
+    "chow": "/Library/Audio/Plug-Ins/VST3/CHOWTapeModel.vst3",
+    "sdrr": "/Library/Audio/Plug-Ins/VST3/SDRR2.vst3",
+    "spiff": "/Library/Audio/Plug-Ins/VST3/spiff.vst3",
+    "soothe": "/Library/Audio/Plug-Ins/VST3/soothe2.vst3",
+    "pro_q": "/Library/Audio/Plug-Ins/VST3/FabFilter Pro-Q 4.vst3",
+    "pro_mb": "/Library/Audio/Plug-Ins/VST3/FabFilter Pro-MB.vst3",
+    "kot": "/Library/Audio/Plug-Ins/VST3/TDR Kotelnikov GE.vst3",
+    "fresh": "/Library/Audio/Plug-Ins/VST3/Fresh Air.vst3",
+    "cho": "/Library/Audio/Plug-Ins/VST3/TAL-Chorus-LX.vst3",
+    "ste": "/Library/Audio/Plug-Ins/VST3/A1StereoControl.vst3",
+    "reverb": "/Library/Audio/Plug-Ins/VST3/FabFilter Pro-R 2.vst3",
+    "limiter": "/Library/Audio/Plug-Ins/VST3/FabFilter Pro-L 2.vst3",
+}
+
+_VST_NEUTRAL_PRESET = {
+    "bypass": False,
+    "tape": {0: 0.889, 1: 0.5, 2: 1.0, 16: 0.15, 17: 0.20, 18: 0.5, 8: 0.5, 9: 0.5},
+    "sdrr": {"bypass": True, "mode": 0.0, "drive": 0.20, "mix": 0.50},
+    "spiff": {"bypass": True, "mode": 1.0, "boost": 0.0, "cut": 0.0, "sens": 0.5},
+    "soothe": {"bypass": True, "depth": 0.35, "sharpness": 0.50, "selectivity": 0.40},
+    "eq": {
+        "hp_freq": 30.0,
+        "b1_freq": 250.0,
+        "b1_gain": 0.0,
+        "b1_q": 0.5,
+        "b1_dyn": -2.0,
+        "b3_freq": 3000.0,
+        "b3_gain": 0.0,
+        "b3_q": 0.5,
+        "b4_freq": 10000.0,
+        "b4_gain": 0.0,
+        "b4_q": 0.5,
+    },
+    "reverb": {
+        2: 0.95,
+        3: 0.03,
+        5: 0.02,
+        6: 0.05,
+        8: 0.05,
+        9: 0.03,
+        10: 0.7,
+        11: 0.10,
+        13: 1.0,
+    },
+    "chorus_wet": 0.0,
+    "stereo": {3: 0.55, 19: 1.0},
+    "fresh_air": {"bypass": True, "mid": 0.0, "high": 0.0},
+    "pro_mb": {"bypass": True, "params": {}},
+}
+
+
+def _freq_to_val(f):
+    f = max(10.0, min(30000.0, float(f)))
+    return math.log10(f / 10.0) / math.log10(3000.0)
+
+
+def _gain_to_val(g):
+    g = max(-30.0, min(30.0, float(g)))
+    return (g + 30.0) / 60.0
+
+
+def _q_to_val(q):
+    q = max(0.025, min(40.0, float(q)))
+    return math.log10(q / 0.025) / math.log10(1600.0)
+
+
+def _configure_kotelnikov_ge(kotelnikov):
+    kotelnikov.set_parameter(0, 0.30)
+    kotelnikov.set_parameter(5, 0.43)
+    kotelnikov.set_parameter(6, 0.39)
+    kotelnikov.set_parameter(7, 0.42)
+    kotelnikov.set_parameter(8, 0.55)
+    kotelnikov.set_parameter(10, 0.58)
+    kotelnikov.set_parameter(11, 0.0)
+    kotelnikov.set_parameter(12, 1.0)
+    kotelnikov.set_parameter(14, 0.55)
+
+
+def _configure_limiter(limiter):
+    limiter.set_parameter(17, 0.0)
+    limiter.set_parameter(0, 0.0)
+    limiter.set_parameter(1, 0.7143)
+    limiter.set_parameter(18, 0.96635)
+    limiter.set_parameter(10, 1.0)
+    limiter.set_parameter(9, 0.11)
+
+
+def _apply_vst_preset(
+    tape, pro_q, pro_mb, reverb, chorus, stereo, fresh_air, spiff, sdrr, soothe, preset
+):
+    for idx, val in preset["tape"].items():
+        tape.set_parameter(idx, val)
+
+    sdrr_settings = preset["sdrr"]
+    if sdrr_settings["bypass"]:
+        sdrr.set_parameter(56, 1.0)
+    else:
+        sdrr.set_parameter(56, 0.0)
+        sdrr_mode = sdrr_settings["mode"]
+        sdrr.set_parameter(0, sdrr_mode)
+        if sdrr_mode == 0.0:
+            sdrr.set_parameter(2, sdrr_settings["drive"])
+            sdrr.set_parameter(10, sdrr_settings["mix"])
+        elif sdrr_mode == 3.0:
+            sdrr.set_parameter(37, sdrr_settings["drive"])
+            sdrr.set_parameter(49, sdrr_settings["mix"])
+
+    spiff_settings = preset["spiff"]
+    if spiff_settings["bypass"]:
+        spiff.set_parameter(38, 1.0)
+        spiff.set_parameter(41, 1.0)
+    else:
+        spiff.set_parameter(38, 0.0)
+        spiff.set_parameter(41, 0.0)
+        spiff.set_parameter(0, spiff_settings["mode"])
+        if spiff_settings["mode"] > 0.5:
+            spiff.set_parameter(2, spiff_settings["boost"])
+        else:
+            spiff.set_parameter(1, spiff_settings["cut"])
+        spiff.set_parameter(3, spiff_settings["sens"])
+        spiff.set_parameter(35, 1.0)
+
+    soothe_settings = preset["soothe"]
+    if soothe_settings["bypass"]:
+        soothe.set_parameter(53, 1.0)
+    else:
+        soothe.set_parameter(53, 0.0)
+        soothe.set_parameter(3, 0.0)
+        soothe.set_parameter(4, soothe_settings["depth"])
+        soothe.set_parameter(5, soothe_settings["sharpness"])
+        soothe.set_parameter(6, soothe_settings["selectivity"])
+        soothe.set_parameter(7, 0.15)
+        soothe.set_parameter(8, 0.20)
+        soothe.set_parameter(50, 1.0)
+
+    eq_settings = preset["eq"]
+    pro_q.set_parameter(0, 1.0)
+    pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(5, 0.22)
+    pro_q.set_parameter(6, 0.1984)
+    pro_q.set_parameter(2, _freq_to_val(eq_settings["hp_freq"]))
+    pro_q.set_parameter(3, _gain_to_val(0.0))
+    pro_q.set_parameter(23, 1.0)
+    pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(28, 0.0)
+    pro_q.set_parameter(25, _freq_to_val(eq_settings["b1_freq"]))
+    pro_q.set_parameter(26, _gain_to_val(eq_settings["b1_gain"]))
+    pro_q.set_parameter(27, _q_to_val(eq_settings["b1_q"]))
+    b1_dyn = eq_settings["b1_dyn"]
+    if abs(b1_dyn) > 1e-4:
+        pro_q.set_parameter(32, _gain_to_val(b1_dyn))
+        pro_q.set_parameter(33, 1.0)
+        pro_q.set_parameter(34, 0.0)
+    else:
+        pro_q.set_parameter(32, _gain_to_val(0.0))
+        pro_q.set_parameter(33, 0.0)
+    pro_q.set_parameter(46, 1.0)
+    pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(51, 0.0)
+    pro_q.set_parameter(48, _freq_to_val(eq_settings["b3_freq"]))
+    pro_q.set_parameter(49, _gain_to_val(eq_settings["b3_gain"]))
+    pro_q.set_parameter(50, _q_to_val(eq_settings["b3_q"]))
+    pro_q.set_parameter(55, _gain_to_val(0.0))
+    pro_q.set_parameter(56, 0.0)
+    pro_q.set_parameter(69, 1.0)
+    pro_q.set_parameter(70, 1.0)
+    pro_q.set_parameter(74, 0.2778)
+    pro_q.set_parameter(71, _freq_to_val(eq_settings["b4_freq"]))
+    pro_q.set_parameter(72, _gain_to_val(eq_settings["b4_gain"]))
+    pro_q.set_parameter(73, _q_to_val(eq_settings["b4_q"]))
+    pro_q.set_parameter(78, _gain_to_val(0.0))
+    pro_q.set_parameter(79, 0.0)
+
+    rvb_settings = preset["reverb"]
+    if rvb_settings is not None:
+        reverb.set_parameter(132, 0.0)
+        dry = rvb_settings.get(2, 0.88)
+        mix = 1.0 - dry
+        reverb.set_parameter(9, mix)
+        decay_val = rvb_settings.get(9, 0.10)
+        reverb.set_parameter(0, decay_val)
+        reverb.set_parameter(1, 0.50)
+        predelay_val = rvb_settings.get(8, 0.08)
+        reverb.set_parameter(16, predelay_val)
+        reverb.set_parameter(5, 0.50)
+        reverb.set_parameter(7, 0.58)
+    else:
+        reverb.set_parameter(132, 1.0)
+        reverb.set_parameter(9, 0.0)
+
+    chorus_wet = preset.get("chorus_wet", 0.0)
+    if chorus_wet > 0.0:
+        chorus.set_parameter(1, chorus_wet)
+        chorus.set_parameter(2, 1.0)
+        chorus.set_parameter(3, 1.0)
+        chorus.set_parameter(4, 0.0)
+        chorus.set_parameter(6, 0.0)
+    else:
+        chorus.set_parameter(1, 0.0)
+        chorus.set_parameter(6, 1.0)
+
+    for idx, val in preset["stereo"].items():
+        stereo.set_parameter(idx, val)
+
+    fresh_settings = preset["fresh_air"]
+    if fresh_settings["bypass"]:
+        fresh_air.set_parameter(2, 1.0)
+    else:
+        fresh_air.set_parameter(2, 0.0)
+        fresh_air.set_parameter(0, fresh_settings["mid"])
+        fresh_air.set_parameter(1, fresh_settings["high"])
+        fresh_air.set_parameter(3, 1.0)
+
+    mb_settings = preset["pro_mb"]
+    if mb_settings["bypass"]:
+        pro_mb.set_parameter(138, 1.0)
+    else:
+        pro_mb.set_parameter(138, 0.0)
+        for idx, val in mb_settings["params"].items():
+            pro_mb.set_parameter(idx, val)
+
+
+def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
+    try:
+        import dawdreamer as daw
+        import numpy as np
+    except ImportError:
+        return False
+
+    for path in _VST_PLUGIN_PATHS.values():
+        if not Path(path).exists():
+            return False
+
+    devnull = open(os.devnull, "w")
+    old_stderr = os.dup(2)
+    os.dup2(devnull.fileno(), 2)
+    engine = None
+    try:
+        engine = daw.RenderEngine(_VST_SAMPLE_RATE, _VST_BUFFER_SIZE)
+        tape = engine.make_plugin_processor("tape", _VST_PLUGIN_PATHS["chow"])
+        sdrr = engine.make_plugin_processor("sdrr", _VST_PLUGIN_PATHS["sdrr"])
+        spiff = engine.make_plugin_processor("spiff", _VST_PLUGIN_PATHS["spiff"])
+        soothe = engine.make_plugin_processor("soothe", _VST_PLUGIN_PATHS["soothe"])
+        pro_q = engine.make_plugin_processor("pro_q", _VST_PLUGIN_PATHS["pro_q"])
+        pro_mb = engine.make_plugin_processor("pro_mb", _VST_PLUGIN_PATHS["pro_mb"])
+        kot = engine.make_plugin_processor("kot", _VST_PLUGIN_PATHS["kot"])
+        fresh = engine.make_plugin_processor("fresh", _VST_PLUGIN_PATHS["fresh"])
+        cho = engine.make_plugin_processor("cho", _VST_PLUGIN_PATHS["cho"])
+        ste = engine.make_plugin_processor("ste", _VST_PLUGIN_PATHS["ste"])
+        reverb = engine.make_plugin_processor("reverb", _VST_PLUGIN_PATHS["reverb"])
+        limiter = engine.make_plugin_processor("limiter", _VST_PLUGIN_PATHS["limiter"])
+
+        _configure_kotelnikov_ge(kot)
+        _configure_limiter(limiter)
+
+        dummy = np.zeros((2, _VST_BUFFER_SIZE), dtype=np.float32)
+        pb = engine.make_playback_processor("pb", dummy)
+        connections = [
+            (pb, []),
+            (tape, ["pb"]),
+            (sdrr, ["tape"]),
+            (spiff, ["sdrr"]),
+            (soothe, ["spiff"]),
+            (pro_q, ["soothe"]),
+            (pro_mb, ["pro_q"]),
+            (kot, ["pro_mb"]),
+            (fresh, ["kot"]),
+            (cho, ["fresh"]),
+            (reverb, ["cho"]),
+            (ste, ["reverb"]),
+            (limiter, ["ste"]),
+        ]
+        engine.load_graph(connections)
+
+        _apply_vst_preset(
+            tape,
+            pro_q,
+            pro_mb,
+            reverb,
+            cho,
+            ste,
+            fresh,
+            spiff,
+            sdrr,
+            soothe,
+            _VST_NEUTRAL_PRESET,
+        )
+
+        audio_2d = dry_audio.reshape(-1, 2).T.astype(np.float32)
+        pb.set_data(audio_2d)
+        duration = audio_2d.shape[1] / _VST_SAMPLE_RATE
+        engine.render(duration)
+        out = engine.get_audio("limiter")
+
+        peak = float(np.max(np.abs(out)))
+        if peak > 1e-6:
+            out = out * (0.95 / peak)
+
+        success = _write_int24_wav(
+            out.T.flatten(), output_path, sample_rate, soft_clip=False
+        )
+        engine.load_graph([])
+        del engine
+        return success
+    except Exception:
+        if engine is not None:
+            try:
+                engine.load_graph([])
+                del engine
+            except Exception:
+                pass
+        return False
+    finally:
+        os.dup2(old_stderr, 2)
+        os.close(old_stderr)
+        devnull.close()
 
 
 def _selected_backend() -> str:
@@ -129,7 +453,12 @@ def _backend_name() -> str:
 
 
 def _synth_to_wav_for_backend(
-    backend: str, midi_path: Path, tmp_wav: Path, sample_rate: int, polyphony: int, quality: int = 2
+    backend: str,
+    midi_path: Path,
+    tmp_wav: Path,
+    sample_rate: int,
+    polyphony: int,
+    quality: int = 2,
 ) -> bool:
     """Synthesize one MIDI to a temp WAV using the given backend.
 
@@ -140,7 +469,12 @@ def _synth_to_wav_for_backend(
         sfz = _find_sfz()
         if sfz is not None:
             return _synth_sfizz_to_wav(
-                sfz, midi_path, tmp_wav, sample_rate=sample_rate, polyphony=polyphony, quality=quality
+                sfz,
+                midi_path,
+                tmp_wav,
+                sample_rate=sample_rate,
+                polyphony=polyphony,
+                quality=quality,
             )
         backend = "tsf" if _TSF_AVAILABLE else "fluidsynth"
 
@@ -158,7 +492,9 @@ def _synth_to_wav_for_backend(
     return False
 
 
-def render_midi_to_mp3(midi_path: Path, output_dir: Path, quality: int = 2) -> Optional[Path]:
+def render_midi_to_mp3(
+    midi_path: Path, output_dir: Path, quality: int = 2
+) -> Optional[Path]:
     """Render a MIDI file to MP3 via the selected backend + ffmpeg loudnorm."""
     if shutil.which("ffmpeg") is None:
         return None
@@ -174,7 +510,9 @@ def render_midi_to_mp3(midi_path: Path, output_dir: Path, quality: int = 2) -> O
     mp3_path = output_dir / (midi_path.stem + ".mp3")
     tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
     try:
-        if not _synth_to_wav_for_backend(backend, midi_path, tmp_wav, 96000, 256, quality=quality):
+        if not _synth_to_wav_for_backend(
+            backend, midi_path, tmp_wav, 96000, 256, quality=quality
+        ):
             return None
         stats = _measure_stats(tmp_wav)
         af = _build_loudnorm_filter(stats)
@@ -233,7 +571,11 @@ def render_midi_to_wav(
         )
     if backend == "fluidsynth" and shutil.which("fluidsynth") is not None:
         return _synth_to_wav(
-            soundfont, midi_path, output_path, sample_rate=sample_rate, polyphony=polyphony
+            soundfont,
+            midi_path,
+            output_path,
+            sample_rate=sample_rate,
+            polyphony=polyphony,
         )
     return False
 
@@ -261,7 +603,11 @@ def render_midi_preview_mp3(
             sfz = _find_sfz()
             if sfz is not None:
                 if not _synth_sfizz_to_wav(
-                    sfz, midi_path, tmp_wav, sample_rate=sample_rate, polyphony=polyphony
+                    sfz,
+                    midi_path,
+                    tmp_wav,
+                    sample_rate=sample_rate,
+                    polyphony=polyphony,
                 ):
                     return False
                 return _encode_mp3(tmp_wav, None, output_path, bitrate=bitrate)
@@ -324,7 +670,9 @@ def render_midi_to_mp3_batch(
         mp3_path = output_dir / (midi_path.stem + ".mp3")
         tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
         try:
-            if not _synth_to_wav_for_backend(backend, midi_path, tmp_wav, 96000, 256, quality=quality):
+            if not _synth_to_wav_for_backend(
+                backend, midi_path, tmp_wav, 96000, 256, quality=quality
+            ):
                 return midi_path, None
             stats = _measure_stats(tmp_wav)
             af = _build_loudnorm_filter(stats)
@@ -502,14 +850,12 @@ def _soft_clip_to_int16(samples: List[float]) -> List[int]:
     """
     try:
         import numpy as np
+
         arr = np.asarray(samples, dtype=np.float32)
         arr = np.tanh(arr)
         return (arr * 32767.0).astype(np.int16).tolist()
     except ImportError:
-        return [
-            max(-32768, min(32767, int(math.tanh(s) * 32767.0)))
-            for s in samples
-        ]
+        return [max(-32768, min(32767, int(math.tanh(s) * 32767.0))) for s in samples]
 
 
 def _soft_clip_to_int24(samples: List[float]) -> List[int]:
@@ -521,13 +867,13 @@ def _soft_clip_to_int24(samples: List[float]) -> List[int]:
     """
     try:
         import numpy as np
+
         arr = np.asarray(samples, dtype=np.float32)
         arr = np.tanh(arr)
         return (arr * 8388607.0).astype(np.int32).tolist()
     except ImportError:
         return [
-            max(-8388608, min(8388607, int(math.tanh(s) * 8388607.0)))
-            for s in samples
+            max(-8388608, min(8388607, int(math.tanh(s) * 8388607.0))) for s in samples
         ]
 
 
@@ -611,7 +957,10 @@ def _synth_tsf_to_wav(
 
 
 def _write_int16_wav(
-    interleaved: List[float], output_path: Path, sample_rate: int, soft_clip: bool = True
+    interleaved: List[float],
+    output_path: Path,
+    sample_rate: int,
+    soft_clip: bool = True,
 ) -> bool:
     """Soft-clip or linearly scale a flat interleaved float buffer and write a 16-bit stereo WAV.
 
@@ -623,12 +972,12 @@ def _write_int16_wav(
     else:
         try:
             import numpy as np
+
             arr = np.asarray(interleaved, dtype=np.float32)
             int16_samples = (arr * 32767.0).astype(np.int16).tolist()
         except ImportError:
             int16_samples = [
-                max(-32768, min(32767, int(s * 32767.0)))
-                for s in interleaved
+                max(-32768, min(32767, int(s * 32767.0))) for s in interleaved
             ]
     if not int16_samples:
         return False
@@ -644,7 +993,10 @@ def _write_int16_wav(
 
 
 def _write_int24_wav(
-    interleaved: List[float], output_path: Path, sample_rate: int, soft_clip: bool = True
+    interleaved: List[float],
+    output_path: Path,
+    sample_rate: int,
+    soft_clip: bool = True,
 ) -> bool:
     """Soft-clip or linearly scale a flat interleaved float buffer and write a 24-bit stereo WAV.
 
@@ -658,18 +1010,19 @@ def _write_int24_wav(
     else:
         try:
             import numpy as np
+
             arr = np.asarray(interleaved, dtype=np.float32)
             int24_samples = (arr * 8388607.0).astype(np.int32).tolist()
         except ImportError:
             int24_samples = [
-                max(-8388608, min(8388607, int(s * 8388607.0)))
-                for s in interleaved
+                max(-8388608, min(8388607, int(s * 8388607.0))) for s in interleaved
             ]
     if not int24_samples:
         return False
     try:
         try:
             import numpy as np
+
             arr = np.asarray(int24_samples, dtype=np.int32)
             # View as uint8, reshape to N x 4, slice first 3 columns, and convert to bytes.
             # This is 3.4x faster than a pure-Python generator expression.
@@ -690,7 +1043,10 @@ def _write_int24_wav(
 
 
 def _write_float_wav(
-    interleaved: List[float], output_path: Path, sample_rate: int, soft_clip: bool = True
+    interleaved: List[float],
+    output_path: Path,
+    sample_rate: int,
+    soft_clip: bool = True,
 ) -> bool:
     """Write a flat interleaved float buffer as a 32-bit IEEE_FLOAT stereo WAV.
 
@@ -721,7 +1077,18 @@ def _write_float_wav(
             f.write(b"WAVE")
             # fmt: WAVE_FORMAT_IEEE_FLOAT (3), stereo, 32 bits/sample
             f.write(b"fmt ")
-            f.write(struct.pack("<IHHIIHH", 16, 3, channels, sample_rate, byte_rate, channels * 4, 32))
+            f.write(
+                struct.pack(
+                    "<IHHIIHH",
+                    16,
+                    3,
+                    channels,
+                    sample_rate,
+                    byte_rate,
+                    channels * 4,
+                    32,
+                )
+            )
             f.write(b"data")
             f.write(struct.pack("<I", len(raw)))
             f.write(raw)
@@ -809,6 +1176,20 @@ def _synth_sfizz_to_wav(
     total_seconds = max(1.0, mid.length + 2.0)
     frames_needed = int(total_seconds * sample_rate)
 
+    use_vst_chain = False
+    try:
+        use_vst_chain = os.environ.get("USE_VST_CHAIN", "").lower() in (
+            "1",
+            "true",
+            "yes",
+        )
+    except Exception:
+        pass
+    if use_vst_chain:
+        logger_sfizz.info(
+            "USE_VST_CHAIN=True: routing sfizz output through VST mastering chain"
+        )
+
     try:
         # Two synth instances: melodic + drums.
         #
@@ -895,8 +1276,9 @@ def _synth_sfizz_to_wav(
             # summed signal smoothly to [-1, 1], so even when 5-6 notes
             # overlap the result stays musical instead of harshly clipped.
             # Applied at 0.7 drive so signals below ~0.5 pass nearly linear.
-            left_arr = np.tanh(left_arr * 0.7) / np.tanh(0.7)
-            right_arr = np.tanh(right_arr * 0.7) / np.tanh(0.7)
+            if not use_vst_chain:
+                left_arr = np.tanh(left_arr * 0.7) / np.tanh(0.7)
+                right_arr = np.tanh(right_arr * 0.7) / np.tanh(0.7)
             block = np.column_stack((left_arr, right_arr)).flatten()
             interleaved_blocks.append(block)
             rendered += len(left_arr)
@@ -904,9 +1286,15 @@ def _synth_sfizz_to_wav(
         return False
 
     if interleaved_blocks:
-        buf_arr = np.concatenate(interleaved_blocks)[:frames_needed * 2]
+        buf_arr = np.concatenate(interleaved_blocks)[: frames_needed * 2]
     else:
         buf_arr = np.zeros(0, dtype=np.float32)
+
+    if use_vst_chain:
+        if _render_sfizz_vst_chain(buf_arr, sample_rate, output_path):
+            return True
+        use_vst_chain = False
+        logger_sfizz.warning("VST chain failed; falling back to pedalboard mastering")
 
     # ── Professional mastering chain (9.5/10) ────────────────────────────
     # Engineer feedback incorporated:
@@ -921,21 +1309,29 @@ def _synth_sfizz_to_wav(
     # Loudness gain after limiter = new overs. This order prevents that.
     try:
         from pedalboard import (
-            Pedalboard, HighpassFilter, LowShelfFilter, HighShelfFilter,
-            PeakFilter, Compressor, Gain, Limiter,
+            Pedalboard,
+            HighpassFilter,
+            LowShelfFilter,
+            HighShelfFilter,
+            PeakFilter,
+            Compressor,
+            Gain,
+            Limiter,
         )
 
         stereo = buf_arr.reshape(-1, 2).T  # (channels, samples)
 
         # ── Step 1: Cleanup EQ ──
-        eq_stage = Pedalboard([
-            HighpassFilter(cutoff_frequency_hz=30.0),
-            LowShelfFilter(cutoff_frequency_hz=120.0, gain_db=-1.0),
-            # Conditional harsh control: only -0.5dB (very subtle, since
-            # harsh=0 already we don't want to kill presence energy)
-            PeakFilter(cutoff_frequency_hz=3500.0, gain_db=-0.5, q=2.0),
-            HighShelfFilter(cutoff_frequency_hz=8000.0, gain_db=1.0),
-        ])
+        eq_stage = Pedalboard(
+            [
+                HighpassFilter(cutoff_frequency_hz=30.0),
+                LowShelfFilter(cutoff_frequency_hz=120.0, gain_db=-1.0),
+                # Conditional harsh control: only -0.5dB (very subtle, since
+                # harsh=0 already we don't want to kill presence energy)
+                PeakFilter(cutoff_frequency_hz=3500.0, gain_db=-0.5, q=2.0),
+                HighShelfFilter(cutoff_frequency_hz=8000.0, gain_db=1.0),
+            ]
+        )
         stereo = eq_stage(stereo, sample_rate)
 
         # ── Step 2: Tape saturation (+1.5 dB drive) ──
@@ -946,12 +1342,16 @@ def _synth_sfizz_to_wav(
         # Higher threshold (-18 dB) so it only touches the loudest peaks.
         # This preserves crest factor (dynamics) — the clipper handles
         # loudness, the compressor just adds a touch of glue.
-        comp_stage = Pedalboard([
-            Compressor(
-                threshold_db=-18.0, ratio=1.5,
-                attack_ms=10.0, release_ms=100.0,
-            ),
-        ])
+        comp_stage = Pedalboard(
+            [
+                Compressor(
+                    threshold_db=-18.0,
+                    ratio=1.5,
+                    attack_ms=10.0,
+                    release_ms=100.0,
+                ),
+            ]
+        )
         stereo = comp_stage(stereo, sample_rate)
 
         # ── Step 4: Adaptive soft clipper ──
@@ -963,15 +1363,15 @@ def _synth_sfizz_to_wav(
         # without over-crushing quiet pieces or under-driving dense ones.
         pre_clip_mono = np.mean(stereo, axis=0)
         pre_peak = float(np.max(np.abs(pre_clip_mono)))
-        pre_rms = float(np.sqrt(np.mean(pre_clip_mono ** 2)))
+        pre_rms = float(np.sqrt(np.mean(pre_clip_mono**2)))
         crest = pre_peak / (pre_rms + 1e-9) if pre_rms > 1e-9 else 10.0
 
         if crest > 10.0:
-            clip_db = 4.0   # sparse/classical — push harder for loudness
+            clip_db = 4.0  # sparse/classical — push harder for loudness
         elif crest > 7.0:
-            clip_db = 3.0   # cinematic — balanced
+            clip_db = 3.0  # cinematic — balanced
         else:
-            clip_db = 2.0   # dense/modern — already loud, be gentle
+            clip_db = 2.0  # dense/modern — already loud, be gentle
 
         clip_drive = 10 ** (clip_db / 20.0)
         stereo = np.tanh(stereo * clip_drive) / np.tanh(clip_drive)
@@ -986,7 +1386,7 @@ def _synth_sfizz_to_wav(
         if len(mono_ms) > win:
             blocks = []
             for i in range(0, len(mono_ms) - win, win):
-                block_rms = np.sqrt(np.mean(mono_ms[i:i+win]**2))
+                block_rms = np.sqrt(np.mean(mono_ms[i : i + win] ** 2))
                 if block_rms > 1e-6:
                     blocks.append(block_rms)
             if blocks:
@@ -1008,9 +1408,11 @@ def _synth_sfizz_to_wav(
         # ── Step 6: True-peak limiter (-1 dBTP) ──
         # Final safety after loudness gain. Catches any overs the
         # clipper+gain introduced. Runs LAST so nothing overshoots after.
-        lim_stage = Pedalboard([
-            Limiter(threshold_db=-1.0, release_ms=50.0),
-        ])
+        lim_stage = Pedalboard(
+            [
+                Limiter(threshold_db=-1.0, release_ms=50.0),
+            ]
+        )
         stereo = lim_stage(stereo, sample_rate)
 
         buf_arr = np.asarray(stereo, dtype=np.float32).T.flatten()
