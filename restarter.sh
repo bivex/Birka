@@ -31,6 +31,18 @@ case "${BACKEND}" in
   sfizz)
     # Use the bundled Discord GM bank by default; BIRKA_SFZ overrides it.
     : "${BIRKA_SFZ:=${PROJECT_ROOT}/data/Discord-SFZ-GM-Bank/Discord GM/GM_combined.sfz}"
+    # PITCH_CENTER_IGNORE=1 swaps to the no-detected-keycenter variant so each
+    # sample plays at its *requested* note (no Surge preset-transpose compensation).
+    # Useful for A/B testing the detected pitch_keycenter vs the raw one.
+    if [[ "${PITCH_CENTER_IGNORE:-0}" == "1" ]]; then
+      nokey="${BIRKA_SFZ%.sfz}_nokeycentered.sfz"
+      if [[ -f "${nokey}" ]]; then
+        BIRKA_SFZ="${nokey}"
+        echo "[birka] PITCH_CENTER_IGNORE=1 -> using ${nokey}"
+      else
+        echo "[birka] PITCH_CENTER_IGNORE=1 but ${nokey} not found; falling back to detected SFZ"
+      fi
+    fi
     export BIRKA_SFZ
     echo "[birka] backend: sfizz | SFZ: ${BIRKA_SFZ}"
     ;;
