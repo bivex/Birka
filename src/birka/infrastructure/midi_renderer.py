@@ -154,7 +154,7 @@ _VST_NEUTRAL_PRESET = {
         "b4_gain": -0.5,
         "b4_q": 1.55,
     },
-    "reverb": {2: 0.93, 8: 0.13, 9: 0.20},
+    "reverb": {"dry": 0.93, "space": 0.70, "decay_rate": 0.25, "predelay": 0.667},
     "chorus_wet": 0.0,
     "stereo": {3: 0.72, 19: 1.0},
     "fresh_air": {"bypass": False, "mid": 0.0, "high": 0.15},
@@ -190,18 +190,30 @@ def _configure_kotelnikov_ge(kotelnikov):
 
 
 def _configure_limiter(limiter):
-    limiter.set_parameter(0, 0.0)
-    limiter.set_parameter(1, 0.7143)
-    limiter.set_parameter(2, 0.0360)
-    limiter.set_parameter(3, 0.4072)
-    limiter.set_parameter(4, 0.3878)
-    limiter.set_parameter(9, 0.5)
-    limiter.set_parameter(10, 1.0)
-    limiter.set_parameter(17, 0.0)
-    limiter.set_parameter(18, 0.891)
-    limiter.set_parameter(19, 1.0)
-    limiter.set_parameter(22, 1.0)
-    limiter.set_parameter(28, 0.4375)
+    # Pro-L 2 (indices verified via live dump). Premium streaming/mastering
+    # settings tuned for AAC/Apple Music transparency.
+    #
+    # idx: 0 Gain | 1 Style | 2 Lookahead | 3 Attack | 4 Release
+    #      9 Oversampling | 10 True Peak | 17 Bypass | 18 Output Level
+    #      19 Lock Output | 22 True Peak Metering | 28 Loudness Meter Target (display only)
+    #
+    # Key fixes vs prior values:
+    #   - Output Level 0.891 was -3.27 dBTP (range is -30..0, NOT linear gain).
+    #     A near-silent master. -1.0 dBTP = norm 0.9667.
+    #   - Lookahead 0.0360 was 0.18 ms (audible distortion on transients).
+    #     1.0 ms (norm 0.2) is the transparent standard; 32x oversampling on a
+    #     slow limiter is overkill and doubles render time without benefit.
+    limiter.set_parameter(0, 0.0)       # Gain = 0 dB
+    limiter.set_parameter(1, 0.4286)    # Style = "Transparent" (cleaner than Modern for AAC)
+    limiter.set_parameter(2, 0.20)      # Lookahead = 1.000 ms (transparent, no pumping)
+    limiter.set_parameter(3, 0.4072)    # Attack ~280 ms (Pro-L auto-style attack)
+    limiter.set_parameter(4, 0.3878)    # Release ~420 ms (smooth, no pumping)
+    limiter.set_parameter(9, 0.25)      # Oversampling = 4x (premium/CD standard; 8x doubles CPU)
+    limiter.set_parameter(10, 1.0)      # True Peak Limiting = On (catches inter-sample peaks)
+    limiter.set_parameter(17, 0.0)      # Bypass = Off
+    limiter.set_parameter(18, 0.9667)   # Output Level = -1.0 dBTP (Apple Music / streaming safe)
+    limiter.set_parameter(19, 1.0)      # Lock Output = Locked
+    limiter.set_parameter(22, 1.0)      # True Peak Metering = Show True Peaks
 
 
 def _apply_vst_preset(
@@ -312,16 +324,24 @@ def _apply_vst_preset(
     rvb_settings = preset["reverb"]
     if rvb_settings is not None:
         reverb.set_parameter(132, 0.0)
-        dry = rvb_settings.get(2, 0.88)
-        mix = 1.0 - dry
-        reverb.set_parameter(9, mix)
-        decay_val = rvb_settings.get(9, 0.20)
-        reverb.set_parameter(0, decay_val)
-        reverb.set_parameter(1, 0.50)
-        predelay_val = rvb_settings.get(8, 0.13)
-        reverb.set_parameter(16, predelay_val)
-        reverb.set_parameter(5, 0.50)
-        reverb.set_parameter(7, 0.58)
+        # Pro-R 2 (indices verified via live dump):
+        #   0 Space (room size, 200ms..10s log)
+        #   1 Decay Rate (25%..400%, 100%=neutral)
+        #   2 Distance | 3 Brightness | 5 Character | 7 Stereo Width
+        #   9 Mix (0..100%) | 16 Predelay (0..500ms)
+        #   132 Bypass (0.0=engaged, 0.5+=bypassed)
+        #
+        # Brief: deep reverb, ~200ms decay tail, 130ms predelay, dry attack.
+        # We use a medium-large Space (the "depth") with a SHORT Decay Rate so
+        # the tail stays ~200ms rather than washing out the mix. Mix stays low
+        # (mostly dry) so the attack remains present.
+        dry = rvb_settings.get("dry", 0.93)
+        reverb.set_parameter(9, 1.0 - dry)              # Mix = 7% wet
+        reverb.set_parameter(0, rvb_settings.get("space", 0.70))    # Space ~4.0s (deep)
+        reverb.set_parameter(1, rvb_settings.get("decay_rate", 0.25))  # Decay Rate ~62% (short tail)
+        reverb.set_parameter(16, rvb_settings.get("predelay", 0.667))  # Predelay ~130ms
+        reverb.set_parameter(5, 0.50)                   # Character neutral
+        reverb.set_parameter(7, 0.58)                   # Stereo Width 70%
     else:
         reverb.set_parameter(132, 1.0)
         reverb.set_parameter(9, 0.0)
