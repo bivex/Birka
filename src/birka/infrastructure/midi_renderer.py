@@ -126,27 +126,24 @@ _VST_NEUTRAL_PRESET = {
     "spiff": {"bypass": True, "mode": 1.0, "boost": 0.0, "cut": 0.0, "sens": 0.5},
     "soothe": {
         "bypass": False,
-        "depth": 0.38,
-        "sharpness": 0.48,
-        "selectivity": 0.42,
+        "depth": 0.25,
+        "sharpness": 0.55,
+        "selectivity": 0.30,
     },
     "eq": {
-        "hp_freq": 28.0,
-        "b1_freq": 180.0,
-        "b1_gain": -0.6,
-        "b1_q": 0.45,
-        "b1_dyn": -2.0,
-        "b3_freq": 4200.0,
-        "b3_gain": -0.7,
-        "b3_q": 1.1,
+        "hp_freq": 22.0,
+        "b1_freq": 120.0,
+        "b1_gain": 0.8,
+        "b1_q": 0.4,
+        "b1_dyn": -1.5,
         "b4_freq": 7500.0,
-        "b4_gain": -0.8,
-        "b4_q": 0.9,
+        "b4_gain": -0.5,
+        "b4_q": 1.55,
     },
-    "reverb": {2: 0.93, 8: 0.14, 9: 0.22},
+    "reverb": {2: 0.93, 8: 0.13, 9: 0.20},
     "chorus_wet": 0.0,
     "stereo": {3: 0.72, 19: 1.0},
-    "fresh_air": {"bypass": False, "mid": 0.0, "high": 0.20},
+    "fresh_air": {"bypass": False, "mid": 0.0, "high": 0.15},
     "pro_mb": {"bypass": True, "params": {}},
 }
 
@@ -258,16 +255,15 @@ def _apply_vst_preset(
     if abs(b1_dyn) > 1e-4:
         pro_q.set_parameter(32, _gain_to_val(b1_dyn))
         pro_q.set_parameter(33, 1.0)
-        pro_q.set_parameter(34, 0.0)
+        pro_q.set_parameter(34, 1.0)
+        pro_q.set_parameter(35, _gain_to_val(abs(b1_dyn)))
     else:
         pro_q.set_parameter(32, _gain_to_val(0.0))
         pro_q.set_parameter(33, 0.0)
+        pro_q.set_parameter(34, 0.0)
     pro_q.set_parameter(46, 1.0)
     pro_q.set_parameter(47, 1.0)
     pro_q.set_parameter(51, 0.0)
-    pro_q.set_parameter(48, _freq_to_val(eq_settings["b3_freq"]))
-    pro_q.set_parameter(49, _gain_to_val(eq_settings["b3_gain"]))
-    pro_q.set_parameter(50, _q_to_val(eq_settings["b3_q"]))
     pro_q.set_parameter(55, _gain_to_val(0.0))
     pro_q.set_parameter(56, 0.0)
     pro_q.set_parameter(69, 1.0)
@@ -285,10 +281,10 @@ def _apply_vst_preset(
         dry = rvb_settings.get(2, 0.88)
         mix = 1.0 - dry
         reverb.set_parameter(9, mix)
-        decay_val = rvb_settings.get(9, 0.10)
+        decay_val = rvb_settings.get(9, 0.20)
         reverb.set_parameter(0, decay_val)
         reverb.set_parameter(1, 0.50)
-        predelay_val = rvb_settings.get(8, 0.08)
+        predelay_val = rvb_settings.get(8, 0.13)
         reverb.set_parameter(16, predelay_val)
         reverb.set_parameter(5, 0.50)
         reverb.set_parameter(7, 0.58)
