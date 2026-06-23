@@ -702,6 +702,17 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
             # the whole chain) -> re-render so the limiter catches the new
             # peaks. This guarantees the master never exceeds -1 dBTP.
             def _measure_lufs(buf: np.ndarray) -> Optional[float]:
+                # True LUFS via pyloudnorm (ITU-R BS.1770). Falls back to RMS
+                # approximation when pyloudnorm is unavailable.
+                try:
+                    import pyloudnorm as pyln
+
+                    meter = pyln.Meter(_VST_SAMPLE_RATE)
+                    loudness = meter.integrated_loudness(buf.T)
+                    return float(loudness)
+                except Exception:
+                    pass
+                # Fallback: RMS approximation (kept for resilience)
                 try:
                     mono = np.mean(buf, axis=0)
                     win = int(0.4 * _VST_SAMPLE_RATE)
@@ -713,8 +724,7 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                     if not blocks:
                         return None
                     mean_rms = float(np.mean(blocks))
-                    lufs_calibration_offset = 6.1
-                    return 20.0 * np.log10(mean_rms) - 0.691 + lufs_calibration_offset
+                    return 20.0 * np.log10(mean_rms) - 0.691 + 6.1
                 except Exception:
                     return None
 
