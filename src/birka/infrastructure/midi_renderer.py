@@ -161,16 +161,20 @@ _VST_NEUTRAL_PRESET = {
     # Pro-MB multiband. Band 2 active at 320 Hz for mid-bass control (brief
     # step 8). Band 2 block: idx 22 State, 23 Freq, 28 Threshold, 29 Range,
     # 30 Ratio, 31 Attack, 32 Release. State 0.25-0.5 = Enabled. Crossover is
-    # log: 320 Hz = norm 0.3427. Conservative glue: 2:1, -3 dB max GR, so the
-    # low-mid never "jumps out" but dynamics are preserved.
+    # log: 320 Hz = norm 0.3427. Mappings (verified via live dump):
+    #   Threshold -60..0 dB linear: norm = (db+60)/60
+    #   Range     -30..+30 dB linear: norm = (db+30)/60
+    #   Ratio     1..100:1 power-law: 2:1=0.40, 3:1=0.50
+    # Conservative glue: 2:1, -10 dB threshold, -3 dB max GR, so the low-mid
+    # never "jumps out" but dynamics are preserved.
     "pro_mb": {
         "bypass": False,
         "params": {
             22: 0.5,      # Band 2 State = Enabled
             23: 0.3427,   # Band 2 Low Crossover = 320 Hz
-            28: 0.889,    # Threshold = -10 dB
+            28: 0.833,    # Threshold = -10 dB
             29: 0.45,     # Range = -3 dB (max gain reduction)
-            30: 0.0101,   # Ratio = 2:1
+            30: 0.40,     # Ratio = 2:1
             31: 0.3,      # Attack = 30%
             32: 0.4,      # Release = 40%
             133: 0.5,     # Mix = 100%
@@ -240,7 +244,7 @@ def _configure_limiter(limiter):
     limiter.set_parameter(2, 0.20)      # Lookahead = 1.000 ms (transparent, no pumping)
     limiter.set_parameter(3, 0.4072)    # Attack ~280 ms (Pro-L auto-style attack)
     limiter.set_parameter(4, 0.3878)    # Release ~420 ms (smooth, no pumping)
-    limiter.set_parameter(9, 0.25)      # Oversampling = 4x (premium/CD standard; 8x doubles CPU)
+    limiter.set_parameter(9, 0.3)       # Oversampling = 4x (premium/CD standard; 0.3=4x)
     limiter.set_parameter(10, 1.0)      # True Peak Limiting = On (catches inter-sample peaks)
     limiter.set_parameter(17, 0.0)      # Bypass = Off
     limiter.set_parameter(18, 0.9667)   # Output Level = -1.0 dBTP (Apple Music / streaming safe)
