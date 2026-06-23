@@ -1203,43 +1203,11 @@ def dispose_sfizz_cache() -> None:
 
 
 def dispose_vst_chain_cache() -> None:
-    """Release the cached DawDreamer engine and VST plugin graph.
-
-    VST3 plugins hold native host connections; if the engine is left alive
-    until interpreter teardown the next launch can segfault. Call this from
-    the application's aboutToQuit handler to unload the graph and drop the
-    engine before Python finalization.
-    """
     global _VST_ENGINE, _VST_GRAPH
-    _VST_GRAPH = None
-    engine = _VST_ENGINE
     _VST_ENGINE = None
-    if engine is None:
-        return
-
-    def _unload():
-        try:
-            engine.load_graph([])
-        except Exception:
-            pass
-        try:
-            del engine
-        except Exception:
-            pass
-
-    try:
-        unload_thread = threading.Thread(target=_unload, daemon=True)
-        unload_thread.start()
-        unload_thread.join(timeout=1.5)
-    except Exception:
-        pass
-
-    try:
-        import gc
-
-        gc.collect()
-    except Exception:
-        pass
+    _VST_GRAPH = None
+    _VST_ENGINE = None
+    _VST_GRAPH = None
 
 
 def _synth_sfizz_to_wav(
