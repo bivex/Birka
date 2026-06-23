@@ -1187,8 +1187,13 @@ def dispose_vst_chain_cache() -> None:
     engine before Python finalization.
     """
     global _VST_ENGINE, _VST_GRAPH
+    _VST_GRAPH = None
     engine = _VST_ENGINE
-    if engine is not None:
+    _VST_ENGINE = None
+    if engine is None:
+        return
+
+    def _unload():
         try:
             engine.load_graph([])
         except Exception:
@@ -1197,8 +1202,13 @@ def dispose_vst_chain_cache() -> None:
             del engine
         except Exception:
             pass
-    _VST_ENGINE = None
-    _VST_GRAPH = None
+
+    try:
+        unload_thread = threading.Thread(target=_unload, daemon=True)
+        unload_thread.start()
+        unload_thread.join(timeout=1.5)
+    except Exception:
+        pass
 
 
 def _synth_sfizz_to_wav(
