@@ -205,7 +205,7 @@ _VST_NEUTRAL_PRESET = {
         "late": 0.07,
         "size": _df_size(28),
         "decay": _df_decay(1.45),
-        "predelay": _df_predelay(110),
+        "predelay": _df_predelay(18),
         "diffuse": 0.82,
         "width": 1.0,
     },
@@ -585,6 +585,18 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
 
     for path in _VST_PLUGIN_PATHS.values():
         if not Path(path).exists():
+            return False
+
+    if sample_rate != _VST_SAMPLE_RATE:
+        try:
+            import scipy.signal as _sps
+
+            duration = dry_audio.shape[1] / sample_rate
+            target_frames = int(duration * _VST_SAMPLE_RATE)
+            dry_audio = _sps.resample(dry_audio, target_frames, axis=1).astype(
+                np.float32
+            )
+        except Exception:
             return False
 
     devnull = open(os.devnull, "w")
@@ -1635,14 +1647,9 @@ def _synth_sfizz_to_wav(
                 d_left, d_right = drum_synth.render_block()
                 left_arr = left_arr + np.asarray(d_left, dtype=np.float32)
                 right_arr = right_arr + np.asarray(d_right, dtype=np.float32)
-            # Tanh soft-clip per block: prevents polyphony sum from creating
-            # harsh flat-top clipping inside sfizz's output. tanh maps the
-            # summed signal smoothly to [-1, 1], so even when 5-6 notes
-            # overlap the result stays musical instead of harshly clipped.
-            # Applied at 0.7 drive so signals below ~0.5 pass nearly linear.
-            if not use_vst_chain:
-                left_arr = np.tanh(left_arr * 0.7) / np.tanh(0.7)
-                right_arr = np.tanh(right_arr * 0.7) / np.tanh(0.7)
+            # NOTE: soft-clipping moved to the pedalboard mastering stage (tape
+            # saturation + adaptive clipper). Keeping raw sfizz output here
+            # avoids double-tanh when the pedalboard fallback is used.
             block = np.column_stack((left_arr, right_arr)).flatten()
             interleaved_blocks.append(block)
             rendered += len(left_arr)
