@@ -112,37 +112,46 @@ _VST_PLUGIN_PATHS = {
 
 _VST_NEUTRAL_PRESET = {
     "bypass": False,
-    "tape": {0: 0.889, 1: 0.5, 2: 1.0, 16: 0.28, 17: 0.35, 18: 0.5, 8: 0.5, 9: 0.5},
-    "sdrr": {"bypass": False, "mode": 0.0, "drive": 0.20, "mix": 0.40},
+    "tape": {
+        0: 0.889,
+        1: 0.62,
+        2: 1.0,
+        16: 0.18,
+        17: 0.25,
+        18: 0.5,
+        8: 0.5,
+        9: 0.5,
+    },
+    "sdrr": {"bypass": True, "mode": 0.0, "drive": 0.20, "mix": 0.40},
     "spiff": {"bypass": True, "mode": 1.0, "boost": 0.0, "cut": 0.0, "sens": 0.5},
     "soothe": {"bypass": True, "depth": 0.35, "sharpness": 0.50, "selectivity": 0.40},
     "eq": {
-        "hp_freq": 35.0,
-        "b1_freq": 250.0,
-        "b1_gain": -1.2,
-        "b1_q": 0.6,
+        "hp_freq": 30.0,
+        "b1_freq": 200.0,
+        "b1_gain": -0.8,
+        "b1_q": 0.5,
         "b1_dyn": -2.0,
-        "b3_freq": 3200.0,
-        "b3_gain": 0.0,
-        "b3_q": 0.5,
-        "b4_freq": 10000.0,
-        "b4_gain": 1.4,
-        "b4_q": 0.5,
+        "b3_freq": 3500.0,
+        "b3_gain": -0.8,
+        "b3_q": 0.7,
+        "b4_freq": 8000.0,
+        "b4_gain": 0.6,
+        "b4_q": 0.4,
     },
     "reverb": {
-        2: 0.95,
+        2: 0.82,
         3: 0.03,
         5: 0.02,
         6: 0.05,
-        8: 0.05,
-        9: 0.03,
+        8: 0.12,
+        9: 0.28,
         10: 0.7,
         11: 0.10,
         13: 1.0,
     },
     "chorus_wet": 0.0,
-    "stereo": {3: 0.62, 19: 1.0},
-    "fresh_air": {"bypass": False, "mid": 0.06, "high": 0.14},
+    "stereo": {3: 0.70, 19: 1.0},
+    "fresh_air": {"bypass": False, "mid": 0.0, "high": 0.18},
     "pro_mb": {"bypass": True, "params": {}},
 }
 
@@ -166,8 +175,8 @@ def _configure_kotelnikov_ge(kotelnikov):
     kotelnikov.set_parameter(0, 0.30)
     kotelnikov.set_parameter(5, 0.43)
     kotelnikov.set_parameter(6, 0.39)
-    kotelnikov.set_parameter(7, 0.42)
-    kotelnikov.set_parameter(8, 0.55)
+    kotelnikov.set_parameter(7, 0.52)
+    kotelnikov.set_parameter(8, 0.50)
     kotelnikov.set_parameter(10, 0.58)
     kotelnikov.set_parameter(11, 0.0)
     kotelnikov.set_parameter(12, 1.0)
@@ -436,7 +445,7 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
             if peak > 1e-6:
                 out = out * (0.95 / peak)
 
-            success = _write_int24_wav(
+            success = _write_float_wav(
                 out.T.flatten(), output_path, sample_rate, soft_clip=False
             )
             return success
@@ -1106,9 +1115,9 @@ def _write_float_wav(
     except Exception:
         return _write_int16_wav(interleaved, output_path, sample_rate, soft_clip)
 
-    if not interleaved:
-        return False
     arr = np.asarray(interleaved, dtype=np.float32)
+    if arr.size == 0:
+        return False
     if soft_clip:
         arr = np.tanh(arr)
     raw = arr.tobytes()  # little-endian float32, interleaved stereo
