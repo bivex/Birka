@@ -5,8 +5,8 @@ Usage:
     python scripts/dump_vst_params.py "Pro-MB"
     python scripts/dump_vst_params.py "/Library/Audio/Plug-Ins/VST3/FabFilter Pro-MB.vst3"
 
-Outputs one row per parameter with: index | name | text value | range | default.
-Prints as a formatted table and also dumps a JSON copy next to this script.
+Outputs one row per parameter with: index | name | default | text | min..max.
+Prints a formatted table and writes a JSON copy next to this script.
 """
 from __future__ import annotations
 
@@ -19,7 +19,6 @@ import dawdreamer as daw
 
 VST_DIR = Path("/Library/Audio/Plug-Ins/VST3")
 
-# Friendly alias -> actual bundle path
 ALIASES = {
     "pro-mb": "FabFilter Pro-MB.vst3",
     "promb": "FabFilter Pro-MB.vst3",
@@ -51,7 +50,6 @@ def resolve_path(arg: str) -> Path:
     key = arg.lower().strip()
     if key in ALIASES:
         return VST_DIR / ALIASES[key]
-    # fuzzy match against bundle names
     cands = [b for b in VST_DIR.iterdir() if key in b.stem.lower()]
     if len(cands) == 1:
         return cands[0]
@@ -63,69 +61,82 @@ def resolve_path(arg: str) -> Path:
     raise FileNotFoundError(f"No VST3 matching {arg!r} in {VST_DIR}")
 
 
+def _norm_range(proc, i: int) -> tuple[float, float] | None:
+    """Return normalized (min,max) if discoverable, else None."""
+    try:
+        r = proc.get_parameter_range(i)
+    except Exception:
+        return None
+    # observed shape: dict keyed by (lo,hi) tuples -> pick first interval
+    if isinstance(r, dict) and r:
+        key = next(iter(r))
+        if isinstance(key, tuple) and len(key) == 2:
+            return (float(key[0]), float(key[1]))
+    return None
+
+
 def dump_plugin(bundle: Path) -> list[dict]:
     engine = daw.RenderEngine(96000, 512)
     proc = engine.make_plugin_processor("p", str(bundle))
 
+    desc = proc.get_parameters_description()
     rows: list[dict] = []
-    n = proc.get_plugin_parameter_size()
-    for i in range(n):
-        name = ""
-        text = ""
-        rng = None
-        default = None
-        try:
-            name = proc.get_parameter_name(i)
-        except Exception:
-            pass
-        try:
-            text = proc.get_parameter_text(i)
-        except Exception:
-            pass
-        try:
-            rng = list(proc.get_parameter_range(i))
-        except Exception:
-            pass
-        try:
-            default = proc.get_parameter(i)
-        except Exception:
-            pass
+    for d in desc:
+        i = d["index"]
+        rng = _norm_range(proc, i)
         rows.append(
             {
                 "index": i,
-                "name": name,
-                "default_norm": default,
-                "text": text,
-                "range": rng,
+                "name": d.get("name", ""),
+                "text": d.get("text", ""),
+                "currentValText": d.get("currentValText", ""),
+                "defaultValue": d.get("defaultValue"),
+                "defaultValueText": d.get("defaultValueText", ""),
+                "min": d.get("min"),
+                "max": d.get("max"),
+                "isDiscrete": d.get("isDiscrete", False),
+                "isBoolean": d.get("isBoolean", False),
+                "numSteps": d.get("numSteps"),
+                "category": d.get("category", ""),
+                "norm_range": rng,
             }
         )
+    rows.sort(key=lambda r: r["index"])
     return rows
 
 
+def _s(v) -> str:
+    return "" if v is None else str(v)
+
+
 def print_table(rows: list[dict], plugin_name: str) -> None:
-    # column widths
     idx_w = max(len(str(r["index"])) for r in rows) if rows else 3
-    name_w = min(
-        44, max((len(r["name"] or "") for r in rows), default=4) if rows else 4
-    )
-    print(f"\n{'='*100}")
+    name_w = min(40, max((len(_s(r["name"])) for r in rows), default=4) if rows else 4)
+    print(f"\n{'='*108}")
     print(f"  {plugin_name}   ({len(rows)} parameters)")
-    print(f"{'='*100}")
-    header = f"{'idx':>{idx_w}}  {'name':<{name_w}}  {'def':>7}  {'text':<22}  range"
+    print(f"{'='*108}")
+    header = f"{'idx':>{idx_w}}  {'name':<{name_w}}  {'def':>7}  {'text/current':<24}  {'min..max':<20}  flags"
     print(header)
     print("-" * len(header))
     for r in rows:
-        name = (r["name"] or "")[:name_w]
-        text = (r["text"] or "")[:22]
-        defv = f"{r['default_norm']:.4f}" if isinstance(r["default_norm"], float) else str(
-            r["default_norm"]
+        name = _s(r["name"])[:name_w]
+        defv = (
+            f"{r['defaultValue']:.4f}"
+            if isinstance(r["defaultValue"], float)
+            else _s(r["defaultValue"])
         )
-        rng = (
-            f"[{r['range'][0]:.3f}, {r['range'][1]:.3f}]"
-            if r["range"]
-            else ""
+        text = (_s(r["currentValText"]) or _s(r["text"]))[:24]
+        mn = _s(r["min"])
+        mx = _s(r["max"])
+        mm = f"{mn}..{mx}"[:20]
+        flags = []
+        if r.get("isDiscrete"):
+            flags.append("DISC")
+        if r.get("isBoolean"):
+            flags.append("BOOL")
+        print(
+            f"{r['index']:>{idx_w}}  {name:<{name_w}}  {defv:>7}  {text:<24}  {mm:<20}  {' '.join(flags)}"
         )
-        print(f"{r['index']:>{idx_w}}  {name:<{name_w}}  {defv:>7}  {text:<22}  {rng}")
 
 
 def main(argv: list[str]) -> int:
@@ -139,7 +150,6 @@ def main(argv: list[str]) -> int:
         return 1
 
     print(f"Loading: {bundle.name} ...", file=sys.stderr)
-    # suppress chatty plugin stderr
     devnull = os.open(os.devnull, os.O_WRONLY)
     old = os.dup(2)
     try:
@@ -156,7 +166,10 @@ def main(argv: list[str]) -> int:
 
     print_table(rows, bundle.stem)
 
-    out_json = Path(__file__).parent / f"dump_{bundle.stem.replace(' ', '_').lower()}.json"
+    out_json = (
+        Path(__file__).parent
+        / f"dump_{bundle.stem.replace(' ', '_').lower()}.json"
+    )
     out_json.write_text(json.dumps(rows, indent=2, ensure_ascii=False))
     print(f"\nJSON written to: {out_json}", file=sys.stderr)
     return 0
