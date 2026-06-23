@@ -204,6 +204,108 @@ Verified normalized values:
 
 ---
 
+## Pro-L 2 (limiter) — CRITICAL fixes applied ✅
+
+All indices verified via live dump. **Three prior bugs fixed:**
+
+| idx | name | mapping | prior (buggy) | now (fixed) |
+|-----|------|---------|---------------|-------------|
+| 2 | Lookahead | 0..5 ms linear | 0.0360 = **0.18 ms** (distorted transients) | 0.20 = **1.0 ms** |
+| 9 | Oversampling | Off/2x/4x/8x/16x/32x | 0.5 = 8x (CPU-heavy) | 0.3 = **4x** |
+| 18 | Output Level | **-30..0 dBTP linear** | 0.891 = **-3.27 dBTP** (near-silent!) | 0.9667 = **-0.99 dBTP** |
+
+⚠️ The Output Level range is **-30..0 dBTP**, NOT a linear gain. The old
+`0.891` (borrowed from a linear -1 dBFS gain convention) landed at -3.27 dBTP,
+making every master ~2 dB too quiet. `-1.0 dBTP` needs norm `0.9667`.
+
+Full mapping table (verified):
+
+| idx | name | value text @ norm |
+|-----|------|-------------------|
+| 0 | Gain | 0..+30 dB |
+| 1 | Style | 0=Transparent, ~0.43=Allround, 0.71=Modern, 1=Safe |
+| 2 | Lookahead | 0.2=1ms, 0.5=2.5ms, 1.0=5ms (linear) |
+| 3 | Attack | log, 0.2=16ms, 0.4=256ms |
+| 4 | Release | log, 0.2=55ms, 0.4=439ms, 0.5=857ms |
+| 9 | Oversampling | 0=Off, 0.1-0.25=2x, 0.3-0.4=4x, 0.5-0.6=8x, 0.75=16x |
+| 10 | True Peak | 0=Off, 1=On |
+| 17 | Bypass | 0=Off |
+| 18 | Output Level | **-30..0 dBTP linear**, -1 dBTP = 0.9667 |
+| 19 | Lock Output | 1=Locked |
+| 22 | True Peak Metering | 1=Show True Peaks |
+| 28 | Loudness Meter Target | display only, no audio effect |
+
+---
+
+## Pro-R 2 (reverb) — mapping rewritten ✅
+
+**Prior bug:** the code treated idx 0 as "decay" and idx 16 as a 0..1 predelay
+multiplier. Actually:
+
+| idx | name | real role | prior (wrong) |
+|-----|------|-----------|---------------|
+| 0 | **Space** | room size 200ms..10s log | was called "decay" |
+| 1 | Decay Rate | 25%..400% (100%=neutral) | — |
+| 16 | **Predelay** | **0..500 ms** | 0.13 read as 2.2 ms, not 130 ms |
+
+So the old reverb had a 750 ms small room, 2.2 ms predelay. Brief wanted a deep
+hall with 130 ms predelay — the opposite of what was heard.
+
+Verified mappings:
+- **Space** (idx 0): 0.5=2.5s, 0.7=4.0s (deep). log.
+- **Decay Rate** (idx 1): 0.25=50%, 0.5=100% (neutral).
+- **Mix** (idx 9): linear 0..100%. 1.0 - dry.
+- **Predelay** (idx 16): quantized steps. 0.667 ≈ **130 ms** (NOT linear).
+- **Bypass** (idx 132): 0.0 = engaged, 0.5+ = bypassed (DISC, inverted).
+
+New preset: deep 4.0s Space, short 50% Decay Rate (≈200 ms tail), 7% Mix, 130 ms
+Predelay → dry attack, deep space, controlled tail.
+
+---
+
+## TDR Kotelnikov GE (glue) — CRITICAL fix applied ✅
+
+**Prior bug (most damaging):** `set_parameter(12, 1.0)`. Index 12 = **Dry Wet**,
+but the control is **INVERTED**: range "100.0..0.0", so **norm 1.0 = "0.0" = 0%
+wet**. The compressor was 100% bypassed — every render had zero glue compression.
+
+| idx | name | mapping |
+|-----|------|---------|
+| 0 | Threshold | 0..-50 dB |
+| 1 | Peak-Crest | 0=Peak, ~0.41=RMS, 1=Crest |
+| 2 | Soft Knee | 0..16 dB |
+| 5 | Ratio | 1.1..7 (0.5=2.0:1) |
+| 6 | Attack | 0.02..250 ms |
+| 7 | Release Peak | 10..2000 ms |
+| 8 | Release RMS | 20..2000 ms |
+| 10 | Makeup | -60..+18 dB |
+| 11 | Dry Mix | off / -45..0 dB |
+| **12** | **Dry Wet** | **INVERTED: 0.0=100% wet, 1.0=0% wet** |
+| 14 | Out Gain | -20..+20 dB |
+| 15 | SC HP Freq | 25..500 Hz (log; 0.598=150 Hz) |
+| 16 | SC HP Slope | Flat..18 dB/oct |
+
+Fix: `set_parameter(12, 0.0)` = 100% wet. Added SC high-pass at 150 Hz so the
+low end isn't over-compressed (keeps the bass "warm/supportive" per brief).
+
+---
+
+## Pro-MB — exact dynamics mappings ✅ (ratio/threshold corrected)
+
+The Band 2 indices were right, but the **Ratio and Threshold mappings were wrong**
+in the first pass (ratio 0.0101 = 1.01:1 = doing nothing; threshold range is
+-60..0, not -90..0). Re-verified:
+
+| param | idx | mapping | corrected norm |
+|-------|-----|---------|----------------|
+| Threshold | 28 | **-60..0 dB linear**, `(db+60)/60` | -10 dB → **0.833** |
+| Range | 29 | -30..+30 dB linear, `(db+30)/60` | -3 dB → 0.45 |
+| Ratio | 30 | **power-law** 1..100:1: 2:1=**0.40**, 3:1=0.50, 4:1≈0.57 | **0.40** |
+| Attack | 31 | 0..100% linear | 0.3 |
+| Release | 32 | 0..100% linear | 0.4 |
+
+---
+
 ## Confirmed-correct existing presets (for reference)
 
 **CHOW Tape** — verified against dump (idx: Drive 16, Saturation 17, Bias 18,
