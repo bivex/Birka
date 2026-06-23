@@ -600,15 +600,22 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
         if not Path(path).exists():
             return False
 
+    # ── Ресемплинг: sfizz SR → VST SR (96kHz) ──────────────────────
+    # buf_arr = interleaved stereo (frames*2,) из sfizz на sample_rate.
+    # DAWdreamer и VST-плагины инициализированы на _VST_SAMPLE_RATE.
+    # Если SR не совпадает — питч сдвинут вниз, тембр плывёт.
     if sample_rate != _VST_SAMPLE_RATE:
         try:
             import scipy.signal as _sps
+            from math import gcd
 
-            duration = dry_audio.shape[1] / sample_rate
-            target_frames = int(duration * _VST_SAMPLE_RATE)
-            dry_audio = _sps.resample(dry_audio, target_frames, axis=1).astype(
-                np.float32
-            )
+            stereo = dry_audio.reshape(-1, 2).T.astype(np.float32)  # (2, frames)
+            g = gcd(_VST_SAMPLE_RATE, sample_rate)
+            up = _VST_SAMPLE_RATE // g
+            dn = sample_rate // g
+            L = _sps.resample_poly(stereo[0], up, dn)
+            R = _sps.resample_poly(stereo[1], up, dn)
+            dry_audio = np.stack([L, R]).T.flatten().astype(np.float32)
         except Exception:
             return False
 
@@ -773,7 +780,7 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                     out = _VST_ENGINE.get_audio("limiter")
 
             success = _write_float_wav(
-                out.T.flatten(), output_path, sample_rate, soft_clip=False
+                out.T.flatten(), output_path, _VST_SAMPLE_RATE, soft_clip=False
             )
             return success
         except Exception:
