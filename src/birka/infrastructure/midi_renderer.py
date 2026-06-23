@@ -126,9 +126,9 @@ _VST_NEUTRAL_PRESET = {
     "spiff": {"bypass": True, "mode": 1.0, "boost": 0.0, "cut": 0.0, "sens": 0.5},
     "soothe": {
         "bypass": False,
-        "depth": 0.28,
-        "sharpness": 0.52,
-        "selectivity": 0.55,
+        "depth": 0.38,
+        "sharpness": 0.48,
+        "selectivity": 0.42,
     },
     "eq": {
         "hp_freq": 28.0,
@@ -139,14 +139,14 @@ _VST_NEUTRAL_PRESET = {
         "b3_freq": 4200.0,
         "b3_gain": -0.7,
         "b3_q": 1.1,
-        "b4_freq": 10000.0,
-        "b4_gain": 0.2,
-        "b4_q": 0.35,
+        "b4_freq": 7500.0,
+        "b4_gain": -0.8,
+        "b4_q": 0.9,
     },
-    "reverb": {2: 0.93, 8: 0.10, 9: 0.18},
+    "reverb": {2: 0.93, 8: 0.14, 9: 0.22},
     "chorus_wet": 0.0,
     "stereo": {3: 0.72, 19: 1.0},
-    "fresh_air": {"bypass": False, "mid": 0.04, "high": 0.16},
+    "fresh_air": {"bypass": False, "mid": 0.0, "high": 0.20},
     "pro_mb": {"bypass": True, "params": {}},
 }
 
@@ -237,7 +237,7 @@ def _apply_vst_preset(
         soothe.set_parameter(4, soothe_settings["depth"])
         soothe.set_parameter(5, soothe_settings["sharpness"])
         soothe.set_parameter(6, soothe_settings["selectivity"])
-        soothe.set_parameter(7, 0.15)
+        soothe.set_parameter(7, 0.25)
         soothe.set_parameter(8, 0.20)
         soothe.set_parameter(50, 1.0)
 
