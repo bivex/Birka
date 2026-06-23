@@ -1234,6 +1234,13 @@ def dispose_vst_chain_cache() -> None:
     except Exception:
         pass
 
+    try:
+        import gc
+
+        gc.collect()
+    except Exception:
+        pass
+
 
 def _synth_sfizz_to_wav(
     sfz_path: Path,

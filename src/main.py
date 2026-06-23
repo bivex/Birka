@@ -11,33 +11,32 @@ from birka.presentation.audio_browser import AudioBrowserWindow
 def main() -> int:
     project_root = Path(__file__).resolve().parents[1]
     app = QtWidgets.QApplication(sys.argv)
-    # Release the cached sfizz Synth instances before the interpreter tears
-    # down. Without this, pysfizz's nanobind-bound Synth objects leak at
-    # process exit (their background file-pool threads delay shutdown and
-    # emit "nanobind: leaked N instances" warnings).
-    app.aboutToQuit.connect(_dispose_sfizz)
-    app.aboutToQuit.connect(_dispose_vst_chain)
+
+    def _on_about_to_quit() -> None:
+        try:
+            sys.stderr.flush()
+        except Exception:
+            pass
+        try:
+            from birka.infrastructure.midi_renderer import (
+                dispose_sfizz_cache,
+                dispose_vst_chain_cache,
+            )
+
+            dispose_sfizz_cache()
+        except Exception:
+            pass
+        try:
+            from birka.infrastructure.midi_renderer import dispose_vst_chain_cache
+
+            dispose_vst_chain_cache()
+        except Exception:
+            pass
+
+    app.aboutToQuit.connect(_on_about_to_quit)
     window = AudioBrowserWindow([project_root / "data" / "library"])
     window.show()
     return app.exec()
-
-
-def _dispose_sfizz() -> None:
-    try:
-        from birka.infrastructure.midi_renderer import dispose_sfizz_cache
-
-        dispose_sfizz_cache()
-    except Exception:
-        pass
-
-
-def _dispose_vst_chain() -> None:
-    try:
-        from birka.infrastructure.midi_renderer import dispose_vst_chain_cache
-
-        dispose_vst_chain_cache()
-    except Exception:
-        pass
 
 
 if __name__ == "__main__":
