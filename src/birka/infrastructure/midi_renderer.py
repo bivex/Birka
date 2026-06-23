@@ -452,7 +452,10 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                         blocks.append(rms)
                 if blocks:
                     mean_rms = float(np.mean(blocks))
-                    current_lufs = 20.0 * np.log10(mean_rms) - 0.691
+                    lufs_calibration_offset = 6.1
+                    current_lufs = (
+                        20.0 * np.log10(mean_rms) - 0.691 + lufs_calibration_offset
+                    )
                     target_lufs = -14.0
                     gain_db = target_lufs - current_lufs
                     gain_db = max(-6.0, min(4.0, gain_db))
