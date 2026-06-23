@@ -111,6 +111,50 @@ _VST_PLUGIN_PATHS = {
     "limiter": "/Library/Audio/Plug-Ins/VST3/FabFilter Pro-L 2.vst3",
 }
 
+# Apple Sound Check lands more musically here after AAC encode than a flat
+# -14. Single source of truth shared by the VST two-pass calibration and the
+# pedalboard fallback — keeps both paths at the same loudness target.
+TARGET_LOUDNESS_LUFS = -13.8
+
+
+def _measure_lufs(buf: np.ndarray, sample_rate: int) -> Optional[float]:
+    """Integrated loudness in LUFS (ITU-R BS.1770).
+
+    buf is (channels, samples). Uses pyloudnorm when available (true K-weighted
+    measurement, matches ffmpeg ebur128 within ~0.1 dB); falls back to a 400 ms
+    gated-block RMS approximation otherwise. Single implementation shared by the
+    VST two-pass calibration and the pedalboard fallback so both paths measure
+    loudness identically.
+    """
+    import numpy as np
+
+    try:
+        import pyloudnorm as pyln
+
+        meter = pyln.Meter(int(sample_rate))
+        # pyloudnorm expects (samples, channels); buf is (channels, samples).
+        loudness = meter.integrated_loudness(np.asarray(buf).T)
+        return float(loudness)
+    except Exception:
+        pass
+    # Fallback: 400 ms block RMS approximation (kept for resilience). The
+    # +6.1 dB term compensates for the missing K-weighting (head-shadow +
+    # RLB) and block-gating empirically.
+    try:
+        mono = np.mean(np.asarray(buf).astype(np.float64), axis=0)
+        win = max(1, int(0.4 * sample_rate))
+        blocks = []
+        for i in range(0, max(1, len(mono) - win), win):
+            rms = float(np.sqrt(np.mean(mono[i : i + win] ** 2)))
+            if rms > 1e-6:
+                blocks.append(rms)
+        if not blocks:
+            return None
+        mean_rms = float(np.mean(blocks))
+        return 20.0 * np.log10(mean_rms) - 0.691 + 6.1
+    except Exception:
+        return None
+
 
 def _df_size(m):
     # Dragonfly Size: 10-60m linear
@@ -733,46 +777,17 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
             # correct order is: measure -> apply gain to the DRY input (before
             # the whole chain) -> re-render so the limiter catches the new
             # peaks. This guarantees the master never exceeds -1 dBTP.
-            def _measure_lufs(buf: np.ndarray) -> Optional[float]:
-                # True LUFS via pyloudnorm (ITU-R BS.1770). Falls back to RMS
-                # approximation when pyloudnorm is unavailable.
-                try:
-                    import pyloudnorm as pyln
-
-                    meter = pyln.Meter(_VST_SAMPLE_RATE)
-                    loudness = meter.integrated_loudness(buf.T)
-                    return float(loudness)
-                except Exception:
-                    pass
-                # Fallback: RMS approximation (kept for resilience)
-                try:
-                    mono = np.mean(buf, axis=0)
-                    win = int(0.4 * _VST_SAMPLE_RATE)
-                    blocks = []
-                    for i in range(0, max(1, len(mono) - win), win):
-                        rms = float(np.sqrt(np.mean(mono[i : i + win] ** 2)))
-                        if rms > 1e-6:
-                            blocks.append(rms)
-                    if not blocks:
-                        return None
-                    mean_rms = float(np.mean(blocks))
-                    return 20.0 * np.log10(mean_rms) - 0.691 + 6.1
-                except Exception:
-                    return None
 
             # Pass 1: render at unity, measure LUFS post-limiter.
             _VST_ENGINE.render(duration)
             out = _VST_ENGINE.get_audio("limiter")
-            current_lufs = _measure_lufs(out)
-            # -13.8 LUFS (not -14): Apple Sound Check lands more musically
-            # here after AAC encode than a flat -14.
-            target_lufs = -13.8
+            current_lufs = _measure_lufs(out, _VST_SAMPLE_RATE)
 
             # Pass 2: if off-target, scale the dry input and re-render so the
             # limiter re-clamps. Gain is applied to the SOURCE, not the master,
             # so the limiter ceiling (-1 dBTP) is never breached.
             if current_lufs is not None:
-                gain_db = max(-8.0, min(6.0, target_lufs - current_lufs))
+                gain_db = max(-8.0, min(6.0, TARGET_LOUDNESS_LUFS - current_lufs))
                 if abs(gain_db) > 0.3:
                     scaled = audio_2d * (10.0 ** (gain_db / 20.0))
                     pb.set_data(scaled.astype(np.float32))
@@ -1767,34 +1782,20 @@ def _synth_sfizz_to_wav(
         clip_drive = 10 ** (clip_db / 20.0)
         stereo = np.tanh(stereo * clip_drive) / np.tanh(clip_drive)
 
-        # ── Step 5: Loudness normalize to -14 LUFS ──
+        # ── Step 5: Loudness normalize to TARGET_LOUDNESS_LUFS ──
         # Measure and adjust. The clipper+comp already bring us close;
         # this fine-tunes to exact target. Gain is applied BEFORE limiter
-        # so no new overs are created.
-        mono_ms = np.mean(stereo, axis=0)
-        target_lufs = -14.0
-        win = int(0.4 * sample_rate)
-        if len(mono_ms) > win:
-            blocks = []
-            for i in range(0, len(mono_ms) - win, win):
-                block_rms = np.sqrt(np.mean(mono_ms[i : i + win] ** 2))
-                if block_rms > 1e-6:
-                    blocks.append(block_rms)
-            if blocks:
-                # Simplified LUFS: mean of 400ms block RMS in dB, minus
-                # the ITU-R BS.1770 K-weighting offset (-0.691) and a
-                # correction for the high-pass shelf in K-weighting (-1.5 dB).
-                # Empirically calibrated against DMC renders.
-                mean_rms = np.mean(blocks)
-                current_lufs = 20 * np.log10(mean_rms) - 0.691 + 1.5
-                gain_db = target_lufs - current_lufs
-                # Clamp to ±3 dB — the clipper should do the heavy lifting,
-                # not the normalize. Large gain = crushed dynamics.
-                # No clamp. The clipper (step 4) already shaped the signal,
-                # and the true-peak limiter (step 6) catches any overs.
-                # To hit -14 LUFS the gain needs ~+5-6 dB on quiet renders.
-                gain_db = max(-10.0, min(8.0, gain_db))
-                stereo = stereo * (10 ** (gain_db / 20.0))
+        # so no new overs are created. Uses the same _measure_lufs as the
+        # VST two-pass path (pyloudnorm with RMS fallback) so both code paths
+        # share one loudness definition and target.
+        current_lufs = _measure_lufs(stereo, sample_rate)
+        if current_lufs is not None:
+            gain_db = TARGET_LOUDNESS_LUFS - current_lufs
+            # The clipper (step 4) already shaped the signal, and the
+            # true-peak limiter (step 6) catches any overs. To hit target
+            # LUFS the gain needs a few dB on quiet renders.
+            gain_db = max(-10.0, min(8.0, gain_db))
+            stereo = stereo * (10 ** (gain_db / 20.0))
 
         # ── Step 6: True-peak limiter (-1 dBTP) ──
         # Final safety after loudness gain. Catches any overs the

@@ -1,6 +1,7 @@
 """
 verify_lufs.py — true LUFS (ITU-R BS.1770) via ffmpeg ebur128.
-Сравнивает текущую RMS-оценку из midi_renderer с true measurement.
+Сравнивает prod _measure_lufs из midi_renderer (используется в двухпроходной
+калибровке) с истинным измерением ebur128.
 """
 import os, sys, math, subprocess, tempfile, re, wave
 _old = os.dup(2); _dn = os.open(os.devnull, os.O_WRONLY); os.dup2(_dn, 2)
@@ -15,6 +16,7 @@ from src.birka.infrastructure.midi_renderer import (
     _VST_PLUGIN_PATHS, _VST_SAMPLE_RATE, _VST_BUFFER_SIZE,
     _configure_kotelnikov_ge, _configure_limiter, _configure_nova,
     _apply_vst_preset, _VST_NEUTRAL_PRESET,
+    _measure_lufs, TARGET_LOUDNESS_LUFS,
 )
 
 SR  = _VST_SAMPLE_RATE
@@ -78,17 +80,10 @@ def build_engine(stereo_in):
     return engine
 
 def rms_lufs_approx(buf):
-    mono = np.mean(buf, axis=0)
-    win = int(0.4 * SR)
-    blocks = []
-    for i in range(0, max(1, len(mono) - win), win):
-        rms = float(np.sqrt(np.mean(mono[i: i + win] ** 2)))
-        if rms > 1e-6:
-            blocks.append(rms)
-    if not blocks:
-        return None
-    mean_rms = float(np.mean(blocks))
-    return 20.0 * np.log10(mean_rms) - 0.691 + 6.1
+    """Production loudness measurement (same _measure_lufs the VST two-pass
+    calibration and pedalboard fallback use): pyloudnorm ITU-R BS.1770 with an
+    RMS-approx fallback. buf is (channels, samples)."""
+    return _measure_lufs(buf, SR)
 
 def ffmpeg_ebur128(wav_path):
     proc = subprocess.run(
@@ -117,10 +112,11 @@ SIGNALS = ["mono", "normal", "wide"]
 os.dup2(_old, 2); os.close(_old); os.close(_dn)
 
 print("═" * 66)
-print("  LUFS VERIFICATION  —  approx vs true (ffmpeg ebur128, ITU-R BS.1770)")
+print("  LUFS VERIFICATION  —  prod _measure_lufs vs true (ffmpeg ebur128, ITU-R BS.1770)")
 print("═" * 66)
 print()
-print(f"  Target LUFS : -13.8 (Apple Sound Check)")
+print(f"  Target LUFS : {TARGET_LOUDNESS_LUFS} (Apple Sound Check)")
+print(f"  prod _measure_lufs (pyloudnorm + RMS fallback) vs true (ebur128)")
 print(f"  avg |Δ(lufs)| между сигналами = мерой стабильности калибровки")
 print()
 
@@ -156,12 +152,12 @@ for sig in SIGNALS:
 
 if errors:
     mean_err = float(np.mean(errors))
-    print(f"  mean offset (approx vs true) = {mean_err:+.2f} dB")
+    print(f"  mean offset (prod _measure_lufs vs true) = {mean_err:+.2f} dB")
     if abs(mean_err) > 0.5:
-        print(f"  ⚠ RMS-оценка систематически занижает/завышает LUFS на {abs(mean_err):.1f} dB")
-        print(f"     → calibration_offset 6.1 нужно заменить на {6.1 + mean_err:.1f}")
+        print(f"  ⚠ prod _measure_lufs систематически расходится с ebur128 на {abs(mean_err):.1f} dB")
+        print(f"     (при активном pyloudnorm это указывает на баг в буферизации/каналах)")
     else:
-        print("  ✓ RMS-оценка достаточно точна (ошибка < 0.5 dB)")
+        print("  ✓ prod _measure_lufs совпадает с ebur128 (ошибка < 0.5 dB)")
 else:
     print("  нет данных для сравнения")
 
