@@ -521,32 +521,46 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
             audio_2d = dry_audio.reshape(-1, 2).T.astype(np.float32)
             pb.set_data(audio_2d)
             duration = audio_2d.shape[1] / _VST_SAMPLE_RATE
-            _VST_ENGINE.render(duration)
-            out = _VST_ENGINE.get_audio("limiter")
 
-            try:
-                mono = np.mean(out, axis=0)
-                win = int(0.4 * _VST_SAMPLE_RATE)
-                blocks = []
-                for i in range(0, max(1, len(mono) - win), win):
-                    rms = float(np.sqrt(np.mean(mono[i : i + win] ** 2)))
-                    if rms > 1e-6:
-                        blocks.append(rms)
-                if blocks:
+            # Two-pass loudness calibration. The limiter is the LAST processor
+            # and clamps to -1 dBTP true-peak, so any gain applied AFTER it
+            # would create new inter-sample overs (clipping on AAC encode). The
+            # correct order is: measure -> apply gain to the DRY input (before
+            # the whole chain) -> re-render so the limiter catches the new
+            # peaks. This guarantees the master never exceeds -1 dBTP.
+            def _measure_lufs(buf: np.ndarray) -> Optional[float]:
+                try:
+                    mono = np.mean(buf, axis=0)
+                    win = int(0.4 * _VST_SAMPLE_RATE)
+                    blocks = []
+                    for i in range(0, max(1, len(mono) - win), win):
+                        rms = float(np.sqrt(np.mean(mono[i : i + win] ** 2)))
+                        if rms > 1e-6:
+                            blocks.append(rms)
+                    if not blocks:
+                        return None
                     mean_rms = float(np.mean(blocks))
                     lufs_calibration_offset = 6.1
-                    current_lufs = (
-                        20.0 * np.log10(mean_rms) - 0.691 + lufs_calibration_offset
-                    )
-                    target_lufs = -14.0
-                    gain_db = target_lufs - current_lufs
-                    gain_db = max(-6.0, min(4.0, gain_db))
-                    out = out * (10.0 ** (gain_db / 20.0))
-                    peak = float(np.max(np.abs(out)))
-                    if peak > 0.891:
-                        out = out * (0.891 / peak)
-            except Exception:
-                pass
+                    return 20.0 * np.log10(mean_rms) - 0.691 + lufs_calibration_offset
+                except Exception:
+                    return None
+
+            # Pass 1: render at unity, measure LUFS post-limiter.
+            _VST_ENGINE.render(duration)
+            out = _VST_ENGINE.get_audio("limiter")
+            current_lufs = _measure_lufs(out)
+            target_lufs = -14.0
+
+            # Pass 2: if off-target, scale the dry input and re-render so the
+            # limiter re-clamps. Gain is applied to the SOURCE, not the master,
+            # so the limiter ceiling (-1 dBTP) is never breached.
+            if current_lufs is not None:
+                gain_db = max(-8.0, min(6.0, target_lufs - current_lufs))
+                if abs(gain_db) > 0.3:
+                    scaled = audio_2d * (10.0 ** (gain_db / 20.0))
+                    pb.set_data(scaled.astype(np.float32))
+                    _VST_ENGINE.render(duration)
+                    out = _VST_ENGINE.get_audio("limiter")
 
             success = _write_float_wav(
                 out.T.flatten(), output_path, sample_rate, soft_clip=False
