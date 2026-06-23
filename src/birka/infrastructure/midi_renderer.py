@@ -209,12 +209,8 @@ _VST_NEUTRAL_PRESET = {
         "width": 1.0,
     },
     "chorus_wet": 0.0,
-    # A1StereoControl: Width 112% (idx 3, linear 0-200% → 0.62), bass mono ON
-    # below 160Hz (SafeBass idx 19 = 1.0, SafeBassFreq idx 18 = 160/525 ≈ 0.305).
-    # Conservative width — AirPods Max break up phase if pushed wider.
-    "stereo": {3: 0.62, 18: 0.305, 19: 1.0},
-    # Fresh Air tamer (premium): High 9%, Mid 2%. AAC adds perceived air itself,
-    # so plugin air must be subtle to avoid codex harshness.
+    # A1StereoControl removed: stereo widening now in Pro-Q 4 per-band
+    # (B2 bass → Mid, B6 air → Side). No standalone stereo plugin needed.
     "fresh_air": {"bypass": False, "mid": 0.02, "high": 0.09},
     # Pro-MB multiband. Band 2 active at 320 Hz for mid-bass control (brief
     # step 8). Band 2 block: idx 22 State, 23 Freq, 28 Threshold, 29 Range,
@@ -429,33 +425,42 @@ def _apply_vst_preset(
 
     eq_settings = preset["eq"]
     # Pro-Q 4 layout (verified via dump): each band = 23 params; base+0 Used,
-    # +1 Enabled, +2 Freq, +3 Gain, +4 Q, +5 Shape, +9 Dyn Range, +10 Dyn En,
-    # +11 Dyn Auto, +12 Threshold. Band bases: B1=0, B2=23, B3=46, B4=69,
-    # B5=92, B6=115. Shape norms: Bell 0.0, Low Shelf 0.10, Low Cut 0.20,
-    # High Shelf 0.30, High Cut 0.40.
+    # +1 Enabled, +2 Freq, +3 Gain, +4 Q, +5 Shape, +7 Stereo Placement,
+    # +9 Dyn Range, +10 Dyn En, +11 Dyn Auto, +12 Threshold. Band bases:
+    # B1=0, B2=23, B3=46, B4=69, B5=92, B6=115. Shape norms: Bell 0.0,
+    # Low Shelf 0.10, Low Cut 0.20, High Shelf 0.30, High Cut 0.40.
+    # Stereo Placement (idx +7 per band): Left 0.0-0.15, Right 0.2-0.35,
+    # Stereo 0.4-0.65, Mid 0.7-0.85, Side 0.9-1.0.
     #
+    # Replaces the old A1StereoControl widener. Per-band routing is cleaner:
+    # the bass low-shelf acts on Mid only (effective mono-bass, phase-stable),
+    # the air high-shelf acts on Side only (wide top end). This is the same
+    # intent as A1's SafeBass + width, but selective per frequency.
     # Premium tonal balance (AirPods Max aware):
-    #   B1 HPF 24Hz | B2 Low Shelf 110Hz +1.1 | B3 Dyn Bell 290Hz -1.2
-    #   B4 Bell 3.4k -0.6 | B5 Bell 6.8k -0.7 | B6 High Shelf 13k +0.6
+    #   B1 HPF 24Hz | B2 Low Shelf 110Hz +1.1 (Mid) | B3 Dyn Bell 290Hz -1.2
+    #   B4 Bell 3.4k -0.6 | B5 Bell 6.8k -0.7 | B6 High Shelf 13k +0.6 (Side)
     pro_q.set_parameter(0, 1.0)   # global
     pro_q.set_parameter(1, 1.0)
-    # Band 1: HPF (Low Cut)
+    # Band 1: HPF (Low Cut) — full stereo, just removes sub rumble
     pro_q.set_parameter(1, 1.0)
     pro_q.set_parameter(2, _freq_to_val(eq_settings["hp_freq"]))
     pro_q.set_parameter(3, _gain_to_val(0.0))
     pro_q.set_parameter(5, 0.20)  # Low Cut
-    # Band 2: Low Shelf
+    pro_q.set_parameter(7, 0.5)   # Stereo (full)
+    # Band 2: Low Shelf 110Hz — Mid only (mono bass, phase-stable)
     pro_q.set_parameter(24, 1.0)
     pro_q.set_parameter(25, _freq_to_val(eq_settings["b1_freq"]))
     pro_q.set_parameter(26, _gain_to_val(eq_settings["b1_gain"]))
     pro_q.set_parameter(27, _q_to_val(eq_settings["b1_q"]))
     pro_q.set_parameter(28, 0.10)  # Low Shelf
-    # Band 3: dynamic bell at 290 Hz (only cuts when energy builds up)
+    pro_q.set_parameter(30, 0.7)   # Mid (mono bass)
+    # Band 3: dynamic bell at 290 Hz (only cuts when energy builds up) — Stereo
     pro_q.set_parameter(47, 1.0)
     pro_q.set_parameter(48, _freq_to_val(eq_settings["b2_freq"]))
     pro_q.set_parameter(49, _gain_to_val(eq_settings["b2_gain"]))
     pro_q.set_parameter(50, _q_to_val(eq_settings["b2_q"]))
     pro_q.set_parameter(51, 0.0)  # Bell
+    pro_q.set_parameter(53, 0.5)  # Stereo
     b2_dyn = eq_settings.get("b2_dyn", 0.0)
     if abs(b2_dyn) > 1e-4:
         pro_q.set_parameter(55, _gain_to_val(b2_dyn))  # Dyn Range (base46+9=55)
@@ -465,28 +470,31 @@ def _apply_vst_preset(
     else:
         pro_q.set_parameter(55, _gain_to_val(0.0))
         pro_q.set_parameter(56, 0.0)
-    # Band 4: static bell at 3.4 kHz
+    # Band 4: static bell at 3.4 kHz — Stereo
     pro_q.set_parameter(70, 1.0)
     pro_q.set_parameter(71, _freq_to_val(eq_settings["b3_freq"]))
     pro_q.set_parameter(72, _gain_to_val(eq_settings["b3_gain"]))
     pro_q.set_parameter(73, _q_to_val(eq_settings["b3_q"]))
     pro_q.set_parameter(74, 0.0)  # Bell
+    pro_q.set_parameter(76, 0.5)  # Stereo
     pro_q.set_parameter(78, _gain_to_val(0.0))
     pro_q.set_parameter(79, 0.0)
-    # Band 5: static bell at 6.8 kHz
+    # Band 5: static bell at 6.8 kHz — Stereo
     pro_q.set_parameter(93, 1.0)
     pro_q.set_parameter(94, _freq_to_val(eq_settings["b4_freq"]))
     pro_q.set_parameter(95, _gain_to_val(eq_settings["b4_gain"]))
     pro_q.set_parameter(96, _q_to_val(eq_settings["b4_q"]))
     pro_q.set_parameter(97, 0.0)  # Bell
+    pro_q.set_parameter(99, 0.5)  # Stereo (Band 5)
     pro_q.set_parameter(101, _gain_to_val(0.0))
     pro_q.set_parameter(102, 0.0)
-    # Band 6: high shelf at 13 kHz (air)
+    # Band 6: high shelf at 13 kHz (air) — Side only (wide top end)
     pro_q.set_parameter(116, 1.0)
     pro_q.set_parameter(117, _freq_to_val(eq_settings["b5_freq"]))
     pro_q.set_parameter(118, _gain_to_val(eq_settings["b5_gain"]))
     pro_q.set_parameter(119, _q_to_val(eq_settings["b5_q"]))
     pro_q.set_parameter(120, 0.30)  # High Shelf
+    pro_q.set_parameter(122, 1.0)   # Side (wide air — widens only the top end)
     pro_q.set_parameter(124, _gain_to_val(0.0))
     pro_q.set_parameter(125, 0.0)
 
@@ -528,8 +536,9 @@ def _apply_vst_preset(
         chorus.set_parameter(1, 0.0)
         chorus.set_parameter(6, 1.0)
 
-    for idx, val in preset["stereo"].items():
-        stereo.set_parameter(idx, val)
+    # NOTE: stereo widening is now handled inside Pro-Q 4 via per-band Stereo
+    # Placement (see the eq block above). The old A1StereoControl "stereo"
+    # preset dict is no longer applied.
 
     fresh_settings = preset["fresh_air"]
     if fresh_settings["bypass"]:
@@ -616,10 +625,12 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                 pb = _VST_ENGINE.make_playback_processor("pb", dummy)
                 # Premium chain (audio-engineer spec, AAC/Apple Music target):
                 #   tape → sdrr → spiff → soothe → pro_q → pro_mb → nova → kot
-                #   → fresh → ste → reverb(dragonfly) → limiter
-                # Nova is a micro-dynamic polish layer after the multiband glue.
-                # Stereo control sits BEFORE reverb so the tail stays centered,
-                # then Dragonfly Hall adds cinematic depth, limiter last.
+                #   → fresh → reverb(dragonfly) → limiter
+                # A1StereoControl was REMOVED: stereo widening now happens
+                # inside Pro-Q 4 via per-band Stereo Placement (idx 7 per band).
+                # Bass band → Mid (mono bass), air band → Side (wide air). This
+                # is cleaner than a separate M/S widener — Pro-Q routes the
+                # correction to exactly the channel/frequency that needs it.
                 connections = [
                     (pb, []),
                     (tape, ["pb"]),
@@ -631,8 +642,7 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                     (nova, ["pro_mb"]),
                     (kot, ["nova"]),
                     (fresh, ["kot"]),
-                    (ste, ["fresh"]),
-                    (reverb, ["ste"]),
+                    (reverb, ["fresh"]),
                     (limiter, ["reverb"]),
                 ]
                 _VST_ENGINE.load_graph(connections)
