@@ -1,0 +1,4916 @@
+[
+  {
+    "index": 0,
+    "name": "Space",
+    "text": "2.500 sec",
+    "currentValText": "2.500 sec",
+    "defaultValue": 0.5,
+    "defaultValueText": "2.500 sec",
+    "min": "200.0 ms",
+    "max": "10.00 sec",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 1,
+    "name": "Decay Rate",
+    "text": "100.0%",
+    "currentValText": "100.0%",
+    "defaultValue": 0.5,
+    "defaultValueText": "100.0%",
+    "min": "25.00%",
+    "max": "400.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 2,
+    "name": "Distance",
+    "text": "50.0%",
+    "currentValText": "50.0%",
+    "defaultValue": 0.5,
+    "defaultValueText": "50.0%",
+    "min": "0.00%",
+    "max": "100%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 3,
+    "name": "Brightness",
+    "text": "0.00%",
+    "currentValText": "0.00%",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00%",
+    "min": "-100%",
+    "max": "100%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 4,
+    "name": "Style",
+    "text": "Modern",
+    "currentValText": "Modern",
+    "defaultValue": 0.0,
+    "defaultValueText": "Modern",
+    "min": "Modern",
+    "max": "Plate",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 5,
+    "name": "Character",
+    "text": "30.0%",
+    "currentValText": "30.0%",
+    "defaultValue": 0.30000001192092896,
+    "defaultValueText": "30.0%",
+    "min": "0.00%",
+    "max": "100%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 6,
+    "name": "Thickness",
+    "text": "0.00%",
+    "currentValText": "0.00%",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00%",
+    "min": "-100%",
+    "max": "100%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 7,
+    "name": "Stereo Width",
+    "text": "70.00%",
+    "currentValText": "70.00%",
+    "defaultValue": 0.5833333134651184,
+    "defaultValueText": "70.00%",
+    "min": "0.000%",
+    "max": "120.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 8,
+    "name": "Ducking",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.00 dB",
+    "min": "0.00 dB",
+    "max": "+48.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 9,
+    "name": "Mix",
+    "text": "22.5%",
+    "currentValText": "22.5%",
+    "defaultValue": 0.30000001192092896,
+    "defaultValueText": "30.0%",
+    "min": "0.00%",
+    "max": "100%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 10,
+    "name": "Lock Mix",
+    "text": "Unlocked",
+    "currentValText": "Unlocked",
+    "defaultValue": 1.0,
+    "defaultValueText": "Locked",
+    "min": "Unlocked",
+    "max": "Locked",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 11,
+    "name": "Freeze",
+    "text": "Freeze Off",
+    "currentValText": "Freeze Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Freeze Off",
+    "min": "Freeze Off",
+    "max": "Freeze On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 12,
+    "name": "Auto Gate",
+    "text": "250.0 ms",
+    "currentValText": "250.0 ms",
+    "defaultValue": 0.25,
+    "defaultValueText": "250.0 ms",
+    "min": "0.000 ms",
+    "max": "1.000 sec",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 13,
+    "name": "Auto Gate Enabled",
+    "text": "Disabled",
+    "currentValText": "Disabled",
+    "defaultValue": 0.0,
+    "defaultValueText": "Disabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 14,
+    "name": "Auto Gate Offset",
+    "text": "100%",
+    "currentValText": "100%",
+    "defaultValue": 0.5,
+    "defaultValueText": "100%",
+    "min": "50.0%",
+    "max": "200%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 15,
+    "name": "Auto Gate Sync",
+    "text": "Free",
+    "currentValText": "Free",
+    "defaultValue": 0.0,
+    "defaultValueText": "Free",
+    "min": "Free",
+    "max": "1/32 Note",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 16,
+    "name": "Predelay",
+    "text": "0.645 ms",
+    "currentValText": "0.645 ms",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.000 ms",
+    "min": "0.000 ms",
+    "max": "500.0 ms",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 17,
+    "name": "Predelay Offset",
+    "text": "100%",
+    "currentValText": "100%",
+    "defaultValue": 0.5,
+    "defaultValueText": "100%",
+    "min": "50.0%",
+    "max": "200%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 18,
+    "name": "Predelay Sync",
+    "text": "Free",
+    "currentValText": "Free",
+    "defaultValue": 0.0,
+    "defaultValueText": "Free",
+    "min": "Free",
+    "max": "1/32 Note",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 19,
+    "name": "Decay EQ Band 1 Used",
+    "text": "Used",
+    "currentValText": "Used",
+    "defaultValue": 0.0,
+    "defaultValueText": "Unused",
+    "min": "Unused",
+    "max": "Used",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 20,
+    "name": "Decay EQ Band 1 Enabled",
+    "text": "Enabled",
+    "currentValText": "Enabled",
+    "defaultValue": 1.0,
+    "defaultValueText": "Enabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 21,
+    "name": "Decay EQ Band 1 Frequency",
+    "text": "15.000 Hz",
+    "currentValText": "15.000 Hz",
+    "defaultValue": 0.5751884579658508,
+    "defaultValueText": "1000.0 Hz",
+    "min": "10.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 22,
+    "name": "Decay EQ Band 1 Rate",
+    "text": "75.00%",
+    "currentValText": "75.00%",
+    "defaultValue": 0.75,
+    "defaultValueText": "100.0%",
+    "min": "12.50%",
+    "max": "200.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 23,
+    "name": "Decay EQ Band 1 Q",
+    "text": "0.450",
+    "currentValText": "0.450",
+    "defaultValue": 0.5,
+    "defaultValueText": "1.000",
+    "min": "0.050",
+    "max": "1.000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 24,
+    "name": "Decay EQ Band 1 Shape",
+    "text": "Low Shelf",
+    "currentValText": "Low Shelf",
+    "defaultValue": 0.0,
+    "defaultValueText": "Bell",
+    "min": "Bell",
+    "max": "Notch",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 25,
+    "name": "Decay EQ Band 1 Speakers",
+    "text": "All (excl. LFE)",
+    "currentValText": "All (excl. LFE)",
+    "defaultValue": 0.06666667014360428,
+    "defaultValueText": "All (excl. LFE)",
+    "min": "All Speakers",
+    "max": "Ltr/Rtr (Top Surround Rear)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 16,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.03400000184774399
+    ]
+  },
+  {
+    "index": 26,
+    "name": "Decay EQ Band 2 Used",
+    "text": "Used",
+    "currentValText": "Used",
+    "defaultValue": 0.0,
+    "defaultValueText": "Unused",
+    "min": "Unused",
+    "max": "Used",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 27,
+    "name": "Decay EQ Band 2 Enabled",
+    "text": "Enabled",
+    "currentValText": "Enabled",
+    "defaultValue": 1.0,
+    "defaultValueText": "Enabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 28,
+    "name": "Decay EQ Band 2 Frequency",
+    "text": "2200.0 Hz",
+    "currentValText": "2200.0 Hz",
+    "defaultValue": 0.5751884579658508,
+    "defaultValueText": "1000.0 Hz",
+    "min": "10.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 29,
+    "name": "Decay EQ Band 2 Rate",
+    "text": "77.00%",
+    "currentValText": "77.00%",
+    "defaultValue": 0.75,
+    "defaultValueText": "100.0%",
+    "min": "12.50%",
+    "max": "200.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 30,
+    "name": "Decay EQ Band 2 Q",
+    "text": "0.250",
+    "currentValText": "0.250",
+    "defaultValue": 0.5,
+    "defaultValueText": "1.000",
+    "min": "0.050",
+    "max": "20.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 31,
+    "name": "Decay EQ Band 2 Shape",
+    "text": "Bell",
+    "currentValText": "Bell",
+    "defaultValue": 0.0,
+    "defaultValueText": "Bell",
+    "min": "Bell",
+    "max": "Notch",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 32,
+    "name": "Decay EQ Band 2 Speakers",
+    "text": "All (excl. LFE)",
+    "currentValText": "All (excl. LFE)",
+    "defaultValue": 0.06666667014360428,
+    "defaultValueText": "All (excl. LFE)",
+    "min": "All Speakers",
+    "max": "Ltr/Rtr (Top Surround Rear)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 16,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.03400000184774399
+    ]
+  },
+  {
+    "index": 33,
+    "name": "Decay EQ Band 3 Used",
+    "text": "Unused",
+    "currentValText": "Unused",
+    "defaultValue": 0.0,
+    "defaultValueText": "Unused",
+    "min": "Unused",
+    "max": "Used",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 34,
+    "name": "Decay EQ Band 3 Enabled",
+    "text": "Disabled",
+    "currentValText": "Disabled",
+    "defaultValue": 1.0,
+    "defaultValueText": "Enabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 35,
+    "name": "Decay EQ Band 3 Frequency",
+    "text": "1000.0 Hz",
+    "currentValText": "1000.0 Hz",
+    "defaultValue": 0.5751884579658508,
+    "defaultValueText": "1000.0 Hz",
+    "min": "10.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 36,
+    "name": "Decay EQ Band 3 Rate",
+    "text": "100.0%",
+    "currentValText": "100.0%",
+    "defaultValue": 0.75,
+    "defaultValueText": "100.0%",
+    "min": "12.50%",
+    "max": "200.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 37,
+    "name": "Decay EQ Band 3 Q",
+    "text": "1.000",
+    "currentValText": "1.000",
+    "defaultValue": 0.5,
+    "defaultValueText": "1.000",
+    "min": "0.050",
+    "max": "20.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 38,
+    "name": "Decay EQ Band 3 Shape",
+    "text": "Bell",
+    "currentValText": "Bell",
+    "defaultValue": 0.0,
+    "defaultValueText": "Bell",
+    "min": "Bell",
+    "max": "Notch",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 39,
+    "name": "Decay EQ Band 3 Speakers",
+    "text": "All (excl. LFE)",
+    "currentValText": "All (excl. LFE)",
+    "defaultValue": 0.06666667014360428,
+    "defaultValueText": "All (excl. LFE)",
+    "min": "All Speakers",
+    "max": "Ltr/Rtr (Top Surround Rear)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 16,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.03400000184774399
+    ]
+  },
+  {
+    "index": 40,
+    "name": "Decay EQ Band 4 Used",
+    "text": "Unused",
+    "currentValText": "Unused",
+    "defaultValue": 0.0,
+    "defaultValueText": "Unused",
+    "min": "Unused",
+    "max": "Used",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 41,
+    "name": "Decay EQ Band 4 Enabled",
+    "text": "Disabled",
+    "currentValText": "Disabled",
+    "defaultValue": 1.0,
+    "defaultValueText": "Enabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 42,
+    "name": "Decay EQ Band 4 Frequency",
+    "text": "1000.0 Hz",
+    "currentValText": "1000.0 Hz",
+    "defaultValue": 0.5751884579658508,
+    "defaultValueText": "1000.0 Hz",
+    "min": "10.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 43,
+    "name": "Decay EQ Band 4 Rate",
+    "text": "100.0%",
+    "currentValText": "100.0%",
+    "defaultValue": 0.75,
+    "defaultValueText": "100.0%",
+    "min": "12.50%",
+    "max": "200.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 44,
+    "name": "Decay EQ Band 4 Q",
+    "text": "1.000",
+    "currentValText": "1.000",
+    "defaultValue": 0.5,
+    "defaultValueText": "1.000",
+    "min": "0.050",
+    "max": "20.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 45,
+    "name": "Decay EQ Band 4 Shape",
+    "text": "Bell",
+    "currentValText": "Bell",
+    "defaultValue": 0.0,
+    "defaultValueText": "Bell",
+    "min": "Bell",
+    "max": "Notch",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 46,
+    "name": "Decay EQ Band 4 Speakers",
+    "text": "All (excl. LFE)",
+    "currentValText": "All (excl. LFE)",
+    "defaultValue": 0.06666667014360428,
+    "defaultValueText": "All (excl. LFE)",
+    "min": "All Speakers",
+    "max": "Ltr/Rtr (Top Surround Rear)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 16,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.03400000184774399
+    ]
+  },
+  {
+    "index": 47,
+    "name": "Decay EQ Band 5 Used",
+    "text": "Unused",
+    "currentValText": "Unused",
+    "defaultValue": 0.0,
+    "defaultValueText": "Unused",
+    "min": "Unused",
+    "max": "Used",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 48,
+    "name": "Decay EQ Band 5 Enabled",
+    "text": "Disabled",
+    "currentValText": "Disabled",
+    "defaultValue": 1.0,
+    "defaultValueText": "Enabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 49,
+    "name": "Decay EQ Band 5 Frequency",
+    "text": "1000.0 Hz",
+    "currentValText": "1000.0 Hz",
+    "defaultValue": 0.5751884579658508,
+    "defaultValueText": "1000.0 Hz",
+    "min": "10.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 50,
+    "name": "Decay EQ Band 5 Rate",
+    "text": "100.0%",
+    "currentValText": "100.0%",
+    "defaultValue": 0.75,
+    "defaultValueText": "100.0%",
+    "min": "12.50%",
+    "max": "200.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 51,
+    "name": "Decay EQ Band 5 Q",
+    "text": "1.000",
+    "currentValText": "1.000",
+    "defaultValue": 0.5,
+    "defaultValueText": "1.000",
+    "min": "0.050",
+    "max": "20.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 52,
+    "name": "Decay EQ Band 5 Shape",
+    "text": "Bell",
+    "currentValText": "Bell",
+    "defaultValue": 0.0,
+    "defaultValueText": "Bell",
+    "min": "Bell",
+    "max": "Notch",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 53,
+    "name": "Decay EQ Band 5 Speakers",
+    "text": "All (excl. LFE)",
+    "currentValText": "All (excl. LFE)",
+    "defaultValue": 0.06666667014360428,
+    "defaultValueText": "All (excl. LFE)",
+    "min": "All Speakers",
+    "max": "Ltr/Rtr (Top Surround Rear)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 16,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.03400000184774399
+    ]
+  },
+  {
+    "index": 54,
+    "name": "Decay EQ Band 6 Used",
+    "text": "Unused",
+    "currentValText": "Unused",
+    "defaultValue": 0.0,
+    "defaultValueText": "Unused",
+    "min": "Unused",
+    "max": "Used",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 55,
+    "name": "Decay EQ Band 6 Enabled",
+    "text": "Disabled",
+    "currentValText": "Disabled",
+    "defaultValue": 1.0,
+    "defaultValueText": "Enabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 56,
+    "name": "Decay EQ Band 6 Frequency",
+    "text": "1000.0 Hz",
+    "currentValText": "1000.0 Hz",
+    "defaultValue": 0.5751884579658508,
+    "defaultValueText": "1000.0 Hz",
+    "min": "10.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 57,
+    "name": "Decay EQ Band 6 Rate",
+    "text": "100.0%",
+    "currentValText": "100.0%",
+    "defaultValue": 0.75,
+    "defaultValueText": "100.0%",
+    "min": "12.50%",
+    "max": "200.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 58,
+    "name": "Decay EQ Band 6 Q",
+    "text": "1.000",
+    "currentValText": "1.000",
+    "defaultValue": 0.5,
+    "defaultValueText": "1.000",
+    "min": "0.050",
+    "max": "20.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 59,
+    "name": "Decay EQ Band 6 Shape",
+    "text": "Bell",
+    "currentValText": "Bell",
+    "defaultValue": 0.0,
+    "defaultValueText": "Bell",
+    "min": "Bell",
+    "max": "Notch",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 60,
+    "name": "Decay EQ Band 6 Speakers",
+    "text": "All (excl. LFE)",
+    "currentValText": "All (excl. LFE)",
+    "defaultValue": 0.06666667014360428,
+    "defaultValueText": "All (excl. LFE)",
+    "min": "All Speakers",
+    "max": "Ltr/Rtr (Top Surround Rear)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 16,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.03400000184774399
+    ]
+  },
+  {
+    "index": 61,
+    "name": "Post EQ Band 1 Used",
+    "text": "Unused",
+    "currentValText": "Unused",
+    "defaultValue": 0.0,
+    "defaultValueText": "Unused",
+    "min": "Unused",
+    "max": "Used",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 62,
+    "name": "Post EQ Band 1 Enabled",
+    "text": "Disabled",
+    "currentValText": "Disabled",
+    "defaultValue": 1.0,
+    "defaultValueText": "Enabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 63,
+    "name": "Post EQ Band 1 Frequency",
+    "text": "2000.0 Hz",
+    "currentValText": "2000.0 Hz",
+    "defaultValue": 0.5751884579658508,
+    "defaultValueText": "1000.0 Hz",
+    "min": "10.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 64,
+    "name": "Post EQ Band 1 Gain",
+    "text": "-2.00 dB",
+    "currentValText": "-2.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 65,
+    "name": "Post EQ Band 1 Q",
+    "text": "2.000",
+    "currentValText": "2.000",
+    "defaultValue": 0.5,
+    "defaultValueText": "1.000",
+    "min": "0.025",
+    "max": "40.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 66,
+    "name": "Post EQ Band 1 Shape",
+    "text": "Bell",
+    "currentValText": "Bell",
+    "defaultValue": 0.0,
+    "defaultValueText": "Bell",
+    "min": "Bell",
+    "max": "High Cut",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 67,
+    "name": "Post EQ Band 1 Slope",
+    "text": "12 dB/oct",
+    "currentValText": "12 dB/oct",
+    "defaultValue": 0.25,
+    "defaultValueText": "12 dB/oct",
+    "min": "6 dB/oct",
+    "max": "96 dB/oct",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 68,
+    "name": "Post EQ Band 1 Stereo Placement",
+    "text": "Stereo",
+    "currentValText": "Stereo",
+    "defaultValue": 0.5,
+    "defaultValueText": "Stereo",
+    "min": "Left",
+    "max": "Side",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 69,
+    "name": "Post EQ Band 1 Speakers",
+    "text": "All (excl. LFE)",
+    "currentValText": "All (excl. LFE)",
+    "defaultValue": 0.06666667014360428,
+    "defaultValueText": "All (excl. LFE)",
+    "min": "All Speakers",
+    "max": "Ltr/Rtr (Top Surround Rear)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 16,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.03400000184774399
+    ]
+  },
+  {
+    "index": 70,
+    "name": "Post EQ Band 2 Used",
+    "text": "Used",
+    "currentValText": "Used",
+    "defaultValue": 0.0,
+    "defaultValueText": "Unused",
+    "min": "Unused",
+    "max": "Used",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 71,
+    "name": "Post EQ Band 2 Enabled",
+    "text": "Enabled",
+    "currentValText": "Enabled",
+    "defaultValue": 1.0,
+    "defaultValueText": "Enabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 72,
+    "name": "Post EQ Band 2 Frequency",
+    "text": "12000 Hz",
+    "currentValText": "12000 Hz",
+    "defaultValue": 0.5751884579658508,
+    "defaultValueText": "1000.0 Hz",
+    "min": "10.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 73,
+    "name": "Post EQ Band 2 Gain",
+    "text": "-2.00 dB",
+    "currentValText": "-2.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 74,
+    "name": "Post EQ Band 2 Q",
+    "text": "1.000",
+    "currentValText": "1.000",
+    "defaultValue": 0.5,
+    "defaultValueText": "1.000",
+    "min": "0.025",
+    "max": "40.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 75,
+    "name": "Post EQ Band 2 Shape",
+    "text": "High Cut",
+    "currentValText": "High Cut",
+    "defaultValue": 0.0,
+    "defaultValueText": "Bell",
+    "min": "Bell",
+    "max": "High Cut",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 76,
+    "name": "Post EQ Band 2 Slope",
+    "text": "12 dB/oct",
+    "currentValText": "12 dB/oct",
+    "defaultValue": 0.25,
+    "defaultValueText": "12 dB/oct",
+    "min": "6 dB/oct",
+    "max": "96 dB/oct",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 77,
+    "name": "Post EQ Band 2 Stereo Placement",
+    "text": "Stereo",
+    "currentValText": "Stereo",
+    "defaultValue": 0.5,
+    "defaultValueText": "Stereo",
+    "min": "Left",
+    "max": "Side",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 78,
+    "name": "Post EQ Band 2 Speakers",
+    "text": "All (excl. LFE)",
+    "currentValText": "All (excl. LFE)",
+    "defaultValue": 0.06666667014360428,
+    "defaultValueText": "All (excl. LFE)",
+    "min": "All Speakers",
+    "max": "Ltr/Rtr (Top Surround Rear)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 16,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.03400000184774399
+    ]
+  },
+  {
+    "index": 79,
+    "name": "Post EQ Band 3 Used",
+    "text": "Used",
+    "currentValText": "Used",
+    "defaultValue": 0.0,
+    "defaultValueText": "Unused",
+    "min": "Unused",
+    "max": "Used",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 80,
+    "name": "Post EQ Band 3 Enabled",
+    "text": "Enabled",
+    "currentValText": "Enabled",
+    "defaultValue": 1.0,
+    "defaultValueText": "Enabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 81,
+    "name": "Post EQ Band 3 Frequency",
+    "text": "600.00 Hz",
+    "currentValText": "600.00 Hz",
+    "defaultValue": 0.5751884579658508,
+    "defaultValueText": "1000.0 Hz",
+    "min": "10.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 82,
+    "name": "Post EQ Band 3 Gain",
+    "text": "-4.50 dB",
+    "currentValText": "-4.50 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 83,
+    "name": "Post EQ Band 3 Q",
+    "text": "0.500",
+    "currentValText": "0.500",
+    "defaultValue": 0.5,
+    "defaultValueText": "1.000",
+    "min": "0.025",
+    "max": "40.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 84,
+    "name": "Post EQ Band 3 Shape",
+    "text": "Bell",
+    "currentValText": "Bell",
+    "defaultValue": 0.0,
+    "defaultValueText": "Bell",
+    "min": "Bell",
+    "max": "High Cut",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 85,
+    "name": "Post EQ Band 3 Slope",
+    "text": "12 dB/oct",
+    "currentValText": "12 dB/oct",
+    "defaultValue": 0.25,
+    "defaultValueText": "12 dB/oct",
+    "min": "6 dB/oct",
+    "max": "96 dB/oct",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 86,
+    "name": "Post EQ Band 3 Stereo Placement",
+    "text": "Stereo",
+    "currentValText": "Stereo",
+    "defaultValue": 0.5,
+    "defaultValueText": "Stereo",
+    "min": "Left",
+    "max": "Side",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 87,
+    "name": "Post EQ Band 3 Speakers",
+    "text": "All (excl. LFE)",
+    "currentValText": "All (excl. LFE)",
+    "defaultValue": 0.06666667014360428,
+    "defaultValueText": "All (excl. LFE)",
+    "min": "All Speakers",
+    "max": "Ltr/Rtr (Top Surround Rear)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 16,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.03400000184774399
+    ]
+  },
+  {
+    "index": 88,
+    "name": "Post EQ Band 4 Used",
+    "text": "Unused",
+    "currentValText": "Unused",
+    "defaultValue": 0.0,
+    "defaultValueText": "Unused",
+    "min": "Unused",
+    "max": "Used",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 89,
+    "name": "Post EQ Band 4 Enabled",
+    "text": "Disabled",
+    "currentValText": "Disabled",
+    "defaultValue": 1.0,
+    "defaultValueText": "Enabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 90,
+    "name": "Post EQ Band 4 Frequency",
+    "text": "1000.0 Hz",
+    "currentValText": "1000.0 Hz",
+    "defaultValue": 0.5751884579658508,
+    "defaultValueText": "1000.0 Hz",
+    "min": "10.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 91,
+    "name": "Post EQ Band 4 Gain",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 92,
+    "name": "Post EQ Band 4 Q",
+    "text": "1.000",
+    "currentValText": "1.000",
+    "defaultValue": 0.5,
+    "defaultValueText": "1.000",
+    "min": "0.025",
+    "max": "40.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 93,
+    "name": "Post EQ Band 4 Shape",
+    "text": "Bell",
+    "currentValText": "Bell",
+    "defaultValue": 0.0,
+    "defaultValueText": "Bell",
+    "min": "Bell",
+    "max": "High Cut",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 94,
+    "name": "Post EQ Band 4 Slope",
+    "text": "12 dB/oct",
+    "currentValText": "12 dB/oct",
+    "defaultValue": 0.25,
+    "defaultValueText": "12 dB/oct",
+    "min": "6 dB/oct",
+    "max": "96 dB/oct",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 95,
+    "name": "Post EQ Band 4 Stereo Placement",
+    "text": "Stereo",
+    "currentValText": "Stereo",
+    "defaultValue": 0.5,
+    "defaultValueText": "Stereo",
+    "min": "Left",
+    "max": "Side",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 96,
+    "name": "Post EQ Band 4 Speakers",
+    "text": "All (excl. LFE)",
+    "currentValText": "All (excl. LFE)",
+    "defaultValue": 0.06666667014360428,
+    "defaultValueText": "All (excl. LFE)",
+    "min": "All Speakers",
+    "max": "Ltr/Rtr (Top Surround Rear)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 16,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.03400000184774399
+    ]
+  },
+  {
+    "index": 97,
+    "name": "Post EQ Band 5 Used",
+    "text": "Unused",
+    "currentValText": "Unused",
+    "defaultValue": 0.0,
+    "defaultValueText": "Unused",
+    "min": "Unused",
+    "max": "Used",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 98,
+    "name": "Post EQ Band 5 Enabled",
+    "text": "Disabled",
+    "currentValText": "Disabled",
+    "defaultValue": 1.0,
+    "defaultValueText": "Enabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 99,
+    "name": "Post EQ Band 5 Frequency",
+    "text": "1000.0 Hz",
+    "currentValText": "1000.0 Hz",
+    "defaultValue": 0.5751884579658508,
+    "defaultValueText": "1000.0 Hz",
+    "min": "10.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 100,
+    "name": "Post EQ Band 5 Gain",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 101,
+    "name": "Post EQ Band 5 Q",
+    "text": "1.000",
+    "currentValText": "1.000",
+    "defaultValue": 0.5,
+    "defaultValueText": "1.000",
+    "min": "0.025",
+    "max": "40.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 102,
+    "name": "Post EQ Band 5 Shape",
+    "text": "Bell",
+    "currentValText": "Bell",
+    "defaultValue": 0.0,
+    "defaultValueText": "Bell",
+    "min": "Bell",
+    "max": "High Cut",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 103,
+    "name": "Post EQ Band 5 Slope",
+    "text": "12 dB/oct",
+    "currentValText": "12 dB/oct",
+    "defaultValue": 0.25,
+    "defaultValueText": "12 dB/oct",
+    "min": "6 dB/oct",
+    "max": "96 dB/oct",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 104,
+    "name": "Post EQ Band 5 Stereo Placement",
+    "text": "Stereo",
+    "currentValText": "Stereo",
+    "defaultValue": 0.5,
+    "defaultValueText": "Stereo",
+    "min": "Left",
+    "max": "Side",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 105,
+    "name": "Post EQ Band 5 Speakers",
+    "text": "All (excl. LFE)",
+    "currentValText": "All (excl. LFE)",
+    "defaultValue": 0.06666667014360428,
+    "defaultValueText": "All (excl. LFE)",
+    "min": "All Speakers",
+    "max": "Ltr/Rtr (Top Surround Rear)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 16,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.03400000184774399
+    ]
+  },
+  {
+    "index": 106,
+    "name": "Post EQ Band 6 Used",
+    "text": "Unused",
+    "currentValText": "Unused",
+    "defaultValue": 0.0,
+    "defaultValueText": "Unused",
+    "min": "Unused",
+    "max": "Used",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 107,
+    "name": "Post EQ Band 6 Enabled",
+    "text": "Disabled",
+    "currentValText": "Disabled",
+    "defaultValue": 1.0,
+    "defaultValueText": "Enabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 108,
+    "name": "Post EQ Band 6 Frequency",
+    "text": "1000.0 Hz",
+    "currentValText": "1000.0 Hz",
+    "defaultValue": 0.5751884579658508,
+    "defaultValueText": "1000.0 Hz",
+    "min": "10.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 109,
+    "name": "Post EQ Band 6 Gain",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 110,
+    "name": "Post EQ Band 6 Q",
+    "text": "1.000",
+    "currentValText": "1.000",
+    "defaultValue": 0.5,
+    "defaultValueText": "1.000",
+    "min": "0.025",
+    "max": "40.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 111,
+    "name": "Post EQ Band 6 Shape",
+    "text": "Bell",
+    "currentValText": "Bell",
+    "defaultValue": 0.0,
+    "defaultValueText": "Bell",
+    "min": "Bell",
+    "max": "High Cut",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 112,
+    "name": "Post EQ Band 6 Slope",
+    "text": "12 dB/oct",
+    "currentValText": "12 dB/oct",
+    "defaultValue": 0.25,
+    "defaultValueText": "12 dB/oct",
+    "min": "6 dB/oct",
+    "max": "96 dB/oct",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 113,
+    "name": "Post EQ Band 6 Stereo Placement",
+    "text": "Stereo",
+    "currentValText": "Stereo",
+    "defaultValue": 0.5,
+    "defaultValueText": "Stereo",
+    "min": "Left",
+    "max": "Side",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 114,
+    "name": "Post EQ Band 6 Speakers",
+    "text": "All (excl. LFE)",
+    "currentValText": "All (excl. LFE)",
+    "defaultValue": 0.06666667014360428,
+    "defaultValueText": "All (excl. LFE)",
+    "min": "All Speakers",
+    "max": "Ltr/Rtr (Top Surround Rear)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 16,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.03400000184774399
+    ]
+  },
+  {
+    "index": 115,
+    "name": "Decay Rate Tilt",
+    "text": "Balanced",
+    "currentValText": "Balanced",
+    "defaultValue": 0.5,
+    "defaultValueText": "Balanced",
+    "min": "100% Rear",
+    "max": "100% Front",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 116,
+    "name": "Distance Tilt",
+    "text": "Balanced",
+    "currentValText": "Balanced",
+    "defaultValue": 0.5,
+    "defaultValueText": "Balanced",
+    "min": "100% Rear",
+    "max": "100% Front",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 117,
+    "name": "Brightness Tilt",
+    "text": "Balanced",
+    "currentValText": "Balanced",
+    "defaultValue": 0.5,
+    "defaultValueText": "Balanced",
+    "min": "100% Rear",
+    "max": "100% Front",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 118,
+    "name": "Character Tilt",
+    "text": "Balanced",
+    "currentValText": "Balanced",
+    "defaultValue": 0.5,
+    "defaultValueText": "Balanced",
+    "min": "100% Rear",
+    "max": "100% Front",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 119,
+    "name": "Thickness Tilt",
+    "text": "Balanced",
+    "currentValText": "Balanced",
+    "defaultValue": 0.5,
+    "defaultValueText": "Balanced",
+    "min": "100% Rear",
+    "max": "100% Front",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 120,
+    "name": "Stereo Width Tilt",
+    "text": "Balanced",
+    "currentValText": "Balanced",
+    "defaultValue": 0.5,
+    "defaultValueText": "Balanced",
+    "min": "100% Rear",
+    "max": "100% Front",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 121,
+    "name": "Ducking Tilt",
+    "text": "Balanced",
+    "currentValText": "Balanced",
+    "defaultValue": 0.5,
+    "defaultValueText": "Balanced",
+    "min": "100% Rear",
+    "max": "100% Front",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 122,
+    "name": "Mix Tilt",
+    "text": "Balanced",
+    "currentValText": "Balanced",
+    "defaultValue": 0.5,
+    "defaultValueText": "Balanced",
+    "min": "100% Rear",
+    "max": "100% Front",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 123,
+    "name": "Predelay Tilt",
+    "text": "Balanced",
+    "currentValText": "Balanced",
+    "defaultValue": 0.5,
+    "defaultValueText": "Balanced",
+    "min": "100% Rear",
+    "max": "100% Front",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 124,
+    "name": "LFE Level",
+    "text": "-INF dB",
+    "currentValText": "-INF dB",
+    "defaultValue": 0.0,
+    "defaultValueText": "-INF dB",
+    "min": "-INF dB",
+    "max": "+6.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 125,
+    "name": "Center Level",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.800000011920929,
+    "defaultValueText": "0.00 dB",
+    "min": "-INF dB",
+    "max": "+6.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 126,
+    "name": "Top Level",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.800000011920929,
+    "defaultValueText": "0.00 dB",
+    "min": "-INF dB",
+    "max": "+6.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 127,
+    "name": "Surround Cross Feed",
+    "text": "100%",
+    "currentValText": "100%",
+    "defaultValue": 0.5,
+    "defaultValueText": "100%",
+    "min": "0.00%",
+    "max": "200%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 128,
+    "name": "Input Level",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-INF dB",
+    "max": "+36.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 129,
+    "name": "Input Pan",
+    "text": "0.000",
+    "currentValText": "0.000",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.000",
+    "min": "-1.000",
+    "max": "1.000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 130,
+    "name": "Output Level",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-INF dB",
+    "max": "+36.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 131,
+    "name": "Output Pan",
+    "text": "0.000",
+    "currentValText": "0.000",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.000",
+    "min": "-1.000",
+    "max": "1.000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 132,
+    "name": "Bypass",
+    "text": "Not Bypassed",
+    "currentValText": "Not Bypassed",
+    "defaultValue": 0.0,
+    "defaultValueText": "Not Bypassed",
+    "min": "Not Bypassed",
+    "max": "Bypassed",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 133,
+    "name": "Analyzer Mode",
+    "text": "Reverb+Post",
+    "currentValText": "Reverb+Post",
+    "defaultValue": 1.0,
+    "defaultValueText": "Reverb+Post",
+    "min": "Off",
+    "max": "Reverb+Post",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 134,
+    "name": "Display Range",
+    "text": "18 dB",
+    "currentValText": "18 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "18 dB",
+    "min": "9 dB",
+    "max": "30 dB",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 135,
+    "name": "Midi State",
+    "text": "0",
+    "currentValText": "0",
+    "defaultValue": 0.0,
+    "defaultValueText": "0",
+    "min": "0",
+    "max": "1",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 136,
+    "name": "Host Bypass",
+    "text": "Not Bypassed",
+    "currentValText": "Not Bypassed",
+    "defaultValue": 0.0,
+    "defaultValueText": "Not Bypassed",
+    "min": "Not Bypassed",
+    "max": "Bypassed",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 137,
+    "name": "Internal",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 138,
+    "name": "Internal",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 139,
+    "name": "Internal",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 140,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 141,
+    "name": "Pitch Bend",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 142,
+    "name": "Channel Pressure",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 143,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 144,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 145,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 146,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 147,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 148,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 149,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 150,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 151,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 152,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 153,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 154,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 155,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 156,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 157,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 158,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 159,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 160,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 161,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 162,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 163,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 164,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 165,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 166,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 167,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 168,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 169,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 170,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 171,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 172,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 173,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 174,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 175,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 176,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 177,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 178,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 179,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 180,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 181,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 182,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 183,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 184,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 185,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 186,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 187,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 188,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 189,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 190,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 191,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 192,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 193,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 194,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 195,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 196,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 197,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 198,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 199,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 200,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 201,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 202,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 203,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 204,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 205,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 206,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 207,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 208,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 209,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 210,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 211,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 212,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 213,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 214,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 215,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 216,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 217,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 218,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 219,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 220,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 221,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 222,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 223,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 224,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 225,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 226,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 227,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 228,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 229,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 230,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 231,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 232,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 233,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 234,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 235,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 236,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 237,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 238,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 239,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 240,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 241,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 242,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 243,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 244,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 245,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 246,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 247,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 248,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 249,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 250,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 251,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 252,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 253,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 254,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 255,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 256,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 257,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 258,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 259,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 260,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 261,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 262,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 263,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 264,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 265,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 266,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 267,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 268,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 269,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 270,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 271,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 128,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 272,
+    "name": "Internal",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4194305,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  }
+]

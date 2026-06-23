@@ -1,0 +1,650 @@
+[
+  {
+    "index": 0,
+    "name": "Threshold",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.0",
+    "min": "0.0",
+    "max": "-50.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 1,
+    "name": "Peak Crest",
+    "text": "3.0",
+    "currentValText": "3.0",
+    "defaultValue": 0.40909090638160706,
+    "defaultValueText": "3.0",
+    "min": "Peak",
+    "max": "RMS",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 2,
+    "name": "Soft Knee",
+    "text": "1.0",
+    "currentValText": "1.0",
+    "defaultValue": 0.0625,
+    "defaultValueText": "1.0",
+    "min": "0.0",
+    "max": "16.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.004000000189989805
+    ]
+  },
+  {
+    "index": 3,
+    "name": "Max GR",
+    "text": "12.0",
+    "currentValText": "12.0",
+    "defaultValue": 0.3979932963848114,
+    "defaultValueText": "12.0",
+    "min": "0.1",
+    "max": "30.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 4,
+    "name": "Max GR Enabled",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 5,
+    "name": "Ratio",
+    "text": "2.0",
+    "currentValText": "2.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "2.0",
+    "min": "1.1",
+    "max": "7.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.04899999871850014
+    ]
+  },
+  {
+    "index": 6,
+    "name": "Attack",
+    "text": "6.0",
+    "currentValText": "6.0",
+    "defaultValue": 0.3932773768901825,
+    "defaultValueText": "6.0",
+    "min": "0.02",
+    "max": "250",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.06700000166893005
+    ]
+  },
+  {
+    "index": 7,
+    "name": "Release Peak",
+    "text": "80",
+    "currentValText": "80",
+    "defaultValue": 0.3924720585346222,
+    "defaultValueText": "80",
+    "min": "10",
+    "max": "2000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.009999999776482582
+    ]
+  },
+  {
+    "index": 8,
+    "name": "Release RMS",
+    "text": "220",
+    "currentValText": "220",
+    "defaultValue": 0.5206963419914246,
+    "defaultValueText": "220",
+    "min": "20",
+    "max": "2000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 9,
+    "name": "Inertia",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "Inv Inertia",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 10,
+    "name": "Makeup",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.0",
+    "min": "-60.0",
+    "max": "18.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 11,
+    "name": "Dry Mix",
+    "text": "off",
+    "currentValText": "off",
+    "defaultValue": 0.0,
+    "defaultValueText": "off",
+    "min": "off",
+    "max": "0.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 12,
+    "name": "Dry Wet",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 1.0,
+    "defaultValueText": "0.0",
+    "min": "100.0",
+    "max": "0.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 13,
+    "name": "Dry Mix Mode",
+    "text": "Dry Mix",
+    "currentValText": "Dry Mix",
+    "defaultValue": 0.0,
+    "defaultValueText": "Dry Mix",
+    "min": "Dry Mix",
+    "max": "Dry Wet",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 14,
+    "name": "Out Gain",
+    "text": "0.0",
+    "currentValText": "0.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.0",
+    "min": "-20.0",
+    "max": "20.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 15,
+    "name": "SC HP Freq",
+    "text": "150",
+    "currentValText": "150",
+    "defaultValue": 0.5981040000915527,
+    "defaultValueText": "150",
+    "min": "25",
+    "max": "500",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.007000000216066837
+    ]
+  },
+  {
+    "index": 16,
+    "name": "SC HP Slope",
+    "text": "3.0",
+    "currentValText": "3.0",
+    "defaultValue": 0.1666666716337204,
+    "defaultValueText": "3.0",
+    "min": "Flat",
+    "max": "18.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 17,
+    "name": "SC Stereo Diff",
+    "text": "100",
+    "currentValText": "100",
+    "defaultValue": 1.0,
+    "defaultValueText": "100",
+    "min": "0",
+    "max": "100",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 18,
+    "name": "Stereo Link Mode",
+    "text": "Advanced",
+    "currentValText": "Advanced",
+    "defaultValue": 1.0,
+    "defaultValueText": "Advanced",
+    "min": "Basic",
+    "max": "Advanced",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 19,
+    "name": "SC Stereo Bal",
+    "text": "Center",
+    "currentValText": "Center",
+    "defaultValue": 0.5,
+    "defaultValueText": "Center",
+    "min": "Left",
+    "max": "Right",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 20,
+    "name": "FDR Visible",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 21,
+    "name": "FDR Active",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 22,
+    "name": "FDR Type",
+    "text": "Bell A",
+    "currentValText": "Bell A",
+    "defaultValue": 0.5,
+    "defaultValueText": "Bell A",
+    "min": "Shelf A",
+    "max": "EL Curve",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 23,
+    "name": "FDR Freq",
+    "text": "1000",
+    "currentValText": "1000",
+    "defaultValue": 0.5654119849205017,
+    "defaultValueText": "1000",
+    "min": "50",
+    "max": "10000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 24,
+    "name": "FDR Amount",
+    "text": "0",
+    "currentValText": "0",
+    "defaultValue": 0.5,
+    "defaultValueText": "0",
+    "min": "-100",
+    "max": "100",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 25,
+    "name": "Yin Active",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 26,
+    "name": "Yang Active",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 27,
+    "name": "Delta",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 28,
+    "name": "Bypass",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 29,
+    "name": "Equal loud.",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 30,
+    "name": "Quality",
+    "text": "Precise",
+    "currentValText": "Precise",
+    "defaultValue": 0.3333333432674408,
+    "defaultValueText": "Precise",
+    "min": "Eco",
+    "max": "Live",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 31,
+    "name": "Mode",
+    "text": "Stereo",
+    "currentValText": "Stereo",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "Stereo",
+    "min": "Mono",
+    "max": "Right",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 6,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.10000000149011612
+    ]
+  },
+  {
+    "index": 32,
+    "name": "GR Disp Scale",
+    "text": "0",
+    "currentValText": "0",
+    "defaultValue": 0.0,
+    "defaultValueText": "0",
+    "min": "0",
+    "max": "6",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 7,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.08399999886751175
+    ]
+  },
+  {
+    "index": 33,
+    "name": "GR Disp Mode",
+    "text": "Gain Reduction",
+    "currentValText": "Gain Reduction",
+    "defaultValue": 0.0,
+    "defaultValueText": "Gain Reduction",
+    "min": "Gain Reduction",
+    "max": "Total Gain",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 34,
+    "name": "Sidechain Mode",
+    "text": "INT SC",
+    "currentValText": "INT SC",
+    "defaultValue": 0.0,
+    "defaultValueText": "INT SC",
+    "min": "INT SC",
+    "max": "EXT SC",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 35,
+    "name": "Program",
+    "text": "Default",
+    "currentValText": "Default",
+    "defaultValue": 0.0,
+    "defaultValueText": "Default",
+    "min": "Default",
+    "max": "USER020",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 38,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.014000000432133675
+    ]
+  }
+]
