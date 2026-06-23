@@ -122,7 +122,18 @@ _VST_NEUTRAL_PRESET = {
         8: 0.52,
         9: 0.48,
     },
-    "sdrr": {"bypass": True, "mode": 0.0, "drive": 0.20, "mix": 0.40},
+    # SDRR enabled in DESK mode (group-4 params). Drive 0.20 = drive value 2.0
+    # in DESK; Compression4 0.25 = gentle dynamics glue; Treble4 0.4583 = -1 dB
+    # (soft top before saturation); Mix4 0.40 = 40% wet. See VST_PARAMETER_INDEX.
+    "sdrr": {
+        "bypass": False,
+        "mode": 1.0,  # DESK
+        "drive": 0.20,
+        "compression": 0.25,
+        "bass": 0.50,  # 0 dB
+        "treble": 0.4583,  # -1.0 dB (gentle top tilt)
+        "mix": 0.40,
+    },
     "spiff": {"bypass": False, "mode": 0.0, "boost": 0.0, "cut": 0.18, "sens": 0.42},
     "soothe": {
         "bypass": False,
@@ -204,13 +215,22 @@ def _apply_vst_preset(
         sdrr.set_parameter(56, 1.0)
     else:
         sdrr.set_parameter(56, 0.0)
+        # SDRR Mode (idx 0) is normalized: 0.0=TUBE, 0.25=DIGI, 0.5=FUZZ,
+        # 1.0=DESK. Each mode has its own parameter group (group N params are
+        # only live in the corresponding mode). DESK uses group 4 (idx 25-50):
+        #   37 Drive4, 40 Compression4, 41 Bass4, 42 Treble4, 49 Mix4.
         sdrr_mode = sdrr_settings["mode"]
         sdrr.set_parameter(0, sdrr_mode)
         if sdrr_mode == 0.0:
+            # TUBE -> group 1 params
             sdrr.set_parameter(2, sdrr_settings["drive"])
             sdrr.set_parameter(10, sdrr_settings["mix"])
-        elif sdrr_mode == 3.0:
+        elif sdrr_mode == 1.0:
+            # DESK -> group 4 params
             sdrr.set_parameter(37, sdrr_settings["drive"])
+            sdrr.set_parameter(40, sdrr_settings.get("compression", 0.25))
+            sdrr.set_parameter(41, sdrr_settings.get("bass", 0.50))
+            sdrr.set_parameter(42, sdrr_settings.get("treble", 0.50))
             sdrr.set_parameter(49, sdrr_settings["mix"])
 
     spiff_settings = preset["spiff"]
@@ -246,11 +266,19 @@ def _apply_vst_preset(
     pro_q.set_parameter(1, 1.0)
     pro_q.set_parameter(5, 0.22)
     pro_q.set_parameter(6, 0.1984)
+    # Pro-Q Band N layout: base+0 Used, +1 Enabled, +2 Freq, +3 Gain, +4 Q,
+    # +5 Shape. Band bases: B1=0, B2=23, B3=46, B4=69. Shape must be set
+    # explicitly -- Pro-Q defaults every band to Bell, so an unset shape on a
+    # shelf intended to be a Low Shelf silently becomes a corrective bell.
+    # Shape normalized values (verified via dump): Bell 0.0, Low Shelf 0.10,
+    # Low Cut 0.20, High Shelf 0.30, High Cut 0.40.
+    # Band 1: high-pass filter (Low Cut).
     pro_q.set_parameter(2, _freq_to_val(eq_settings["hp_freq"]))
     pro_q.set_parameter(3, _gain_to_val(0.0))
+    pro_q.set_parameter(5, 0.20)  # Band 1 Shape = Low Cut
     pro_q.set_parameter(23, 1.0)
     pro_q.set_parameter(24, 1.0)
-    pro_q.set_parameter(28, 0.0)
+    pro_q.set_parameter(28, 0.10)  # Band 2 Shape = Low Shelf
     pro_q.set_parameter(25, _freq_to_val(eq_settings["b1_freq"]))
     pro_q.set_parameter(26, _gain_to_val(eq_settings["b1_gain"]))
     pro_q.set_parameter(27, _q_to_val(eq_settings["b1_q"]))
@@ -266,7 +294,7 @@ def _apply_vst_preset(
         pro_q.set_parameter(34, 0.0)
     pro_q.set_parameter(46, 1.0)
     pro_q.set_parameter(47, 1.0)
-    pro_q.set_parameter(51, 0.0)
+    pro_q.set_parameter(51, 0.0)  # Band 3 Shape = Bell
     pro_q.set_parameter(48, _freq_to_val(eq_settings["b3_freq"]))
     pro_q.set_parameter(49, _gain_to_val(eq_settings["b3_gain"]))
     pro_q.set_parameter(50, _q_to_val(eq_settings["b3_q"]))
@@ -274,7 +302,7 @@ def _apply_vst_preset(
     pro_q.set_parameter(56, 0.0)
     pro_q.set_parameter(69, 1.0)
     pro_q.set_parameter(70, 1.0)
-    pro_q.set_parameter(74, 0.2778)
+    pro_q.set_parameter(74, 0.0)  # Band 4 Shape = Bell
     pro_q.set_parameter(71, _freq_to_val(eq_settings["b4_freq"]))
     pro_q.set_parameter(72, _gain_to_val(eq_settings["b4_gain"]))
     pro_q.set_parameter(73, _q_to_val(eq_settings["b4_q"]))
