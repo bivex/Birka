@@ -1,0 +1,974 @@
+[
+  {
+    "index": 0,
+    "name": "Input Gain",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.8333333134651184,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "6.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 1,
+    "name": "Output Gain",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 2,
+    "name": "Dry/Wet",
+    "text": "100%",
+    "currentValText": "100%",
+    "defaultValue": 1.0,
+    "defaultValueText": "100%",
+    "min": "0%",
+    "max": "100%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.009999999776482582
+    ]
+  },
+  {
+    "index": 3,
+    "name": "Input Filters On/Off",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 4,
+    "name": "Input Low Cut",
+    "text": "20.00 Hz",
+    "currentValText": "20.00 Hz",
+    "defaultValue": 0.0,
+    "defaultValueText": "20.00 Hz",
+    "min": "20.00 Hz",
+    "max": "2.00 kHz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.01600000075995922
+    ]
+  },
+  {
+    "index": 5,
+    "name": "Input High Cut",
+    "text": "22.00 kHz",
+    "currentValText": "22.00 kHz",
+    "defaultValue": 1.0,
+    "defaultValueText": "22.00 kHz",
+    "min": "2.00 kHz",
+    "max": "22.00 kHz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 6,
+    "name": "Input Cut Makeup",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 7,
+    "name": "Tone On/Off",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 8,
+    "name": "Tone Bass",
+    "text": "0.00",
+    "currentValText": "0.00",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00",
+    "min": "-1.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 9,
+    "name": "Tone Treble",
+    "text": "0.00",
+    "currentValText": "0.00",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00",
+    "min": "-1.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 10,
+    "name": "Tone Transition Frequency",
+    "text": "500.00 Hz",
+    "currentValText": "500.00 Hz",
+    "defaultValue": 0.4999999701976776,
+    "defaultValueText": "500.00 Hz",
+    "min": "100.00 Hz",
+    "max": "4.00 kHz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.017000000923871994
+    ]
+  },
+  {
+    "index": 11,
+    "name": "Compression On/Off",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 12,
+    "name": "Compression Amount",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.00 dB",
+    "min": "0.00 dB",
+    "max": "9.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.008999999612569809
+    ]
+  },
+  {
+    "index": 13,
+    "name": "Compression Attack",
+    "text": "5.00 ms",
+    "currentValText": "5.00 ms",
+    "defaultValue": 0.3698955476284027,
+    "defaultValueText": "5.00 ms",
+    "min": "0.10 ms",
+    "max": "50.00 ms",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.019999999552965164
+    ]
+  },
+  {
+    "index": 14,
+    "name": "Compression Release",
+    "text": "200.00 ms",
+    "currentValText": "200.00 ms",
+    "defaultValue": 0.6205471158027649,
+    "defaultValueText": "200.00 ms",
+    "min": "10.00 ms",
+    "max": "1.00 s",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.029999999329447746
+    ]
+  },
+  {
+    "index": 15,
+    "name": "Tape On/Off",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 16,
+    "name": "Tape Drive",
+    "text": "0.50",
+    "currentValText": "0.50",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.50",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 17,
+    "name": "Tape Saturation",
+    "text": "0.50",
+    "currentValText": "0.50",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.50",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 18,
+    "name": "Tape Bias",
+    "text": "0.50",
+    "currentValText": "0.50",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.50",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 19,
+    "name": "Tape Mode",
+    "text": "NR4",
+    "currentValText": "NR4",
+    "defaultValue": 0.0,
+    "defaultValueText": "RK2",
+    "min": "RK2",
+    "max": "V1",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 6,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.10100000351667404
+    ]
+  },
+  {
+    "index": 20,
+    "name": "Oversampling Factor",
+    "text": "2x",
+    "currentValText": "2x",
+    "defaultValue": 0.25,
+    "defaultValueText": "2x",
+    "min": "1x",
+    "max": "16x",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.12600000202655792
+    ]
+  },
+  {
+    "index": 21,
+    "name": "Oversampling Mode",
+    "text": "Min. Phase",
+    "currentValText": "Min. Phase",
+    "defaultValue": 0.0,
+    "defaultValueText": "Min. Phase",
+    "min": "Min. Phase",
+    "max": "Linear Phase",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5009999871253967
+    ]
+  },
+  {
+    "index": 22,
+    "name": "Oversampling Factor (render)",
+    "text": "2x",
+    "currentValText": "2x",
+    "defaultValue": 0.25,
+    "defaultValueText": "2x",
+    "min": "1x",
+    "max": "16x",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.12600000202655792
+    ]
+  },
+  {
+    "index": 23,
+    "name": "Oversampling Mode (render)",
+    "text": "Min. Phase",
+    "currentValText": "Min. Phase",
+    "defaultValue": 0.0,
+    "defaultValueText": "Min. Phase",
+    "min": "Min. Phase",
+    "max": "Linear Phase",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5009999871253967
+    ]
+  },
+  {
+    "index": 24,
+    "name": "Oversampling (render like real-time)",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 25,
+    "name": "Loss On/Off",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 26,
+    "name": "Tape Speed",
+    "text": "15.00",
+    "currentValText": "15.00",
+    "defaultValue": 0.7481014728546143,
+    "defaultValueText": "30.00",
+    "min": "1.00",
+    "max": "50.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.007000000216066837
+    ]
+  },
+  {
+    "index": 27,
+    "name": "Tape Spacing",
+    "text": "0.1000",
+    "currentValText": "0.1000",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.1000",
+    "min": "0.1000",
+    "max": "20.0000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 28,
+    "name": "Tape Thickness",
+    "text": "0.1000",
+    "currentValText": "0.1000",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.1000",
+    "min": "0.1000",
+    "max": "50.0000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 29,
+    "name": "Playhead Gap",
+    "text": "1.0000",
+    "currentValText": "1.0000",
+    "defaultValue": 0.0,
+    "defaultValueText": "1.0000",
+    "min": "1.0000",
+    "max": "50.0000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.004000000189989805
+    ]
+  },
+  {
+    "index": 30,
+    "name": "Azimuth",
+    "text": "0.00",
+    "currentValText": "0.00",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00",
+    "min": "-75.00",
+    "max": "75.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 31,
+    "name": "Wow/Flutter On/Off",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 32,
+    "name": "Flutter Rate",
+    "text": "0.30",
+    "currentValText": "0.30",
+    "defaultValue": 0.30000001192092896,
+    "defaultValueText": "0.30",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 33,
+    "name": "Flutter Depth",
+    "text": "0.00",
+    "currentValText": "0.00",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.00",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 34,
+    "name": "Wow Rate",
+    "text": "0.25",
+    "currentValText": "0.25",
+    "defaultValue": 0.25,
+    "defaultValueText": "0.25",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 35,
+    "name": "Wow Depth",
+    "text": "0.00",
+    "currentValText": "0.00",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.00",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 36,
+    "name": "Wow Variance",
+    "text": "0.00",
+    "currentValText": "0.00",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.00",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 37,
+    "name": "Wow Drift",
+    "text": "0.00",
+    "currentValText": "0.00",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.00",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 38,
+    "name": "Degrade Point1x",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 39,
+    "name": "Degrade On/Off",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 40,
+    "name": "Degrade Depth",
+    "text": "0.00",
+    "currentValText": "0.00",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.00",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 41,
+    "name": "Degrade Amount",
+    "text": "0.00",
+    "currentValText": "0.00",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.00",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 42,
+    "name": "Degrade Variance",
+    "text": "0.00",
+    "currentValText": "0.00",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.00",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 43,
+    "name": "Degrade Envelope",
+    "text": "0.00",
+    "currentValText": "0.00",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.00",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 44,
+    "name": "Chew On/Off",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 45,
+    "name": "Chew Depth",
+    "text": "0.00",
+    "currentValText": "0.00",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.00",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 46,
+    "name": "Chew Freq",
+    "text": "0.00",
+    "currentValText": "0.00",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.00",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 47,
+    "name": "Chew Variance",
+    "text": "0.00",
+    "currentValText": "0.00",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.00",
+    "min": "0.00",
+    "max": "1.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 48,
+    "name": "Mid/Side Mode",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 49,
+    "name": "Stereo Balance",
+    "text": "0%",
+    "currentValText": "0%",
+    "defaultValue": 0.5,
+    "defaultValueText": "0%",
+    "min": "-100%",
+    "max": "100%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 50,
+    "name": "Stereo Makeup",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 51,
+    "name": "Mix Group",
+    "text": "N/A",
+    "currentValText": "N/A",
+    "defaultValue": 0.0,
+    "defaultValueText": "N/A",
+    "min": "N/A",
+    "max": "4",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.12600000202655792
+    ]
+  },
+  {
+    "index": 52,
+    "name": "Bypass",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 53,
+    "name": "Program",
+    "text": "Default",
+    "currentValText": "Default",
+    "defaultValue": 0.0,
+    "defaultValueText": "Default",
+    "min": "Default",
+    "max": "String Mojo",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 94,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  }
+]

@@ -1,0 +1,758 @@
+[
+  {
+    "index": 0,
+    "name": "gain mode",
+    "text": "boost",
+    "currentValText": "boost",
+    "defaultValue": 1.0,
+    "defaultValueText": "boost",
+    "min": "cut",
+    "max": "boost",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 1,
+    "name": "cut depth",
+    "text": "5.0",
+    "currentValText": "5.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "5.0",
+    "min": "0.0",
+    "max": "10.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 2,
+    "name": "boost depth",
+    "text": "3.6",
+    "currentValText": "3.6",
+    "defaultValue": 0.35999998450279236,
+    "defaultValueText": "3.6",
+    "min": "0.0",
+    "max": "10.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 3,
+    "name": "sensitivity",
+    "text": "7.5",
+    "currentValText": "7.5",
+    "defaultValue": 0.75,
+    "defaultValueText": "7.5",
+    "min": "0.0",
+    "max": "10.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 4,
+    "name": "sharpness",
+    "text": "5.0",
+    "currentValText": "5.0",
+    "defaultValue": 0.5,
+    "defaultValueText": "5.0",
+    "min": "0.0",
+    "max": "10.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 5,
+    "name": "decay",
+    "text": "3.3",
+    "currentValText": "3.3",
+    "defaultValue": 0.32999998331069946,
+    "defaultValueText": "3.3",
+    "min": "0.0",
+    "max": "10.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 6,
+    "name": "decay lf/hf",
+    "text": "3.3",
+    "currentValText": "3.3",
+    "defaultValue": 0.32999998331069946,
+    "defaultValueText": "3.3",
+    "min": "0.0",
+    "max": "10.0",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 7,
+    "name": "lo cut on",
+    "text": "on",
+    "currentValText": "on",
+    "defaultValue": 1.0,
+    "defaultValueText": "on",
+    "min": "off",
+    "max": "on",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 8,
+    "name": "lo cut freq",
+    "text": "50",
+    "currentValText": "50",
+    "defaultValue": 0.13264667987823486,
+    "defaultValueText": "50",
+    "min": "20",
+    "max": "20k",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.004000000189989805
+    ]
+  },
+  {
+    "index": 9,
+    "name": "lo cut slope",
+    "text": "high pass 12",
+    "currentValText": "high pass 12",
+    "defaultValue": 0.3333333432674408,
+    "defaultValueText": "high pass 12",
+    "min": "high pass 6",
+    "max": "high pass 48",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 10,
+    "name": "band1 on",
+    "text": "on",
+    "currentValText": "on",
+    "defaultValue": 1.0,
+    "defaultValueText": "on",
+    "min": "off",
+    "max": "on",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 11,
+    "name": "band1 freq",
+    "text": "100",
+    "currentValText": "100",
+    "defaultValue": 0.23299002647399902,
+    "defaultValueText": "100",
+    "min": "20",
+    "max": "20k",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.004000000189989805
+    ]
+  },
+  {
+    "index": 12,
+    "name": "band1 sens",
+    "text": "0.0 dB",
+    "currentValText": "0.0 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.0 dB",
+    "min": "-18.0 dB",
+    "max": "18.0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 13,
+    "name": "band1 q",
+    "text": "0.5 dB",
+    "currentValText": "0.5 dB",
+    "defaultValue": 0.34948498010635376,
+    "defaultValueText": "0.5 dB",
+    "min": "0.1 dB",
+    "max": "10.0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.08900000154972076
+    ]
+  },
+  {
+    "index": 14,
+    "name": "band1 mode",
+    "text": "peaking",
+    "currentValText": "peaking",
+    "defaultValue": 0.3333333432674408,
+    "defaultValueText": "peaking",
+    "min": "lo shelf",
+    "max": "tilt",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 15,
+    "name": "band2 on",
+    "text": "on",
+    "currentValText": "on",
+    "defaultValue": 1.0,
+    "defaultValueText": "on",
+    "min": "off",
+    "max": "on",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 16,
+    "name": "band2 freq",
+    "text": "430",
+    "currentValText": "430",
+    "defaultValue": 0.44414615631103516,
+    "defaultValueText": "430",
+    "min": "20",
+    "max": "20k",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.004000000189989805
+    ]
+  },
+  {
+    "index": 17,
+    "name": "band2 sens",
+    "text": "0.0 dB",
+    "currentValText": "0.0 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.0 dB",
+    "min": "-18.0 dB",
+    "max": "18.0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 18,
+    "name": "band2 q",
+    "text": "0.5 dB",
+    "currentValText": "0.5 dB",
+    "defaultValue": 0.34948498010635376,
+    "defaultValueText": "0.5 dB",
+    "min": "0.1 dB",
+    "max": "10.0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.08900000154972076
+    ]
+  },
+  {
+    "index": 19,
+    "name": "band2 mode",
+    "text": "peaking",
+    "currentValText": "peaking",
+    "defaultValue": 0.3333333432674408,
+    "defaultValueText": "peaking",
+    "min": "lo shelf",
+    "max": "tilt",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 20,
+    "name": "band3 on",
+    "text": "on",
+    "currentValText": "on",
+    "defaultValue": 1.0,
+    "defaultValueText": "on",
+    "min": "off",
+    "max": "on",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 21,
+    "name": "band3 freq",
+    "text": "2k",
+    "currentValText": "2k",
+    "defaultValue": 0.6666667461395264,
+    "defaultValueText": "2k",
+    "min": "20",
+    "max": "20k",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.004000000189989805
+    ]
+  },
+  {
+    "index": 22,
+    "name": "band3 sens",
+    "text": "3.0 dB",
+    "currentValText": "3.0 dB",
+    "defaultValue": 0.5833333134651184,
+    "defaultValueText": "3.0 dB",
+    "min": "-18.0 dB",
+    "max": "18.0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 23,
+    "name": "band3 q",
+    "text": "0.5 dB",
+    "currentValText": "0.5 dB",
+    "defaultValue": 0.34948498010635376,
+    "defaultValueText": "0.5 dB",
+    "min": "0.1 dB",
+    "max": "10.0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.08900000154972076
+    ]
+  },
+  {
+    "index": 24,
+    "name": "band3 mode",
+    "text": "peaking",
+    "currentValText": "peaking",
+    "defaultValue": 0.3333333432674408,
+    "defaultValueText": "peaking",
+    "min": "lo shelf",
+    "max": "tilt",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 25,
+    "name": "hi cut on",
+    "text": "on",
+    "currentValText": "on",
+    "defaultValue": 1.0,
+    "defaultValueText": "on",
+    "min": "off",
+    "max": "on",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 26,
+    "name": "hi cut freq",
+    "text": "16k",
+    "currentValText": "16k",
+    "defaultValue": 0.9676966667175293,
+    "defaultValueText": "16k",
+    "min": "20",
+    "max": "20k",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.004000000189989805
+    ]
+  },
+  {
+    "index": 27,
+    "name": "hi cut slope",
+    "text": "low pass 12",
+    "currentValText": "low pass 12",
+    "defaultValue": 0.3333333432674408,
+    "defaultValueText": "low pass 12",
+    "min": "low pass 6",
+    "max": "low pass 48",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 28,
+    "name": "stereo mode",
+    "text": "left / right",
+    "currentValText": "left / right",
+    "defaultValue": 0.0,
+    "defaultValueText": "left / right",
+    "min": "left / right",
+    "max": "mid / side",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 29,
+    "name": "stereo link",
+    "text": "100 %",
+    "currentValText": "100 %",
+    "defaultValue": 1.0,
+    "defaultValueText": "100 %",
+    "min": "0 %",
+    "max": "100 %",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 30,
+    "name": "stereo balance",
+    "text": "100 / 100",
+    "currentValText": "100 / 100",
+    "defaultValue": 0.5,
+    "defaultValueText": "100 / 100",
+    "min": "left only",
+    "max": "right only",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 31,
+    "name": "resolution",
+    "text": "normal",
+    "currentValText": "normal",
+    "defaultValue": 0.0,
+    "defaultValueText": "normal",
+    "min": "normal",
+    "max": "ultra",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 32,
+    "name": "oversample",
+    "text": "off",
+    "currentValText": "off",
+    "defaultValue": 0.0,
+    "defaultValueText": "off",
+    "min": "off",
+    "max": "4x",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 33,
+    "name": "window length",
+    "text": "medium",
+    "currentValText": "medium",
+    "defaultValue": 0.5,
+    "defaultValueText": "medium",
+    "min": "short",
+    "max": "long",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 34,
+    "name": "phase mode",
+    "text": "minimum",
+    "currentValText": "minimum",
+    "defaultValue": 1.0,
+    "defaultValueText": "minimum",
+    "min": "linear",
+    "max": "minimum",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 35,
+    "name": "mix",
+    "text": "100 %",
+    "currentValText": "100 %",
+    "defaultValue": 1.0,
+    "defaultValueText": "100 %",
+    "min": "0 %",
+    "max": "100 %",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 36,
+    "name": "trim",
+    "text": "0.0 dB",
+    "currentValText": "0.0 dB",
+    "defaultValue": 0.6666666865348816,
+    "defaultValueText": "0.0 dB",
+    "min": "-24.0 dB",
+    "max": "12.0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0020000000949949026
+    ]
+  },
+  {
+    "index": 37,
+    "name": "delta",
+    "text": "off",
+    "currentValText": "off",
+    "defaultValue": 0.0,
+    "defaultValueText": "off",
+    "min": "off",
+    "max": "on",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 38,
+    "name": "bypass",
+    "text": "off",
+    "currentValText": "off",
+    "defaultValue": 0.0,
+    "defaultValueText": "off",
+    "min": "off",
+    "max": "on",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 39,
+    "name": "band solo on",
+    "text": "off",
+    "currentValText": "off",
+    "defaultValue": 0.0,
+    "defaultValueText": "off",
+    "min": "off",
+    "max": "on",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 40,
+    "name": "selected band",
+    "text": "-1",
+    "currentValText": "-1",
+    "defaultValue": 0.0,
+    "defaultValueText": "-1",
+    "min": "-1",
+    "max": "4",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.10000000149011612
+    ]
+  },
+  {
+    "index": 41,
+    "name": "Bypass",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  }
+]
