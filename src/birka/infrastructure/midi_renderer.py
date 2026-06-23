@@ -318,6 +318,11 @@ def _apply_vst_preset(
             pro_mb.set_parameter(idx, val)
 
 
+_VST_ENGINE = None
+_VST_GRAPH = None
+_VST_LOCK = threading.Lock()
+
+
 def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
     try:
         import dawdreamer as daw
@@ -332,86 +337,126 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
     devnull = open(os.devnull, "w")
     old_stderr = os.dup(2)
     os.dup2(devnull.fileno(), 2)
-    engine = None
-    try:
-        engine = daw.RenderEngine(_VST_SAMPLE_RATE, _VST_BUFFER_SIZE)
-        tape = engine.make_plugin_processor("tape", _VST_PLUGIN_PATHS["chow"])
-        sdrr = engine.make_plugin_processor("sdrr", _VST_PLUGIN_PATHS["sdrr"])
-        spiff = engine.make_plugin_processor("spiff", _VST_PLUGIN_PATHS["spiff"])
-        soothe = engine.make_plugin_processor("soothe", _VST_PLUGIN_PATHS["soothe"])
-        pro_q = engine.make_plugin_processor("pro_q", _VST_PLUGIN_PATHS["pro_q"])
-        pro_mb = engine.make_plugin_processor("pro_mb", _VST_PLUGIN_PATHS["pro_mb"])
-        kot = engine.make_plugin_processor("kot", _VST_PLUGIN_PATHS["kot"])
-        fresh = engine.make_plugin_processor("fresh", _VST_PLUGIN_PATHS["fresh"])
-        cho = engine.make_plugin_processor("cho", _VST_PLUGIN_PATHS["cho"])
-        ste = engine.make_plugin_processor("ste", _VST_PLUGIN_PATHS["ste"])
-        reverb = engine.make_plugin_processor("reverb", _VST_PLUGIN_PATHS["reverb"])
-        limiter = engine.make_plugin_processor("limiter", _VST_PLUGIN_PATHS["limiter"])
 
-        _configure_kotelnikov_ge(kot)
-        _configure_limiter(limiter)
+    with _VST_LOCK:
+        try:
+            global _VST_ENGINE, _VST_GRAPH
+            if _VST_ENGINE is None:
+                _VST_ENGINE = daw.RenderEngine(_VST_SAMPLE_RATE, _VST_BUFFER_SIZE)
+                tape = _VST_ENGINE.make_plugin_processor(
+                    "tape", _VST_PLUGIN_PATHS["chow"]
+                )
+                sdrr = _VST_ENGINE.make_plugin_processor(
+                    "sdrr", _VST_PLUGIN_PATHS["sdrr"]
+                )
+                spiff = _VST_ENGINE.make_plugin_processor(
+                    "spiff", _VST_PLUGIN_PATHS["spiff"]
+                )
+                soothe = _VST_ENGINE.make_plugin_processor(
+                    "soothe", _VST_PLUGIN_PATHS["soothe"]
+                )
+                pro_q = _VST_ENGINE.make_plugin_processor(
+                    "pro_q", _VST_PLUGIN_PATHS["pro_q"]
+                )
+                pro_mb = _VST_ENGINE.make_plugin_processor(
+                    "pro_mb", _VST_PLUGIN_PATHS["pro_mb"]
+                )
+                kot = _VST_ENGINE.make_plugin_processor("kot", _VST_PLUGIN_PATHS["kot"])
+                fresh = _VST_ENGINE.make_plugin_processor(
+                    "fresh", _VST_PLUGIN_PATHS["fresh"]
+                )
+                cho = _VST_ENGINE.make_plugin_processor("cho", _VST_PLUGIN_PATHS["cho"])
+                ste = _VST_ENGINE.make_plugin_processor("ste", _VST_PLUGIN_PATHS["ste"])
+                reverb = _VST_ENGINE.make_plugin_processor(
+                    "reverb", _VST_PLUGIN_PATHS["reverb"]
+                )
+                limiter = _VST_ENGINE.make_plugin_processor(
+                    "limiter", _VST_PLUGIN_PATHS["limiter"]
+                )
 
-        dummy = np.zeros((2, _VST_BUFFER_SIZE), dtype=np.float32)
-        pb = engine.make_playback_processor("pb", dummy)
-        connections = [
-            (pb, []),
-            (tape, ["pb"]),
-            (sdrr, ["tape"]),
-            (spiff, ["sdrr"]),
-            (soothe, ["spiff"]),
-            (pro_q, ["soothe"]),
-            (pro_mb, ["pro_q"]),
-            (kot, ["pro_mb"]),
-            (fresh, ["kot"]),
-            (cho, ["fresh"]),
-            (reverb, ["cho"]),
-            (ste, ["reverb"]),
-            (limiter, ["ste"]),
-        ]
-        engine.load_graph(connections)
+                _configure_kotelnikov_ge(kot)
+                _configure_limiter(limiter)
 
-        _apply_vst_preset(
-            tape,
-            pro_q,
-            pro_mb,
-            reverb,
-            cho,
-            ste,
-            fresh,
-            spiff,
-            sdrr,
-            soothe,
-            _VST_NEUTRAL_PRESET,
-        )
+                dummy = np.zeros((2, _VST_BUFFER_SIZE), dtype=np.float32)
+                pb = _VST_ENGINE.make_playback_processor("pb", dummy)
+                connections = [
+                    (pb, []),
+                    (tape, ["pb"]),
+                    (sdrr, ["tape"]),
+                    (spiff, ["sdrr"]),
+                    (soothe, ["spiff"]),
+                    (pro_q, ["soothe"]),
+                    (pro_mb, ["pro_q"]),
+                    (kot, ["pro_mb"]),
+                    (fresh, ["kot"]),
+                    (cho, ["fresh"]),
+                    (reverb, ["cho"]),
+                    (ste, ["reverb"]),
+                    (limiter, ["ste"]),
+                ]
+                _VST_ENGINE.load_graph(connections)
+                _VST_GRAPH = {
+                    "tape": tape,
+                    "sdrr": sdrr,
+                    "spiff": spiff,
+                    "soothe": soothe,
+                    "pro_q": pro_q,
+                    "pro_mb": pro_mb,
+                    "kot": kot,
+                    "fresh": fresh,
+                    "cho": cho,
+                    "ste": ste,
+                    "reverb": reverb,
+                    "limiter": limiter,
+                    "pb": pb,
+                }
 
-        audio_2d = dry_audio.reshape(-1, 2).T.astype(np.float32)
-        pb.set_data(audio_2d)
-        duration = audio_2d.shape[1] / _VST_SAMPLE_RATE
-        engine.render(duration)
-        out = engine.get_audio("limiter")
+            pb = _VST_GRAPH["pb"]
+            _apply_vst_preset(
+                _VST_GRAPH["tape"],
+                _VST_GRAPH["pro_q"],
+                _VST_GRAPH["pro_mb"],
+                _VST_GRAPH["reverb"],
+                _VST_GRAPH["cho"],
+                _VST_GRAPH["ste"],
+                _VST_GRAPH["fresh"],
+                _VST_GRAPH["spiff"],
+                _VST_GRAPH["sdrr"],
+                _VST_GRAPH["soothe"],
+                _VST_NEUTRAL_PRESET,
+            )
 
-        peak = float(np.max(np.abs(out)))
-        if peak > 1e-6:
-            out = out * (0.95 / peak)
+            audio_2d = dry_audio.reshape(-1, 2).T.astype(np.float32)
+            pb.set_data(audio_2d)
+            duration = audio_2d.shape[1] / _VST_SAMPLE_RATE
+            _VST_ENGINE.render(duration)
+            out = _VST_ENGINE.get_audio("limiter")
 
-        success = _write_int24_wav(
-            out.T.flatten(), output_path, sample_rate, soft_clip=False
-        )
-        engine.load_graph([])
-        del engine
-        return success
-    except Exception:
-        if engine is not None:
-            try:
-                engine.load_graph([])
-                del engine
-            except Exception:
-                pass
-        return False
-    finally:
-        os.dup2(old_stderr, 2)
-        os.close(old_stderr)
-        devnull.close()
+            peak = float(np.max(np.abs(out)))
+            if peak > 1e-6:
+                out = out * (0.95 / peak)
+
+            success = _write_int24_wav(
+                out.T.flatten(), output_path, sample_rate, soft_clip=False
+            )
+            return success
+        except Exception:
+            if _VST_ENGINE is not None:
+                try:
+                    _VST_ENGINE.load_graph([])
+                except Exception:
+                    pass
+                try:
+                    del _VST_ENGINE
+                except Exception:
+                    pass
+                _VST_ENGINE = None
+                _VST_GRAPH = None
+            return False
+        finally:
+            os.dup2(old_stderr, 2)
+            os.close(old_stderr)
+            devnull.close()
 
 
 def _selected_backend() -> str:
