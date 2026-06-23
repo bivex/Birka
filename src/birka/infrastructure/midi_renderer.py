@@ -158,7 +158,24 @@ _VST_NEUTRAL_PRESET = {
     "chorus_wet": 0.0,
     "stereo": {3: 0.72, 19: 1.0},
     "fresh_air": {"bypass": False, "mid": 0.0, "high": 0.15},
-    "pro_mb": {"bypass": True, "params": {}},
+    # Pro-MB multiband. Band 2 active at 320 Hz for mid-bass control (brief
+    # step 8). Band 2 block: idx 22 State, 23 Freq, 28 Threshold, 29 Range,
+    # 30 Ratio, 31 Attack, 32 Release. State 0.25-0.5 = Enabled. Crossover is
+    # log: 320 Hz = norm 0.3427. Conservative glue: 2:1, -3 dB max GR, so the
+    # low-mid never "jumps out" but dynamics are preserved.
+    "pro_mb": {
+        "bypass": False,
+        "params": {
+            22: 0.5,      # Band 2 State = Enabled
+            23: 0.3427,   # Band 2 Low Crossover = 320 Hz
+            28: 0.889,    # Threshold = -10 dB
+            29: 0.45,     # Range = -3 dB (max gain reduction)
+            30: 0.0101,   # Ratio = 2:1
+            31: 0.3,      # Attack = 30%
+            32: 0.4,      # Release = 40%
+            133: 0.5,     # Mix = 100%
+        },
+    },
 }
 
 
@@ -178,15 +195,30 @@ def _q_to_val(q):
 
 
 def _configure_kotelnikov_ge(kotelnikov):
-    kotelnikov.set_parameter(0, 0.30)
-    kotelnikov.set_parameter(5, 0.43)
-    kotelnikov.set_parameter(6, 0.39)
-    kotelnikov.set_parameter(7, 0.52)
-    kotelnikov.set_parameter(8, 0.50)
-    kotelnikov.set_parameter(10, 0.58)
-    kotelnikov.set_parameter(11, 0.0)
-    kotelnikov.set_parameter(12, 1.0)
-    kotelnikov.set_parameter(14, 0.55)
+    # TDR Kotelnikov GE (indices verified via live dump). Wide-band glue
+    # compressor. Premium "invisible glue" settings: gentle ratio, slow-ish
+    # RMS release, sidechain high-passed so the bass isn't over-compressed.
+    #
+    # idx: 0 Threshold | 1 Peak-Crest | 2 Soft Knee | 3 Max GR | 4 Max GR En
+    #      5 Ratio | 6 Attack | 7 Release Peak | 8 Release RMS | 10 Makeup
+    #      11 Dry Mix | 12 Dry Wet (INVERTED: 0.0=100% wet, 1.0=0% wet/dry!)
+    #      14 Out Gain | 15 SC HP Freq | 16 SC HP Slope
+    #
+    # CRITICAL FIX: idx 12 (Dry Wet) was 1.0 = "0.0" = 0% processed signal,
+    # so the entire compressor was bypassed. 0.0 = 100% wet (full processing).
+    kotelnikov.set_parameter(0, 0.30)   # Threshold ~-15 dB (gentle, only catches peaks)
+    kotelnikov.set_parameter(1, 0.4091) # Peak-Crest = RMS (smooth, musical)
+    kotelnikov.set_parameter(2, 0.0625) # Soft Knee = 1.0 (gentle onset)
+    kotelnikov.set_parameter(5, 0.43)   # Ratio ~2:1 (glue, not squash)
+    kotelnikov.set_parameter(6, 0.39)   # Attack ~6 ms (let transients through)
+    kotelnikov.set_parameter(7, 0.52)   # Release Peak ~150 ms
+    kotelnikov.set_parameter(8, 0.50)   # Release RMS ~220 ms (smooth recovery)
+    kotelnikov.set_parameter(10, 0.58)  # Makeup +1 dB
+    kotelnikov.set_parameter(11, 0.0)   # Dry Mix = off
+    kotelnikov.set_parameter(12, 0.0)   # Dry Wet = 100% wet (FIXED: was 1.0 = bypassed)
+    kotelnikov.set_parameter(14, 0.55)  # Out Gain = 0 dB
+    kotelnikov.set_parameter(15, 0.5981)  # SC HP Freq = 150 Hz (bass not over-compressed)
+    kotelnikov.set_parameter(16, 0.1667)  # SC HP Slope = 3.0
 
 
 def _configure_limiter(limiter):
