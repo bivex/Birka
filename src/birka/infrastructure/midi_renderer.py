@@ -179,12 +179,18 @@ def _configure_kotelnikov_ge(kotelnikov):
 
 
 def _configure_limiter(limiter):
-    limiter.set_parameter(17, 0.0)
     limiter.set_parameter(0, 0.0)
     limiter.set_parameter(1, 0.7143)
-    limiter.set_parameter(18, 0.96635)
+    limiter.set_parameter(2, 0.0360)
+    limiter.set_parameter(3, 0.4072)
+    limiter.set_parameter(4, 0.3878)
+    limiter.set_parameter(9, 0.5)
     limiter.set_parameter(10, 1.0)
-    limiter.set_parameter(9, 0.11)
+    limiter.set_parameter(17, 0.0)
+    limiter.set_parameter(18, 0.891)
+    limiter.set_parameter(19, 1.0)
+    limiter.set_parameter(22, 1.0)
+    limiter.set_parameter(28, 0.4375)
 
 
 def _apply_vst_preset(
