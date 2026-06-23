@@ -1,0 +1,128 @@
+[
+  {
+    "index": 0,
+    "name": "Volume",
+    "text": "5.00",
+    "currentValText": "5.00",
+    "defaultValue": 0.5,
+    "defaultValueText": "5.00",
+    "min": "0.00",
+    "max": "10.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 1,
+    "name": "Dry / Wet",
+    "text": "5.00",
+    "currentValText": "5.00",
+    "defaultValue": 0.5,
+    "defaultValueText": "5.00",
+    "min": "0.00",
+    "max": "10.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 2,
+    "name": "Stereo",
+    "text": "10.00",
+    "currentValText": "10.00",
+    "defaultValue": 1.0,
+    "defaultValueText": "10.00",
+    "min": "0.00",
+    "max": "10.00",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 3,
+    "name": "Chorus 1",
+    "text": "1.0000000",
+    "currentValText": "1.0000000",
+    "defaultValue": 1.0,
+    "defaultValueText": "1.0000000",
+    "min": "0.0000000",
+    "max": "1.0000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 4,
+    "name": "Chorus 2",
+    "text": "0.0000000",
+    "currentValText": "0.0000000",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.0000000",
+    "min": "0.0000000",
+    "max": "1.0000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 5,
+    "name": "Compatible with version <= 1.3.1",
+    "text": "0.0000000",
+    "currentValText": "0.0000000",
+    "defaultValue": 0.0,
+    "defaultValueText": "0.0000000",
+    "min": "0.0000000",
+    "max": "1.0000000",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 6,
+    "name": "Bypass",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  }
+]

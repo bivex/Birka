@@ -1,0 +1,5186 @@
+[
+  {
+    "index": 0,
+    "name": "Band 1 State",
+    "text": "Unused",
+    "currentValText": "Unused",
+    "defaultValue": 1.0,
+    "defaultValueText": "Unused",
+    "min": "Disabled",
+    "max": "Unused",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 1,
+    "name": "Band 1 Low Crossover",
+    "text": "30.000 Hz",
+    "currentValText": "30.000 Hz",
+    "defaultValue": 0.0,
+    "defaultValueText": "30.000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 2,
+    "name": "Band 1 Low Slope",
+    "text": "24.0 dB/oct",
+    "currentValText": "24.0 dB/oct",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.0 dB/oct",
+    "min": "6.0 dB/oct",
+    "max": "48.0 dB/oct",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 3,
+    "name": "Band 1 High Crossover",
+    "text": "30000 Hz",
+    "currentValText": "30000 Hz",
+    "defaultValue": 1.0,
+    "defaultValueText": "30000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 4,
+    "name": "Band 1 High Slope",
+    "text": "24.0 dB/oct",
+    "currentValText": "24.0 dB/oct",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.0 dB/oct",
+    "min": "6.0 dB/oct",
+    "max": "48.0 dB/oct",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 5,
+    "name": "Band 1 Dynamics Mode",
+    "text": "Compression",
+    "currentValText": "Compression",
+    "defaultValue": 0.0,
+    "defaultValueText": "Compression",
+    "min": "Compression",
+    "max": "Expansion",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 6,
+    "name": "Band 1 Threshold",
+    "text": "-18.00 dB",
+    "currentValText": "-18.00 dB",
+    "defaultValue": 0.699999988079071,
+    "defaultValueText": "-18.00 dB",
+    "min": "-90.00 dB",
+    "max": "0.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 7,
+    "name": "Band 1 Range",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 8,
+    "name": "Band 1 Ratio",
+    "text": "4.00:1",
+    "currentValText": "4.00:1",
+    "defaultValue": 0.6000000238418579,
+    "defaultValueText": "4.00:1",
+    "min": "1.00:1",
+    "max": "100.00:1",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 9,
+    "name": "Band 1 Attack",
+    "text": "20.0%",
+    "currentValText": "20.0%",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "20.0%",
+    "min": "0.0%",
+    "max": "100.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 10,
+    "name": "Band 1 Release",
+    "text": "20.0%",
+    "currentValText": "20.0%",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "20.0%",
+    "min": "0.0%",
+    "max": "100.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 11,
+    "name": "Band 1 Knee",
+    "text": "24.00 dB",
+    "currentValText": "24.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.00 dB",
+    "min": "0.00 dB",
+    "max": "48.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 12,
+    "name": "Band 1 Lookahead",
+    "text": "1.000 ms",
+    "currentValText": "1.000 ms",
+    "defaultValue": 0.05000000074505806,
+    "defaultValueText": "1.000 ms",
+    "min": "0.000 ms",
+    "max": "20.00 ms",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 13,
+    "name": "Band 1 Level",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 14,
+    "name": "Band 1 Pan",
+    "text": "Mid: 0 dB / Side: 0 dB",
+    "currentValText": "Mid: 0 dB / Side: 0 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "Mid: 0 dB / Side: 0 dB",
+    "min": "Mid: 0 dB / Side: -INF dB",
+    "max": "Mid: -INF dB / Side: 0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 15,
+    "name": "Band 1 Side Chain Filtering",
+    "text": "Band",
+    "currentValText": "Band",
+    "defaultValue": 0.0,
+    "defaultValueText": "Band",
+    "min": "Band",
+    "max": "Free",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 16,
+    "name": "Band 1 Side Chain Low Frequency",
+    "text": "30.000 Hz",
+    "currentValText": "30.000 Hz",
+    "defaultValue": 0.0,
+    "defaultValueText": "30.000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 17,
+    "name": "Band 1 Side Chain High Frequency",
+    "text": "30000 Hz",
+    "currentValText": "30000 Hz",
+    "defaultValue": 1.0,
+    "defaultValueText": "30000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 18,
+    "name": "Band 1 Side Chain Input",
+    "text": "Plug-in Input",
+    "currentValText": "Plug-in Input",
+    "defaultValue": 0.0,
+    "defaultValueText": "Plug-in Input",
+    "min": "Plug-in Input",
+    "max": "External Input",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 19,
+    "name": "Band 1 Stereo Link",
+    "text": "100%",
+    "currentValText": "100%",
+    "defaultValue": 0.5,
+    "defaultValueText": "100%",
+    "min": "0%",
+    "max": "100%, 100% Mid-only",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 20,
+    "name": "Band 1 Stereo Link Mode",
+    "text": "Mid",
+    "currentValText": "Mid",
+    "defaultValue": 0.0,
+    "defaultValueText": "Mid",
+    "min": "Mid",
+    "max": "Side",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 21,
+    "name": "Band 1 Solo/Mute State",
+    "text": "Normal",
+    "currentValText": "Normal",
+    "defaultValue": 0.0,
+    "defaultValueText": "Normal",
+    "min": "Normal",
+    "max": "Solo (Mute)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 22,
+    "name": "Band 2 State",
+    "text": "Unused",
+    "currentValText": "Unused",
+    "defaultValue": 1.0,
+    "defaultValueText": "Unused",
+    "min": "Disabled",
+    "max": "Unused",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 23,
+    "name": "Band 2 Low Crossover",
+    "text": "30.000 Hz",
+    "currentValText": "30.000 Hz",
+    "defaultValue": 0.0,
+    "defaultValueText": "30.000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 24,
+    "name": "Band 2 Low Slope",
+    "text": "24.0 dB/oct",
+    "currentValText": "24.0 dB/oct",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.0 dB/oct",
+    "min": "6.0 dB/oct",
+    "max": "48.0 dB/oct",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 25,
+    "name": "Band 2 High Crossover",
+    "text": "30000 Hz",
+    "currentValText": "30000 Hz",
+    "defaultValue": 1.0,
+    "defaultValueText": "30000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 26,
+    "name": "Band 2 High Slope",
+    "text": "24.0 dB/oct",
+    "currentValText": "24.0 dB/oct",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.0 dB/oct",
+    "min": "6.0 dB/oct",
+    "max": "48.0 dB/oct",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 27,
+    "name": "Band 2 Dynamics Mode",
+    "text": "Compression",
+    "currentValText": "Compression",
+    "defaultValue": 0.0,
+    "defaultValueText": "Compression",
+    "min": "Compression",
+    "max": "Expansion",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 28,
+    "name": "Band 2 Threshold",
+    "text": "-18.00 dB",
+    "currentValText": "-18.00 dB",
+    "defaultValue": 0.699999988079071,
+    "defaultValueText": "-18.00 dB",
+    "min": "-90.00 dB",
+    "max": "0.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 29,
+    "name": "Band 2 Range",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 30,
+    "name": "Band 2 Ratio",
+    "text": "4.00:1",
+    "currentValText": "4.00:1",
+    "defaultValue": 0.6000000238418579,
+    "defaultValueText": "4.00:1",
+    "min": "1.00:1",
+    "max": "100.00:1",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 31,
+    "name": "Band 2 Attack",
+    "text": "20.0%",
+    "currentValText": "20.0%",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "20.0%",
+    "min": "0.0%",
+    "max": "100.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 32,
+    "name": "Band 2 Release",
+    "text": "20.0%",
+    "currentValText": "20.0%",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "20.0%",
+    "min": "0.0%",
+    "max": "100.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 33,
+    "name": "Band 2 Knee",
+    "text": "24.00 dB",
+    "currentValText": "24.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.00 dB",
+    "min": "0.00 dB",
+    "max": "48.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 34,
+    "name": "Band 2 Lookahead",
+    "text": "1.000 ms",
+    "currentValText": "1.000 ms",
+    "defaultValue": 0.05000000074505806,
+    "defaultValueText": "1.000 ms",
+    "min": "0.000 ms",
+    "max": "20.00 ms",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 35,
+    "name": "Band 2 Level",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 36,
+    "name": "Band 2 Pan",
+    "text": "Mid: 0 dB / Side: 0 dB",
+    "currentValText": "Mid: 0 dB / Side: 0 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "Mid: 0 dB / Side: 0 dB",
+    "min": "Mid: 0 dB / Side: -INF dB",
+    "max": "Mid: -INF dB / Side: 0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 37,
+    "name": "Band 2 Side Chain Filtering",
+    "text": "Band",
+    "currentValText": "Band",
+    "defaultValue": 0.0,
+    "defaultValueText": "Band",
+    "min": "Band",
+    "max": "Free",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 38,
+    "name": "Band 2 Side Chain Low Frequency",
+    "text": "30.000 Hz",
+    "currentValText": "30.000 Hz",
+    "defaultValue": 0.0,
+    "defaultValueText": "30.000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 39,
+    "name": "Band 2 Side Chain High Frequency",
+    "text": "30000 Hz",
+    "currentValText": "30000 Hz",
+    "defaultValue": 1.0,
+    "defaultValueText": "30000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 40,
+    "name": "Band 2 Side Chain Input",
+    "text": "Plug-in Input",
+    "currentValText": "Plug-in Input",
+    "defaultValue": 0.0,
+    "defaultValueText": "Plug-in Input",
+    "min": "Plug-in Input",
+    "max": "External Input",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 41,
+    "name": "Band 2 Stereo Link",
+    "text": "100%",
+    "currentValText": "100%",
+    "defaultValue": 0.5,
+    "defaultValueText": "100%",
+    "min": "0%",
+    "max": "100%, 100% Mid-only",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 42,
+    "name": "Band 2 Stereo Link Mode",
+    "text": "Mid",
+    "currentValText": "Mid",
+    "defaultValue": 0.0,
+    "defaultValueText": "Mid",
+    "min": "Mid",
+    "max": "Side",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 43,
+    "name": "Band 2 Solo/Mute State",
+    "text": "Normal",
+    "currentValText": "Normal",
+    "defaultValue": 0.0,
+    "defaultValueText": "Normal",
+    "min": "Normal",
+    "max": "Solo (Mute)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 44,
+    "name": "Band 3 State",
+    "text": "Unused",
+    "currentValText": "Unused",
+    "defaultValue": 1.0,
+    "defaultValueText": "Unused",
+    "min": "Disabled",
+    "max": "Unused",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 45,
+    "name": "Band 3 Low Crossover",
+    "text": "30.000 Hz",
+    "currentValText": "30.000 Hz",
+    "defaultValue": 0.0,
+    "defaultValueText": "30.000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 46,
+    "name": "Band 3 Low Slope",
+    "text": "24.0 dB/oct",
+    "currentValText": "24.0 dB/oct",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.0 dB/oct",
+    "min": "6.0 dB/oct",
+    "max": "48.0 dB/oct",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 47,
+    "name": "Band 3 High Crossover",
+    "text": "30000 Hz",
+    "currentValText": "30000 Hz",
+    "defaultValue": 1.0,
+    "defaultValueText": "30000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 48,
+    "name": "Band 3 High Slope",
+    "text": "24.0 dB/oct",
+    "currentValText": "24.0 dB/oct",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.0 dB/oct",
+    "min": "6.0 dB/oct",
+    "max": "48.0 dB/oct",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 49,
+    "name": "Band 3 Dynamics Mode",
+    "text": "Compression",
+    "currentValText": "Compression",
+    "defaultValue": 0.0,
+    "defaultValueText": "Compression",
+    "min": "Compression",
+    "max": "Expansion",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 50,
+    "name": "Band 3 Threshold",
+    "text": "-18.00 dB",
+    "currentValText": "-18.00 dB",
+    "defaultValue": 0.699999988079071,
+    "defaultValueText": "-18.00 dB",
+    "min": "-90.00 dB",
+    "max": "0.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 51,
+    "name": "Band 3 Range",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 52,
+    "name": "Band 3 Ratio",
+    "text": "4.00:1",
+    "currentValText": "4.00:1",
+    "defaultValue": 0.6000000238418579,
+    "defaultValueText": "4.00:1",
+    "min": "1.00:1",
+    "max": "100.00:1",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 53,
+    "name": "Band 3 Attack",
+    "text": "20.0%",
+    "currentValText": "20.0%",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "20.0%",
+    "min": "0.0%",
+    "max": "100.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 54,
+    "name": "Band 3 Release",
+    "text": "20.0%",
+    "currentValText": "20.0%",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "20.0%",
+    "min": "0.0%",
+    "max": "100.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 55,
+    "name": "Band 3 Knee",
+    "text": "24.00 dB",
+    "currentValText": "24.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.00 dB",
+    "min": "0.00 dB",
+    "max": "48.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 56,
+    "name": "Band 3 Lookahead",
+    "text": "1.000 ms",
+    "currentValText": "1.000 ms",
+    "defaultValue": 0.05000000074505806,
+    "defaultValueText": "1.000 ms",
+    "min": "0.000 ms",
+    "max": "20.00 ms",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 57,
+    "name": "Band 3 Level",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 58,
+    "name": "Band 3 Pan",
+    "text": "Mid: 0 dB / Side: 0 dB",
+    "currentValText": "Mid: 0 dB / Side: 0 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "Mid: 0 dB / Side: 0 dB",
+    "min": "Mid: 0 dB / Side: -INF dB",
+    "max": "Mid: -INF dB / Side: 0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 59,
+    "name": "Band 3 Side Chain Filtering",
+    "text": "Band",
+    "currentValText": "Band",
+    "defaultValue": 0.0,
+    "defaultValueText": "Band",
+    "min": "Band",
+    "max": "Free",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 60,
+    "name": "Band 3 Side Chain Low Frequency",
+    "text": "30.000 Hz",
+    "currentValText": "30.000 Hz",
+    "defaultValue": 0.0,
+    "defaultValueText": "30.000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 61,
+    "name": "Band 3 Side Chain High Frequency",
+    "text": "30000 Hz",
+    "currentValText": "30000 Hz",
+    "defaultValue": 1.0,
+    "defaultValueText": "30000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 62,
+    "name": "Band 3 Side Chain Input",
+    "text": "Plug-in Input",
+    "currentValText": "Plug-in Input",
+    "defaultValue": 0.0,
+    "defaultValueText": "Plug-in Input",
+    "min": "Plug-in Input",
+    "max": "External Input",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 63,
+    "name": "Band 3 Stereo Link",
+    "text": "100%",
+    "currentValText": "100%",
+    "defaultValue": 0.5,
+    "defaultValueText": "100%",
+    "min": "0%",
+    "max": "100%, 100% Mid-only",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 64,
+    "name": "Band 3 Stereo Link Mode",
+    "text": "Mid",
+    "currentValText": "Mid",
+    "defaultValue": 0.0,
+    "defaultValueText": "Mid",
+    "min": "Mid",
+    "max": "Side",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 65,
+    "name": "Band 3 Solo/Mute State",
+    "text": "Normal",
+    "currentValText": "Normal",
+    "defaultValue": 0.0,
+    "defaultValueText": "Normal",
+    "min": "Normal",
+    "max": "Solo (Mute)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 66,
+    "name": "Band 4 State",
+    "text": "Unused",
+    "currentValText": "Unused",
+    "defaultValue": 1.0,
+    "defaultValueText": "Unused",
+    "min": "Disabled",
+    "max": "Unused",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 67,
+    "name": "Band 4 Low Crossover",
+    "text": "30.000 Hz",
+    "currentValText": "30.000 Hz",
+    "defaultValue": 0.0,
+    "defaultValueText": "30.000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 68,
+    "name": "Band 4 Low Slope",
+    "text": "24.0 dB/oct",
+    "currentValText": "24.0 dB/oct",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.0 dB/oct",
+    "min": "6.0 dB/oct",
+    "max": "48.0 dB/oct",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 69,
+    "name": "Band 4 High Crossover",
+    "text": "30000 Hz",
+    "currentValText": "30000 Hz",
+    "defaultValue": 1.0,
+    "defaultValueText": "30000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 70,
+    "name": "Band 4 High Slope",
+    "text": "24.0 dB/oct",
+    "currentValText": "24.0 dB/oct",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.0 dB/oct",
+    "min": "6.0 dB/oct",
+    "max": "48.0 dB/oct",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 71,
+    "name": "Band 4 Dynamics Mode",
+    "text": "Compression",
+    "currentValText": "Compression",
+    "defaultValue": 0.0,
+    "defaultValueText": "Compression",
+    "min": "Compression",
+    "max": "Expansion",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 72,
+    "name": "Band 4 Threshold",
+    "text": "-18.00 dB",
+    "currentValText": "-18.00 dB",
+    "defaultValue": 0.699999988079071,
+    "defaultValueText": "-18.00 dB",
+    "min": "-90.00 dB",
+    "max": "0.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 73,
+    "name": "Band 4 Range",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 74,
+    "name": "Band 4 Ratio",
+    "text": "4.00:1",
+    "currentValText": "4.00:1",
+    "defaultValue": 0.6000000238418579,
+    "defaultValueText": "4.00:1",
+    "min": "1.00:1",
+    "max": "100.00:1",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 75,
+    "name": "Band 4 Attack",
+    "text": "20.0%",
+    "currentValText": "20.0%",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "20.0%",
+    "min": "0.0%",
+    "max": "100.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 76,
+    "name": "Band 4 Release",
+    "text": "20.0%",
+    "currentValText": "20.0%",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "20.0%",
+    "min": "0.0%",
+    "max": "100.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 77,
+    "name": "Band 4 Knee",
+    "text": "24.00 dB",
+    "currentValText": "24.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.00 dB",
+    "min": "0.00 dB",
+    "max": "48.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 78,
+    "name": "Band 4 Lookahead",
+    "text": "1.000 ms",
+    "currentValText": "1.000 ms",
+    "defaultValue": 0.05000000074505806,
+    "defaultValueText": "1.000 ms",
+    "min": "0.000 ms",
+    "max": "20.00 ms",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 79,
+    "name": "Band 4 Level",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 80,
+    "name": "Band 4 Pan",
+    "text": "Mid: 0 dB / Side: 0 dB",
+    "currentValText": "Mid: 0 dB / Side: 0 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "Mid: 0 dB / Side: 0 dB",
+    "min": "Mid: 0 dB / Side: -INF dB",
+    "max": "Mid: -INF dB / Side: 0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 81,
+    "name": "Band 4 Side Chain Filtering",
+    "text": "Band",
+    "currentValText": "Band",
+    "defaultValue": 0.0,
+    "defaultValueText": "Band",
+    "min": "Band",
+    "max": "Free",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 82,
+    "name": "Band 4 Side Chain Low Frequency",
+    "text": "30.000 Hz",
+    "currentValText": "30.000 Hz",
+    "defaultValue": 0.0,
+    "defaultValueText": "30.000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 83,
+    "name": "Band 4 Side Chain High Frequency",
+    "text": "30000 Hz",
+    "currentValText": "30000 Hz",
+    "defaultValue": 1.0,
+    "defaultValueText": "30000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 84,
+    "name": "Band 4 Side Chain Input",
+    "text": "Plug-in Input",
+    "currentValText": "Plug-in Input",
+    "defaultValue": 0.0,
+    "defaultValueText": "Plug-in Input",
+    "min": "Plug-in Input",
+    "max": "External Input",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 85,
+    "name": "Band 4 Stereo Link",
+    "text": "100%",
+    "currentValText": "100%",
+    "defaultValue": 0.5,
+    "defaultValueText": "100%",
+    "min": "0%",
+    "max": "100%, 100% Mid-only",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 86,
+    "name": "Band 4 Stereo Link Mode",
+    "text": "Mid",
+    "currentValText": "Mid",
+    "defaultValue": 0.0,
+    "defaultValueText": "Mid",
+    "min": "Mid",
+    "max": "Side",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 87,
+    "name": "Band 4 Solo/Mute State",
+    "text": "Normal",
+    "currentValText": "Normal",
+    "defaultValue": 0.0,
+    "defaultValueText": "Normal",
+    "min": "Normal",
+    "max": "Solo (Mute)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 88,
+    "name": "Band 5 State",
+    "text": "Unused",
+    "currentValText": "Unused",
+    "defaultValue": 1.0,
+    "defaultValueText": "Unused",
+    "min": "Disabled",
+    "max": "Unused",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 89,
+    "name": "Band 5 Low Crossover",
+    "text": "30.000 Hz",
+    "currentValText": "30.000 Hz",
+    "defaultValue": 0.0,
+    "defaultValueText": "30.000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 90,
+    "name": "Band 5 Low Slope",
+    "text": "24.0 dB/oct",
+    "currentValText": "24.0 dB/oct",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.0 dB/oct",
+    "min": "6.0 dB/oct",
+    "max": "48.0 dB/oct",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 91,
+    "name": "Band 5 High Crossover",
+    "text": "30000 Hz",
+    "currentValText": "30000 Hz",
+    "defaultValue": 1.0,
+    "defaultValueText": "30000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 92,
+    "name": "Band 5 High Slope",
+    "text": "24.0 dB/oct",
+    "currentValText": "24.0 dB/oct",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.0 dB/oct",
+    "min": "6.0 dB/oct",
+    "max": "48.0 dB/oct",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 93,
+    "name": "Band 5 Dynamics Mode",
+    "text": "Compression",
+    "currentValText": "Compression",
+    "defaultValue": 0.0,
+    "defaultValueText": "Compression",
+    "min": "Compression",
+    "max": "Expansion",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 94,
+    "name": "Band 5 Threshold",
+    "text": "-18.00 dB",
+    "currentValText": "-18.00 dB",
+    "defaultValue": 0.699999988079071,
+    "defaultValueText": "-18.00 dB",
+    "min": "-90.00 dB",
+    "max": "0.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 95,
+    "name": "Band 5 Range",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 96,
+    "name": "Band 5 Ratio",
+    "text": "4.00:1",
+    "currentValText": "4.00:1",
+    "defaultValue": 0.6000000238418579,
+    "defaultValueText": "4.00:1",
+    "min": "1.00:1",
+    "max": "100.00:1",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 97,
+    "name": "Band 5 Attack",
+    "text": "20.0%",
+    "currentValText": "20.0%",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "20.0%",
+    "min": "0.0%",
+    "max": "100.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 98,
+    "name": "Band 5 Release",
+    "text": "20.0%",
+    "currentValText": "20.0%",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "20.0%",
+    "min": "0.0%",
+    "max": "100.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 99,
+    "name": "Band 5 Knee",
+    "text": "24.00 dB",
+    "currentValText": "24.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.00 dB",
+    "min": "0.00 dB",
+    "max": "48.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 100,
+    "name": "Band 5 Lookahead",
+    "text": "1.000 ms",
+    "currentValText": "1.000 ms",
+    "defaultValue": 0.05000000074505806,
+    "defaultValueText": "1.000 ms",
+    "min": "0.000 ms",
+    "max": "20.00 ms",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 101,
+    "name": "Band 5 Level",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 102,
+    "name": "Band 5 Pan",
+    "text": "Mid: 0 dB / Side: 0 dB",
+    "currentValText": "Mid: 0 dB / Side: 0 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "Mid: 0 dB / Side: 0 dB",
+    "min": "Mid: 0 dB / Side: -INF dB",
+    "max": "Mid: -INF dB / Side: 0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 103,
+    "name": "Band 5 Side Chain Filtering",
+    "text": "Band",
+    "currentValText": "Band",
+    "defaultValue": 0.0,
+    "defaultValueText": "Band",
+    "min": "Band",
+    "max": "Free",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 104,
+    "name": "Band 5 Side Chain Low Frequency",
+    "text": "30.000 Hz",
+    "currentValText": "30.000 Hz",
+    "defaultValue": 0.0,
+    "defaultValueText": "30.000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 105,
+    "name": "Band 5 Side Chain High Frequency",
+    "text": "30000 Hz",
+    "currentValText": "30000 Hz",
+    "defaultValue": 1.0,
+    "defaultValueText": "30000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 106,
+    "name": "Band 5 Side Chain Input",
+    "text": "Plug-in Input",
+    "currentValText": "Plug-in Input",
+    "defaultValue": 0.0,
+    "defaultValueText": "Plug-in Input",
+    "min": "Plug-in Input",
+    "max": "External Input",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 107,
+    "name": "Band 5 Stereo Link",
+    "text": "100%",
+    "currentValText": "100%",
+    "defaultValue": 0.5,
+    "defaultValueText": "100%",
+    "min": "0%",
+    "max": "100%, 100% Mid-only",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 108,
+    "name": "Band 5 Stereo Link Mode",
+    "text": "Mid",
+    "currentValText": "Mid",
+    "defaultValue": 0.0,
+    "defaultValueText": "Mid",
+    "min": "Mid",
+    "max": "Side",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 109,
+    "name": "Band 5 Solo/Mute State",
+    "text": "Normal",
+    "currentValText": "Normal",
+    "defaultValue": 0.0,
+    "defaultValueText": "Normal",
+    "min": "Normal",
+    "max": "Solo (Mute)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 110,
+    "name": "Band 6 State",
+    "text": "Unused",
+    "currentValText": "Unused",
+    "defaultValue": 1.0,
+    "defaultValueText": "Unused",
+    "min": "Disabled",
+    "max": "Unused",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 111,
+    "name": "Band 6 Low Crossover",
+    "text": "30.000 Hz",
+    "currentValText": "30.000 Hz",
+    "defaultValue": 0.0,
+    "defaultValueText": "30.000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 112,
+    "name": "Band 6 Low Slope",
+    "text": "24.0 dB/oct",
+    "currentValText": "24.0 dB/oct",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.0 dB/oct",
+    "min": "6.0 dB/oct",
+    "max": "48.0 dB/oct",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 113,
+    "name": "Band 6 High Crossover",
+    "text": "30000 Hz",
+    "currentValText": "30000 Hz",
+    "defaultValue": 1.0,
+    "defaultValueText": "30000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 114,
+    "name": "Band 6 High Slope",
+    "text": "24.0 dB/oct",
+    "currentValText": "24.0 dB/oct",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.0 dB/oct",
+    "min": "6.0 dB/oct",
+    "max": "48.0 dB/oct",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 115,
+    "name": "Band 6 Dynamics Mode",
+    "text": "Compression",
+    "currentValText": "Compression",
+    "defaultValue": 0.0,
+    "defaultValueText": "Compression",
+    "min": "Compression",
+    "max": "Expansion",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 116,
+    "name": "Band 6 Threshold",
+    "text": "-18.00 dB",
+    "currentValText": "-18.00 dB",
+    "defaultValue": 0.699999988079071,
+    "defaultValueText": "-18.00 dB",
+    "min": "-90.00 dB",
+    "max": "0.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 117,
+    "name": "Band 6 Range",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 118,
+    "name": "Band 6 Ratio",
+    "text": "4.00:1",
+    "currentValText": "4.00:1",
+    "defaultValue": 0.6000000238418579,
+    "defaultValueText": "4.00:1",
+    "min": "1.00:1",
+    "max": "100.00:1",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.006000000052154064
+    ]
+  },
+  {
+    "index": 119,
+    "name": "Band 6 Attack",
+    "text": "20.0%",
+    "currentValText": "20.0%",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "20.0%",
+    "min": "0.0%",
+    "max": "100.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 120,
+    "name": "Band 6 Release",
+    "text": "20.0%",
+    "currentValText": "20.0%",
+    "defaultValue": 0.20000000298023224,
+    "defaultValueText": "20.0%",
+    "min": "0.0%",
+    "max": "100.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 121,
+    "name": "Band 6 Knee",
+    "text": "24.00 dB",
+    "currentValText": "24.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "24.00 dB",
+    "min": "0.00 dB",
+    "max": "48.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 122,
+    "name": "Band 6 Lookahead",
+    "text": "1.000 ms",
+    "currentValText": "1.000 ms",
+    "defaultValue": 0.05000000074505806,
+    "defaultValueText": "1.000 ms",
+    "min": "0.000 ms",
+    "max": "20.00 ms",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 123,
+    "name": "Band 6 Level",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-30.00 dB",
+    "max": "+30.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 124,
+    "name": "Band 6 Pan",
+    "text": "Mid: 0 dB / Side: 0 dB",
+    "currentValText": "Mid: 0 dB / Side: 0 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "Mid: 0 dB / Side: 0 dB",
+    "min": "Mid: 0 dB / Side: -INF dB",
+    "max": "Mid: -INF dB / Side: 0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 125,
+    "name": "Band 6 Side Chain Filtering",
+    "text": "Band",
+    "currentValText": "Band",
+    "defaultValue": 0.0,
+    "defaultValueText": "Band",
+    "min": "Band",
+    "max": "Free",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 126,
+    "name": "Band 6 Side Chain Low Frequency",
+    "text": "30.000 Hz",
+    "currentValText": "30.000 Hz",
+    "defaultValue": 0.0,
+    "defaultValueText": "30.000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 127,
+    "name": "Band 6 Side Chain High Frequency",
+    "text": "30000 Hz",
+    "currentValText": "30000 Hz",
+    "defaultValue": 1.0,
+    "defaultValueText": "30000 Hz",
+    "min": "30.000 Hz",
+    "max": "30000 Hz",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 128,
+    "name": "Band 6 Side Chain Input",
+    "text": "Plug-in Input",
+    "currentValText": "Plug-in Input",
+    "defaultValue": 0.0,
+    "defaultValueText": "Plug-in Input",
+    "min": "Plug-in Input",
+    "max": "External Input",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 129,
+    "name": "Band 6 Stereo Link",
+    "text": "100%",
+    "currentValText": "100%",
+    "defaultValue": 0.5,
+    "defaultValueText": "100%",
+    "min": "0%",
+    "max": "100%, 100% Mid-only",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.003000000026077032
+    ]
+  },
+  {
+    "index": 130,
+    "name": "Band 6 Stereo Link Mode",
+    "text": "Mid",
+    "currentValText": "Mid",
+    "defaultValue": 0.0,
+    "defaultValueText": "Mid",
+    "min": "Mid",
+    "max": "Side",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 131,
+    "name": "Band 6 Solo/Mute State",
+    "text": "Normal",
+    "currentValText": "Normal",
+    "defaultValue": 0.0,
+    "defaultValueText": "Normal",
+    "min": "Normal",
+    "max": "Solo (Mute)",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 132,
+    "name": "Audition Side Chain",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "Band 6",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 7,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.08399999886751175
+    ]
+  },
+  {
+    "index": 133,
+    "name": "Mix",
+    "text": "100.0%",
+    "currentValText": "100.0%",
+    "defaultValue": 0.5,
+    "defaultValueText": "100.0%",
+    "min": "0.000%",
+    "max": "200.0%",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 134,
+    "name": "Input Level",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-INF dB",
+    "max": "+36.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 135,
+    "name": "Input Pan",
+    "text": "Left: 0 dB / Right: 0 dB",
+    "currentValText": "Left: 0 dB / Right: 0 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "Left: 0 dB / Right: 0 dB",
+    "min": "Left: 0 dB / Right: -INF dB",
+    "max": "Left: -INF dB / Right: 0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 136,
+    "name": "Output Level",
+    "text": "0.00 dB",
+    "currentValText": "0.00 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "0.00 dB",
+    "min": "-INF dB",
+    "max": "+36.00 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 137,
+    "name": "Output Pan",
+    "text": "Left: 0 dB / Right: 0 dB",
+    "currentValText": "Left: 0 dB / Right: 0 dB",
+    "defaultValue": 0.5,
+    "defaultValueText": "Left: 0 dB / Right: 0 dB",
+    "min": "Left: 0 dB / Right: -INF dB",
+    "max": "Left: -INF dB / Right: 0 dB",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.0010000000474974513
+    ]
+  },
+  {
+    "index": 138,
+    "name": "Bypass",
+    "text": "Not Bypassed",
+    "currentValText": "Not Bypassed",
+    "defaultValue": 0.0,
+    "defaultValueText": "Not Bypassed",
+    "min": "Not Bypassed",
+    "max": "Bypassed",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 139,
+    "name": "Processing Mode",
+    "text": "Dynamic Phase",
+    "currentValText": "Dynamic Phase",
+    "defaultValue": 0.5,
+    "defaultValueText": "Dynamic Phase",
+    "min": "Linear Phase",
+    "max": "Minimum Phase",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 140,
+    "name": "Oversampling",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "4x",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 3,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.25
+    ]
+  },
+  {
+    "index": 141,
+    "name": "Lookahead Enabled",
+    "text": "On",
+    "currentValText": "On",
+    "defaultValue": 1.0,
+    "defaultValueText": "On",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 142,
+    "name": "Expert Mode",
+    "text": "Disabled",
+    "currentValText": "Disabled",
+    "defaultValue": 0.0,
+    "defaultValueText": "Disabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 143,
+    "name": "Midi State",
+    "text": "Enabled",
+    "currentValText": "Enabled",
+    "defaultValue": 0.0,
+    "defaultValueText": "Enabled",
+    "min": "Enabled",
+    "max": "Disabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 144,
+    "name": "Display Range",
+    "text": "12 dB",
+    "currentValText": "12 dB",
+    "defaultValue": 0.6666666865348816,
+    "defaultValueText": "12 dB",
+    "min": "3 dB",
+    "max": "30 dB",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 145,
+    "name": "Analyzer",
+    "text": "Pre+Post",
+    "currentValText": "Pre+Post",
+    "defaultValue": 1.0,
+    "defaultValueText": "Pre+Post",
+    "min": "Off",
+    "max": "Pre+Post",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 146,
+    "name": "Analyzer Resolution",
+    "text": "Medium",
+    "currentValText": "Medium",
+    "defaultValue": 0.3333333432674408,
+    "defaultValueText": "Medium",
+    "min": "Low",
+    "max": "Maximum",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.16699999570846558
+    ]
+  },
+  {
+    "index": 147,
+    "name": "Analyzer Speed",
+    "text": "Medium",
+    "currentValText": "Medium",
+    "defaultValue": 0.5,
+    "defaultValueText": "Medium",
+    "min": "Very Slow",
+    "max": "Very Fast",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 148,
+    "name": "Analyzer Tilt",
+    "text": "4.5 dB/octave",
+    "currentValText": "4.5 dB/octave",
+    "defaultValue": 0.75,
+    "defaultValueText": "4.5 dB/octave",
+    "min": "0 dB/octave",
+    "max": "6 dB/octave",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 5,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.125
+    ]
+  },
+  {
+    "index": 149,
+    "name": "Analyzer Freeze",
+    "text": "Off",
+    "currentValText": "Off",
+    "defaultValue": 0.0,
+    "defaultValueText": "Off",
+    "min": "Off",
+    "max": "On",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 150,
+    "name": "Analyzer Side Chain",
+    "text": "Disabled",
+    "currentValText": "Disabled",
+    "defaultValue": 0.0,
+    "defaultValueText": "Disabled",
+    "min": "Disabled",
+    "max": "Enabled",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 151,
+    "name": "Host Bypass",
+    "text": "Not Bypassed",
+    "currentValText": "Not Bypassed",
+    "defaultValue": 0.0,
+    "defaultValueText": "Not Bypassed",
+    "min": "Not Bypassed",
+    "max": "Bypassed",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 2,
+    "category": "genericParameter",
+    "norm_range": [
+      0.0,
+      0.5
+    ]
+  },
+  {
+    "index": 152,
+    "name": "Internal",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 153,
+    "name": "Internal",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 154,
+    "name": "Internal",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 155,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 156,
+    "name": "Pitch Bend",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 157,
+    "name": "Channel Pressure",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 158,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 159,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 160,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 161,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 162,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 163,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 164,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 165,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 166,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 167,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 168,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 169,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 170,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 171,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 172,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 173,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 174,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 175,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 176,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 177,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 178,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 179,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 180,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 181,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 182,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 183,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 184,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 185,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 186,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 187,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 188,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 189,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 190,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 191,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 192,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 193,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 194,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 195,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 196,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 197,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 198,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 199,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 200,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 201,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 202,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 203,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 204,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 205,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 206,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 207,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 208,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 209,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 210,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 211,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 212,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 213,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 214,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 215,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 216,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 217,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 218,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 219,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 220,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 221,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 222,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 223,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 224,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 225,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 226,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 227,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 228,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 229,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 230,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 231,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 232,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 233,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 234,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 235,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 236,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 237,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 238,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 239,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 240,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 241,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 242,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 243,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 244,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 245,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 246,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 247,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 248,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 249,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 250,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 251,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 252,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 253,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 254,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 255,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 256,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 257,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 258,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 259,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 260,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 261,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 262,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 263,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 264,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 265,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 266,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 267,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 268,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 269,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 270,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 271,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 272,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 273,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 274,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 275,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 276,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 277,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 278,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 279,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 280,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 281,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 282,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 283,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 284,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 285,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": false,
+    "isBoolean": false,
+    "numSteps": 2147483647,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 286,
+    "name": "MIDI CC",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 128,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  },
+  {
+    "index": 287,
+    "name": "Internal",
+    "text": "-",
+    "currentValText": "-",
+    "defaultValue": 0.0,
+    "defaultValueText": "-",
+    "min": "-",
+    "max": "-",
+    "isDiscrete": true,
+    "isBoolean": false,
+    "numSteps": 4194305,
+    "category": "genericParameter",
+    "norm_range": [
+      1.401298464324817e-45,
+      1.0
+    ]
+  }
+]
