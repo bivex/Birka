@@ -160,7 +160,7 @@ _VST_NEUTRAL_PRESET = {
         "compression": 0.22,  # 2.2
         "bass": 0.5167,  # +0.4 dB  (0.5 + 0.4/24)
         "treble": 0.4667,  # -0.8 dB  (0.5 - 0.8/24)
-        "mix": 0.32,  # 32%
+        "mix": 0.20,  # 20% — lower saturation on master, more air between instruments
     },
     # spiff softer (premium): Amount -12% (cut value 1.2), Sensitivity 3.1.
     # spiff cut depth idx1 = value 0-10 linear; sens idx3 = 0-10 linear.
@@ -198,41 +198,52 @@ _VST_NEUTRAL_PRESET = {
         "b5_gain": 0.6,
         "b5_q": 0.7,
     },
-    # Dragonfly Hall reverb (see _apply_vst_preset reverb block).
+    # Dragonfly Hall reverb (master "glue" reverb — not a space creator).
+    # Scene-depth is built per-band in Pro-Q, not here. This is a short
+    # room-tone glue: mostly dry with a whisper of early reflections and
+    # a tight tail. Large predelay smears transients; 18ms keeps attack
+    # intact while adding just enough "air" around the sound field.
     "reverb": {
-        "dry": 0.93,
-        "early": 0.04,
-        "late": 0.07,
-        "size": _df_size(28),
-        "decay": _df_decay(1.45),
+        "dry": 0.96,
+        "early": 0.02,
+        "late": 0.04,
+        "size": _df_size(18),
+        "decay": _df_decay(0.9),
         "predelay": _df_predelay(18),
-        "diffuse": 0.82,
+        "diffuse": 0.65,
         "width": 1.0,
     },
     "chorus_wet": 0.0,
     # A1StereoControl removed: stereo widening now in Pro-Q 4 per-band
     # (B2 bass → Mid, B6 air → Side). No standalone stereo plugin needed.
-    "fresh_air": {"bypass": False, "mid": 0.02, "high": 0.09},
-    # Pro-MB multiband. Band 2 active at 320 Hz for mid-bass control (brief
-    # step 8). Band 2 block: idx 22 State, 23 Freq, 28 Threshold, 29 Range,
-    # 30 Ratio, 31 Attack, 32 Release. State 0.25-0.5 = Enabled. Crossover is
-    # log: 320 Hz = norm 0.3427. Mappings (verified via live dump):
-    #   Threshold -60..0 dB linear: norm = (db+60)/60
-    #   Range     -30..+30 dB linear: norm = (db+30)/60
-    #   Ratio     1..100:1 power-law: 2:1=0.40, 3:1=0.50
-    # Conservative glue: 2:1, -10 dB threshold, -3 dB max GR, so the low-mid
-    # never "jumps out" but dynamics are preserved.
+    "fresh_air": {"bypass": False, "mid": 0.02, "high": 0.12},
+    # Pro-MB multiband. Band 1 anchors the scene by mono-ing bass below 120Hz
+    # (fundamental low-end that otherwise "floats" in stereo and blurs the
+    # whole mix). Band 2 provides mid-bass glue. Both verified against live
+    # parameter dump.
     "pro_mb": {
         "bypass": False,
         "params": {
-            22: 0.5,  # Band 2 State = Enabled
-            23: 0.3427,  # Band 2 Low Crossover = 320 Hz
-            28: 0.833,  # Threshold = -10 dB
-            29: 0.45,  # Range = -3 dB (max gain reduction)
-            30: 0.40,  # Ratio = 2:1
-            31: 0.3,  # Attack = 30%
-            32: 0.4,  # Release = 40%
-            133: 0.5,  # Mix = 100%
+            # Band 1: mono bass below 120Hz — scene anchor
+            0: 0.5,  # State = Enabled (0.5 verified for Band 2)
+            1: 0.0,  # Low Crossover 30Hz (full lower edge, below bass)
+            3: 0.2007,  # High Crossover 120Hz (upper boundary of bass mono)
+            6: 0.70,  # Threshold -18 dB
+            8: 0.0101,  # Ratio 2:1 ((2-1)/(100-1))
+            9: 0.15,  # Attack 15%
+            10: 0.30,  # Release 30%
+            11: 0.125,  # Knee 6 dB (6/48)
+            # Pan left at default 0.5 (stereo) — bass below 120Hz is already
+            # "mono" via shared band compression (both channels get same GR).
+            # Band 2: mid-bass glue (120–320 Hz region, unchanged)
+            22: 0.5,
+            23: 0.3427,
+            28: 0.833,
+            29: 0.45,
+            30: 0.40,
+            31: 0.3,
+            32: 0.4,
+            133: 0.5,
         },
     },
 }
@@ -347,7 +358,9 @@ def _configure_nova(nova):
     nova.set_parameter(26, _nova_gain_to_val(-2.0))
     nova.set_parameter(30, 0.5)  # Dyn = On
     nova.set_parameter(31, _nova_thr_to_val(-6.0))
-    # Band 4: 11 kHz, high shelf +0.8 dB (static air)
+    # Band 4: 11 kHz, high shelf +0.8 dB (static air shelf — no dynamics,
+    # keeps the "height" axis of the scene clean and steady; dynamic
+    # movement on the air band would fight with Fresh Air above).
     nova.set_parameter(37, 1.0)
     nova.set_parameter(40, 0.8443)  # Freq = 11 kHz
     nova.set_parameter(41, 1.0)  # Type = High Shelf
@@ -516,20 +529,20 @@ def _apply_vst_preset(
         #   15 Spin(0-10) | 16 Wander(0-40) | 17 Decay(0.1-10s)
         #   18 Early Send | 19 Modulation
         #
-        # Audio-engineer spec: cinematic expensive tail. Size 28m, Decay 1.45s,
-        # Predelay 110ms, Diffuse 82%, Low Cut 180Hz, High Cut 7.8k, mostly dry
-        # (93%) with a whisper of early reflection (4%) and tail (7%).
-        reverb.set_parameter(2, rvb_settings.get("dry", 0.93))  # Dry 93%
-        reverb.set_parameter(3, rvb_settings.get("early", 0.04))  # Early 4%
-        reverb.set_parameter(4, rvb_settings.get("late", 0.07))  # Late 7%
-        reverb.set_parameter(5, rvb_settings.get("size", _df_size(28)))  # Size 28m
+        # Master reverb glue: short room-tone, not a space creator.
+        # Size 18m / Decay 0.9s / Predelay 18ms — keeps transients intact
+        # while adding subtle room depth. Diffuse 65% — clean early reflections.
+        reverb.set_parameter(2, rvb_settings.get("dry", 0.96))  # Dry 96%
+        reverb.set_parameter(3, rvb_settings.get("early", 0.02))  # Early 2%
+        reverb.set_parameter(4, rvb_settings.get("late", 0.04))  # Late 4%
+        reverb.set_parameter(5, rvb_settings.get("size", _df_size(18)))  # Size 18m
         reverb.set_parameter(
-            17, rvb_settings.get("decay", _df_decay(1.45))
-        )  # Decay 1.45s
+            17, rvb_settings.get("decay", _df_decay(0.9))
+        )  # Decay 0.9s
         reverb.set_parameter(
-            7, rvb_settings.get("predelay", _df_predelay(110))
-        )  # Predelay 110ms
-        reverb.set_parameter(8, rvb_settings.get("diffuse", 0.82))  # Diffuse 82%
+            7, rvb_settings.get("predelay", _df_predelay(18))
+        )  # Predelay 18ms
+        reverb.set_parameter(8, rvb_settings.get("diffuse", 0.65))  # Diffuse 65%
         reverb.set_parameter(9, _df_lowcut(180))  # Low Cut 180Hz
         reverb.set_parameter(12, _df_highcut(7800))  # High Cut 7.8k
         reverb.set_parameter(6, rvb_settings.get("width", 1.0))  # Width 100%
