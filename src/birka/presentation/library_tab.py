@@ -50,7 +50,9 @@ def _render_midi_to_tmp_wav(midi_path: Path) -> Path | None:
 
     tmp_dir = Path(tempfile.mkdtemp(prefix="birka_midi_"))
     wav_path = tmp_dir / (midi_path.stem + ".wav")
-    if render_midi_to_wav(midi_path, wav_path, sample_rate=96000, polyphony=64, bit_depth=24):
+    if render_midi_to_wav(
+        midi_path, wav_path, sample_rate=96000, polyphony=64, bit_depth=24
+    ):
         return wav_path
     return None
 
@@ -69,7 +71,9 @@ def _render_midi_to_tmp_preview_mp3(midi_path: Path) -> Path | None:
 class _RefreshWorker(QtCore.QObject):
     finished = QtCore.pyqtSignal(list)
 
-    def __init__(self, root: Path, metadata_store: UserMetadataStore, cache=None) -> None:
+    def __init__(
+        self, root: Path, metadata_store: UserMetadataStore, cache=None
+    ) -> None:
         super().__init__()
         self._root = root
         self._metadata_store = metadata_store
@@ -87,7 +91,9 @@ class _RenderWorker(QtCore.QObject):
     progress = QtCore.pyqtSignal(int, int)
     finished = QtCore.pyqtSignal(list, list)
 
-    def __init__(self, midi_paths: list[Path], output_dir: Path, quality: int = 2) -> None:
+    def __init__(
+        self, midi_paths: list[Path], output_dir: Path, quality: int = 2
+    ) -> None:
         super().__init__()
         self._midi_paths = midi_paths
         self._output_dir = output_dir
@@ -98,7 +104,10 @@ class _RenderWorker(QtCore.QObject):
             self.progress.emit(completed, total)
 
         successful, failed = render_midi_to_mp3_batch(
-            self._midi_paths, self._output_dir, on_progress=on_progress, quality=self._quality
+            self._midi_paths,
+            self._output_dir,
+            on_progress=on_progress,
+            quality=self._quality,
         )
         self.finished.emit(successful, failed)
 
@@ -107,7 +116,9 @@ class _RenderWavWorker(QtCore.QObject):
     progress = QtCore.pyqtSignal(int, int)
     finished = QtCore.pyqtSignal(list, list)
 
-    def __init__(self, midi_paths: list[Path], output_dir: Path, quality: int = 2) -> None:
+    def __init__(
+        self, midi_paths: list[Path], output_dir: Path, quality: int = 2
+    ) -> None:
         super().__init__()
         self._midi_paths = midi_paths
         self._output_dir = output_dir
@@ -118,7 +129,10 @@ class _RenderWavWorker(QtCore.QObject):
             self.progress.emit(completed, total)
 
         successful, failed = render_midi_to_wav_batch(
-            self._midi_paths, self._output_dir, on_progress=on_progress, quality=self._quality
+            self._midi_paths,
+            self._output_dir,
+            on_progress=on_progress,
+            quality=self._quality,
         )
         self.finished.emit(successful, failed)
 
@@ -181,10 +195,19 @@ class LibraryTab(QtWidgets.QWidget):
         self._midi_play_worker: _MidiPlayRenderWorker | None = None
         self._loading_midi_path: Path | None = None
         self._seeking = False
+        self._current_audio_device_id = str(
+            QtMultimedia.QMediaDevices.defaultAudioOutput().id()
+        )
 
         self._player = QtMultimedia.QMediaPlayer(self)
         self._audio_output = QtMultimedia.QAudioOutput(self)
         self._player.setAudioOutput(self._audio_output)
+        self._current_audio_device_id = str(
+            QtMultimedia.QMediaDevices.defaultAudioOutput().id()
+        )
+        self._audio_output_timer = QtCore.QTimer(self)
+        self._audio_output_timer.timeout.connect(self._on_audio_outputs_changed)
+        self._audio_output_timer.start(500)
         self._player.positionChanged.connect(self._on_position_changed)
         self._player.durationChanged.connect(self._on_duration_changed)
         self._player.mediaStatusChanged.connect(self._on_media_status)
@@ -314,7 +337,9 @@ class LibraryTab(QtWidgets.QWidget):
         self._loading_midi_path = None
         if self._midi_play_thread is not None:
             try:
-                self._midi_play_worker.finished.disconnect(self._on_midi_render_finished)
+                self._midi_play_worker.finished.disconnect(
+                    self._on_midi_render_finished
+                )
             except (TypeError, RuntimeError):
                 pass
             self._midi_play_thread.quit()
@@ -649,6 +674,18 @@ class LibraryTab(QtWidgets.QWidget):
     def _on_volume_changed(self, value: int) -> None:
         self._audio_output.setVolume(value / VOLUME_SLIDER_MAX)
 
+    def _on_audio_outputs_changed(self) -> None:
+        new_device = QtMultimedia.QMediaDevices.defaultAudioOutput()
+        if str(new_device.id()) == self._current_audio_device_id:
+            return
+        self._current_audio_device_id = str(new_device.id())
+        volume = self._audio_output.volume()
+        self._player.setAudioOutput(None)
+        self._audio_output.deleteLater()
+        self._audio_output = QtMultimedia.QAudioOutput(new_device, self)
+        self._audio_output.setVolume(volume)
+        self._player.setAudioOutput(self._audio_output)
+
     def _on_media_status(self, status: QtMultimedia.QMediaPlayer.MediaStatus) -> None:
         if status == QtMultimedia.QMediaPlayer.MediaStatus.LoadedMedia:
             self._player.play()
@@ -745,7 +782,10 @@ class LibraryTab(QtWidgets.QWidget):
             return
 
         wav_path = Path(wav_path_str)
-        if self._loading_midi_path is not None and wav_path.stem == self._loading_midi_path.stem:
+        if (
+            self._loading_midi_path is not None
+            and wav_path.stem == self._loading_midi_path.stem
+        ):
             self._tmp_midi_wav = wav_path
             samples = self._waveform_provider.load(wav_path)
             self._waveform.set_samples(samples)
@@ -884,7 +924,9 @@ class LibraryTab(QtWidgets.QWidget):
             )
         if successful:
             fmt = getattr(self, "_render_format", "mp3")
-            output_dir = self.root / ("rendered_wav" if fmt == "wav" else "rendered_mp3")
+            output_dir = self.root / (
+                "rendered_wav" if fmt == "wav" else "rendered_mp3"
+            )
             QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(output_dir)))
 
     def _open_selected_folder(self) -> None:
@@ -1045,5 +1087,7 @@ def _sort_path_for_item(root: Path, item: MediaItem) -> Path:
         if getattr(metadata, "key", None) is not None:
             key_value = metadata.key
     bpm_folder = f"{bpm_value}bpm" if bpm_value is not None else "unknown-bpm"
-    key_folder = key_value if (key_value is not None and key_value != "") else "unknown-key"
+    key_folder = (
+        key_value if (key_value is not None and key_value != "") else "unknown-key"
+    )
     return root / media_type / bpm_folder / key_folder
