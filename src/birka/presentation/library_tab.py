@@ -45,7 +45,10 @@ MIDI_EXTENSIONS = {".mid", ".midi"}
 
 
 def _normalize_wav_for_playback(
-    wav_path: Path, target_lufs: float = -16.0, tp_ceiling_db: float = -1.0
+    wav_path: Path,
+    target_lufs: float = -16.0,
+    tp_ceiling_db: float = -1.0,
+    target_sr: int = 44100,
 ) -> None:
     """Loudness-normalise a preview WAV in place for comfortable playback.
 
@@ -56,6 +59,12 @@ def _normalize_wav_for_playback(
     loudness and apply a single gain to hit target_lufs, then guard the true
     (inter-sample) peak so nothing clips. Mastering for export is untouched —
     this only affects the throwaway preview file handed to the player.
+
+    Also resamples to target_sr (44.1 kHz): the VST mastering chain hard-codes
+    its render rate to 96 kHz and ignores the preview's requested sample_rate,
+    and QMediaPlayer's FFmpeg backend can play 96 kHz float/PCM silently on some
+    output devices. Forcing 44.1 kHz here makes playback universal regardless of
+    which backend produced the file.
 
     Best-effort: any failure (missing deps, silent/too-short audio) leaves the
     file as-is.
@@ -73,6 +82,21 @@ def _normalize_wav_for_playback(
         return
     if audio.ndim == 1:
         audio = audio[:, None]
+
+    # Downsample to the playback target rate if the render came out higher
+    # (the VST chain forces 96 kHz). Polyphase resampling per channel.
+    if target_sr and sr != target_sr:
+        try:
+            from scipy.signal import resample_poly
+            from math import gcd
+
+            g = gcd(int(sr), int(target_sr))
+            up, dn = int(target_sr) // g, int(sr) // g
+            cols = [resample_poly(audio[:, c], up, dn) for c in range(audio.shape[1])]
+            audio = np.stack(cols, axis=1)
+            sr = target_sr
+        except Exception:
+            pass
 
     gain = 1.0
     try:
