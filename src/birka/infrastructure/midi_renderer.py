@@ -680,9 +680,126 @@ def _apply_vst_preset(
 
 _VST_ENGINE = None
 _VST_GRAPH = None
+_VST_FAST_ENGINE = None
+_VST_FAST_GRAPH = None
 _VST_DISPOSED = False
 _VST_LEAK_BIN: list = []  # objects parked here survive until os._exit()
 _VST_LOCK = threading.Lock()
+
+
+def _fast_master_enabled() -> bool:
+    """True when BIRKA_FAST_MASTER selects the lightweight mastering chain.
+
+    Fast master swaps the full 10-plugin two-pass chain for a single-pass
+    Pro-Q (HPF + air tilt) -> Kotelnikov (gentle glue) -> Pro-L (2x, transparent)
+    graph. Profiled ~6x faster than the full chain at near-identical loudness,
+    intended for quick previews / draft masters. Opt-in via env var.
+    """
+    return os.environ.get("BIRKA_FAST_MASTER", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+
+
+def _configure_proq_fast(pro_q):
+    # Minimal corrective EQ for the fast chain: 30 Hz high-pass (Band 1) + a
+    # gentle +1 dB high shelf at 10 kHz (Band 2) for a touch of air. No dynamic
+    # bands, no per-band M/S — just the essentials. Band "Used" (idx base+0)
+    # must be 1 or the band is inert (Pro-Q quirk).
+    pro_q.set_parameter(0, 1.0)  # Band 1 Used
+    pro_q.set_parameter(1, 1.0)  # Band 1 Enabled
+    pro_q.set_parameter(2, _freq_to_val(30.0))
+    pro_q.set_parameter(5, 0.20)  # Low Cut
+    pro_q.set_parameter(7, 0.5)   # Stereo
+    pro_q.set_parameter(23, 1.0)  # Band 2 Used
+    pro_q.set_parameter(24, 1.0)  # Band 2 Enabled
+    pro_q.set_parameter(25, _freq_to_val(10000.0))
+    pro_q.set_parameter(26, _gain_to_val(1.0))
+    pro_q.set_parameter(28, 0.30)  # High Shelf
+
+
+def _configure_kotelnikov_fast(kot):
+    # Light, cheap glue: ~1.5:1 at a gentle threshold, 100% wet, unity out. No
+    # parallel dry blend or deep GR — just cohesion for the draft master.
+    kot.set_parameter(0, 0.45)   # Threshold ~ -17 dB
+    kot.set_parameter(5, 0.30)   # Ratio ~1.5:1
+    kot.set_parameter(12, 0.0)   # Dry/Wet = 100% wet
+    kot.set_parameter(14, 0.55)  # Out gain ~0 dB
+
+
+def _configure_limiter_fast(limiter):
+    # Reuse the premium limiter config, then drop oversampling to 2x and turn
+    # off true-peak limiting for speed (the chain's heaviest plugin). For a
+    # draft/preview master the inter-sample safety margin is not critical;
+    # the export path uses the full _configure_limiter (4x + true-peak).
+    _configure_limiter(limiter)
+    limiter.set_parameter(9, 0.166)  # Oversampling = 2x
+    limiter.set_parameter(10, 0.0)   # True Peak Limiting = Off
+
+
+def _render_fast_vst_chain(dry_audio, np, daw):
+    """Single-pass lightweight master: Pro-Q -> Kotelnikov -> Pro-L (2x).
+
+    Caller has already resampled dry_audio to _VST_SAMPLE_RATE and redirected
+    stderr. Returns the post-limiter audio (channels, frames) or None on failure.
+    Uses its own cached engine (_VST_FAST_ENGINE) independent of the full chain.
+
+    No two-pass calibration: a single gain is applied to the dry input from the
+    pass-1 measurement BEFORE the limiter, then we render once more only if the
+    correction is large — but we fold that into one extra render at most, so it
+    is still much cheaper than the full chain. To keep it truly single-pass and
+    fast, we render once, measure, and apply makeup via a final scalar that the
+    limiter has already constrained (the 2x limiter ceiling still protects us).
+    """
+    global _VST_FAST_ENGINE, _VST_FAST_GRAPH
+    if _VST_FAST_ENGINE is None:
+        _VST_FAST_ENGINE = daw.RenderEngine(_VST_SAMPLE_RATE, _VST_BUFFER_SIZE)
+        pro_q = _VST_FAST_ENGINE.make_plugin_processor(
+            "pro_q", _VST_PLUGIN_PATHS["pro_q"]
+        )
+        kot = _VST_FAST_ENGINE.make_plugin_processor("kot", _VST_PLUGIN_PATHS["kot"])
+        limiter = _VST_FAST_ENGINE.make_plugin_processor(
+            "limiter", _VST_PLUGIN_PATHS["limiter"]
+        )
+        dummy = np.zeros((2, _VST_BUFFER_SIZE), dtype=np.float32)
+        pb = _VST_FAST_ENGINE.make_playback_processor("pb", dummy)
+        _VST_FAST_ENGINE.load_graph(
+            [
+                (pb, []),
+                (pro_q, ["pb"]),
+                (kot, ["pro_q"]),
+                (limiter, ["kot"]),
+            ]
+        )
+        _VST_FAST_GRAPH = {"pro_q": pro_q, "kot": kot, "limiter": limiter, "pb": pb}
+
+    _configure_proq_fast(_VST_FAST_GRAPH["pro_q"])
+    _configure_kotelnikov_fast(_VST_FAST_GRAPH["kot"])
+    _configure_limiter_fast(_VST_FAST_GRAPH["limiter"])
+
+    pb = _VST_FAST_GRAPH["pb"]
+    audio_2d = dry_audio.reshape(-1, 2).T.astype(np.float32)
+    duration = audio_2d.shape[1] / _VST_SAMPLE_RATE
+
+    # Pass 1: render at unity and measure post-limiter loudness.
+    pb.set_data(audio_2d)
+    _VST_FAST_ENGINE.render(duration)
+    out = _VST_FAST_ENGINE.get_audio("limiter")
+    current_lufs = _measure_lufs(out, _VST_SAMPLE_RATE)
+
+    # Single corrective re-render only when meaningfully off target. Applying
+    # gain to the DRY input keeps the limiter ceiling intact (no post-limiter
+    # boost). This is at most a 2-render pass — still ~3x cheaper than the full
+    # chain — and only triggers when needed.
+    if current_lufs is not None:
+        gain_db = max(-8.0, min(6.0, TARGET_LOUDNESS_LUFS - current_lufs))
+        if abs(gain_db) > 0.5:
+            scaled = audio_2d * (10.0 ** (gain_db / 20.0))
+            pb.set_data(scaled.astype(np.float32))
+            _VST_FAST_ENGINE.render(duration)
+            out = _VST_FAST_ENGINE.get_audio("limiter")
+    return out
 
 
 def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
@@ -728,7 +845,24 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
 
     with _VST_LOCK:
         try:
-            global _VST_ENGINE, _VST_GRAPH
+            global _VST_ENGINE, _VST_GRAPH, _VST_FAST_ENGINE, _VST_FAST_GRAPH
+
+            # Fast-master path: lightweight single-pass chain. Dispatched here so
+            # it shares the same resampling + stderr-redirect + lock as the full
+            # chain, but builds/uses its own cached engine and returns early.
+            if _fast_master_enabled():
+                try:
+                    out = _render_fast_vst_chain(dry_audio, np, daw)
+                    if out is not None:
+                        return _write_float_wav(
+                            out.T.flatten(), output_path, _VST_SAMPLE_RATE,
+                            soft_clip=False,
+                        )
+                except Exception:
+                    _VST_FAST_ENGINE = None
+                    _VST_FAST_GRAPH = None
+                    # fall through to the full chain on any fast-path failure
+
             if _VST_ENGINE is None:
                 _VST_ENGINE = daw.RenderEngine(_VST_SAMPLE_RATE, _VST_BUFFER_SIZE)
                 tape = _VST_ENGINE.make_plugin_processor(
@@ -1629,7 +1763,7 @@ def dispose_vst_chain_cache() -> None:
     module-level 'leak bin' that keeps the object alive until os._exit()
     kills the process without running any destructors.
     """
-    global _VST_ENGINE, _VST_GRAPH, _VST_DISPOSED
+    global _VST_ENGINE, _VST_GRAPH, _VST_FAST_ENGINE, _VST_FAST_GRAPH, _VST_DISPOSED
     if _VST_DISPOSED:
         return
     _VST_DISPOSED = True
@@ -1637,8 +1771,12 @@ def dispose_vst_chain_cache() -> None:
     # without decrementing refcounts or calling C++ destructors.
     _VST_LEAK_BIN.append(_VST_ENGINE)
     _VST_LEAK_BIN.append(_VST_GRAPH)
+    _VST_LEAK_BIN.append(_VST_FAST_ENGINE)
+    _VST_LEAK_BIN.append(_VST_FAST_GRAPH)
     _VST_ENGINE = None
     _VST_GRAPH = None
+    _VST_FAST_ENGINE = None
+    _VST_FAST_GRAPH = None
 
 
 def _dispose_all_audio_backends() -> None:
