@@ -716,7 +716,9 @@ class LibraryTab(QtWidgets.QWidget):
             "☁️ Airy — воздушный, открытый. Tape→Fresh Air→Kotelnikov→лимитер.\n"
             "    Под R&B / акустику / вокал.\n"
             "🥁 Punch — ударный, транзиентный. Tape→Spiff→Kotelnikov→лимитер.\n"
-            "    Под drill / techno / перкуссию."
+            "    Под drill / techno / перкуссию.\n"
+            "🎞 Reel-to-reel — плёночная философия. Tape→Tape→лимитер (два стейджа:\n"
+            "    tracking-плёнка с head bump → mixdown-плёнка с мягким верхом)."
         )
         self._master_combo.addItem("💎 Full — кристальный, эталонный (экспорт)", "")
         self._master_combo.addItem("⚡ Digital fast — быстрый, чистый", "digital")
@@ -728,6 +730,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._master_combo.addItem("🔊 Modern loud — громкий, плотный", "modern_loud")
         self._master_combo.addItem("☁️ Airy — воздушный, открытый", "airy")
         self._master_combo.addItem("🥁 Punch — ударный, транзиентный", "punch")
+        self._master_combo.addItem("🎞 Reel-to-reel — двойная плёнка (tracking→mixdown)", "reel")
         _env_mode = os.environ.get("BIRKA_FAST_MASTER", "").strip().lower()
         _alias = {
             "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
@@ -738,6 +741,7 @@ class LibraryTab(QtWidgets.QWidget):
             "luxury": "polished", "smooth": "polished",
             "loud": "modern_loud", "modern": "modern_loud",
             "air": "airy", "punchy": "punch",
+            "reel": "reel", "reel2reel": "reel", "double_tape": "reel", "tape2": "reel",
         }
         _resolved = _alias.get(_env_mode, _env_mode)
         _idx = self._master_combo.findData(_resolved)

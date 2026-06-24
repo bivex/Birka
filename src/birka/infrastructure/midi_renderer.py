@@ -714,6 +714,7 @@ _FAST_MASTER_CHAINS = {
     "modern_loud":  ["tape", "pro_mb", "sdrr", "limiter"],       # controlled low + loud (EDM)
     "airy":         ["tape", "fresh", "kot", "limiter"],         # warm bottom + air (R&B)
     "punch":        ["tape", "spiff", "kot", "limiter"],         # tight transients (drill/techno)
+    "reel":         ["tape_track", "tape_mix", "limiter"],       # 2x tape: tracking->mixdown
 }
 _FAST_MASTER_ALIASES = {
     "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
@@ -726,6 +727,7 @@ _FAST_MASTER_ALIASES = {
     "modern_loud": "modern_loud", "loud": "modern_loud", "modern": "modern_loud",
     "airy": "airy", "air": "airy",
     "punch": "punch", "punchy": "punch",
+    "reel": "reel", "reel2reel": "reel", "double_tape": "reel", "tape2": "reel",
 }
 
 
@@ -868,6 +870,42 @@ def _configure_pro_mb_fast(pro_mb):
         pro_mb.set_parameter(idx, val)
 
 
+def _configure_tape_track(tape):
+    # Stage 1 "tracking tape": low drive + head bump. Slower 15 ips tape speed
+    # (idx26=0.5) with Loss on gives the low-end head bump of a tracking machine.
+    # Light drive for body without obvious saturation.
+    tape.set_parameter(0, 0.889)  # Input Gain
+    tape.set_parameter(1, 0.68)   # Output Gain
+    tape.set_parameter(2, 1.0)    # Dry/Wet full
+    tape.set_parameter(16, 0.14)  # Tape Drive (low)
+    tape.set_parameter(17, 0.20)  # Saturation
+    tape.set_parameter(18, 0.50)  # Bias neutral
+    tape.set_parameter(25, 1.0)   # Loss On (enables head-bump/HF modelling)
+    tape.set_parameter(26, 0.5)   # Tape Speed 15 ips -> pronounced head bump
+    tape.set_parameter(27, 0.2)   # Spacing low (keep highs at tracking stage)
+    tape.set_parameter(28, 0.5)   # Thickness moderate
+    tape.set_parameter(8, 0.54)   # Tone Bass slight + (body)
+    tape.set_parameter(9, 0.50)   # Tone Treble neutral
+
+
+def _configure_tape_mix(tape):
+    # Stage 2 "mixdown tape": lighter drive + more HF rolloff. Faster 30 ips
+    # (idx26=0.75) is flatter in the lows but we widen Spacing/Thickness so the
+    # Loss model rolls off the top — the gentle HF softening of a mixdown pass.
+    tape.set_parameter(0, 0.889)
+    tape.set_parameter(1, 0.68)
+    tape.set_parameter(2, 1.0)
+    tape.set_parameter(16, 0.08)  # Drive lighter than stage 1
+    tape.set_parameter(17, 0.16)  # Saturation lighter
+    tape.set_parameter(18, 0.50)
+    tape.set_parameter(25, 1.0)   # Loss On
+    tape.set_parameter(26, 0.75)  # Tape Speed 30 ips -> flatter lows
+    tape.set_parameter(27, 0.6)   # Spacing higher -> more HF loss
+    tape.set_parameter(28, 0.7)   # Thickness higher -> more HF rolloff
+    tape.set_parameter(8, 0.50)   # Bass neutral
+    tape.set_parameter(9, 0.46)   # Treble slight - (soft top)
+
+
 def _configure_limiter_fast(limiter):
     # Reuse the premium limiter config, then drop oversampling to 2x and turn
     # off true-peak limiting for speed (the chain's heaviest plugin). For a
@@ -884,6 +922,10 @@ def _configure_limiter_fast(limiter):
 def _configure_fast_node(name, proc, analog):
     if name == "tape":
         _configure_tape_analog(proc)
+    elif name == "tape_track":
+        _configure_tape_track(proc)
+    elif name == "tape_mix":
+        _configure_tape_mix(proc)
     elif name == "sdrr":
         _configure_sdrr_analog(proc)
     elif name == "sdrr_tube":
@@ -906,7 +948,8 @@ def _configure_fast_node(name, proc, analog):
 
 # Graph-node name -> plugin path key in _VST_PLUGIN_PATHS.
 _FAST_NODE_PLUGIN = {
-    "tape": "chow", "sdrr": "sdrr", "sdrr_tube": "sdrr", "kot": "kot",
+    "tape": "chow", "tape_track": "chow", "tape_mix": "chow",
+    "sdrr": "sdrr", "sdrr_tube": "sdrr", "kot": "kot",
     "pro_q": "pro_q", "soothe": "soothe", "fresh": "fresh", "pro_mb": "pro_mb",
     "spiff": "spiff", "limiter": "limiter",
 }
@@ -972,13 +1015,34 @@ def _render_fast_vst_chain(dry_audio, np, daw, mode="digital"):
     out = _VST_FAST_ENGINE.get_audio(out_node)
     current_lufs = _measure_lufs(out, _VST_SAMPLE_RATE)
 
-    # Single corrective re-render only when meaningfully off target. Applying
-    # gain to the DRY input keeps the limiter ceiling intact (no post-limiter
-    # boost). At most a 2-render pass — still much cheaper than the full chain.
     if current_lufs is not None:
-        gain_db = max(-8.0, min(6.0, TARGET_LOUDNESS_LUFS - current_lufs))
-        if abs(gain_db) > 0.5:
-            scaled = audio_2d * (10.0 ** (gain_db / 20.0))
+        gain_db = TARGET_LOUDNESS_LUFS - current_lufs
+        if gain_db > 0.5:
+            # UNDERSHOOT (common with tape/HF-rolloff chains: the limiter never
+            # engaged, leaving lots of headroom). Boosting the dry input is
+            # ineffective here — the tape stages are non-linear and eat the
+            # gain. Instead apply makeup to the OUTPUT, clamped so the true
+            # (inter-sample) peak stays under -1 dBTP. This reaches the target
+            # loudness exactly when there is headroom, and stops at the ceiling
+            # otherwise — no clipping, no extra render.
+            ceiling = 10.0 ** (-1.0 / 20.0)  # -1 dBTP
+            try:
+                from scipy.signal import resample_poly
+
+                tp = 0.0
+                for c in range(out.shape[0]):
+                    up = resample_poly(out[c], 4, 1)
+                    if up.size:
+                        tp = max(tp, float(np.max(np.abs(up))))
+            except Exception:
+                tp = float(np.max(np.abs(out))) if out.size else 1.0
+            want = 10.0 ** (gain_db / 20.0)
+            headroom = (ceiling / tp) if tp > 1e-9 else want
+            out = out * min(want, headroom)
+        elif gain_db < -0.5:
+            # OVERSHOOT: too loud. Scale the dry input down and re-render so the
+            # limiter re-clamps cleanly (cheaper/cleaner than pulling the master).
+            scaled = audio_2d * (10.0 ** (max(-8.0, gain_db) / 20.0))
             pb.set_data(scaled.astype(np.float32))
             _VST_FAST_ENGINE.render(duration)
             out = _VST_FAST_ENGINE.get_audio(out_node)
