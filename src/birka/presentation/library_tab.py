@@ -613,17 +613,23 @@ class LibraryTab(QtWidgets.QWidget):
     def _init_playback_controls(self) -> None:
         self._waveform = WaveformWidget(self)
         self._waveform.position_changed.connect(self._waveform_seek)
-        self._play_button = QtWidgets.QPushButton("Play", self)
+        self._play_button = QtWidgets.QPushButton("▶  Play", self)
         self._play_button.setObjectName("playButton")
-        self._stop_button = QtWidgets.QPushButton("Stop", self)
+        self._play_button.setToolTip(
+            "Render & play the selected file at full quality "
+            "(uses the chosen Synth Quality + Master Mode)."
+        )
+        self._stop_button = QtWidgets.QPushButton("⏹  Stop", self)
         self._stop_button.setObjectName("stopButton")
         self._play_button.clicked.connect(self._play_selected)
-        self._play_fast_button = QtWidgets.QPushButton("Play Fast", self)
+        self._play_fast_button = QtWidgets.QPushButton("⏩  Play Fast", self)
         self._play_fast_button.setObjectName("playFastButton")
         self._play_fast_button.setToolTip(
-            "Render selected MIDI to a low-quality MP3 (22 kHz) for fast preview"
+            "Quick low-quality preview (22 kHz MP3) — fastest way to audition a "
+            "MIDI file. Ignores Synth Quality / Master Mode."
         )
         self._play_fast_button.clicked.connect(self._play_selected_fast)
+        self._stop_button.setToolTip("Stop playback.")
         self._stop_button.clicked.connect(self._stop_playback)
 
         self._seek_slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
@@ -1023,7 +1029,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._loading_midi_path = path
         button = self._play_fast_button if fast else self._play_button
         button.setEnabled(False)
-        button.setText("Loading...")
+        button.setText("⏳  Loading…")
 
         self._midi_play_thread = QtCore.QThread()
         # Honour the Synth Quality combo for full-quality Play (Fast Play uses
@@ -1038,9 +1044,9 @@ class LibraryTab(QtWidgets.QWidget):
 
     def _on_midi_render_finished(self, wav_path_str: str) -> None:
         self._play_button.setEnabled(True)
-        self._play_button.setText("Play")
+        self._play_button.setText("▶  Play")
         self._play_fast_button.setEnabled(True)
-        self._play_fast_button.setText("Play Fast")
+        self._play_fast_button.setText("⏩  Play Fast")
 
         if self._midi_play_thread is not None:
             self._midi_play_thread.quit()

@@ -190,6 +190,21 @@ QPushButton#playButton:pressed {
     background-color: #051a13;
 }
 
+/* Play Fast Button: Glowing Amber (quick low-quality preview) */
+QPushButton#playFastButton {
+    background-color: #2a1c05;
+    border: 1px solid #ffaa00;
+    color: #ffaa00;
+}
+QPushButton#playFastButton:hover {
+    background-color: #3c2807;
+    color: #ffc44d;
+    border-color: #ffc44d;
+}
+QPushButton#playFastButton:pressed {
+    background-color: #1c1203;
+}
+
 /* Stop / Delete Button: Glowing Crimson */
 QPushButton#stopButton, QPushButton#deleteButton {
     background-color: #301414;
