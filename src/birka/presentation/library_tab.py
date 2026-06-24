@@ -44,6 +44,20 @@ VOLUME_SLIDER_MAX = 100
 MIDI_EXTENSIONS = {".mid", ".midi"}
 
 
+def _preview_dir() -> Path:
+    """Fixed preview output dir at /tmp/birka_app (created if missing).
+
+    Using one stable directory instead of a fresh mkdtemp() per render keeps all
+    throwaway preview WAV/MP3 files in a single predictable place (easy to find,
+    inspect, or clean), rather than scattering random /var/folders/.../birka_midi_*
+    dirs. Files are reused by name, so an old preview of the same track is simply
+    overwritten.
+    """
+    d = Path("/tmp/birka_app")
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
 def _normalize_wav_for_playback(
     wav_path: Path,
     target_lufs: float = -16.0,
@@ -145,7 +159,7 @@ def _render_midi_to_tmp_wav(midi_path: Path, quality: int = 2) -> Path | None:
     """
     from birka.infrastructure.midi_renderer import render_midi_to_wav
 
-    tmp_dir = Path(tempfile.mkdtemp(prefix="birka_midi_"))
+    tmp_dir = _preview_dir()
     wav_path = tmp_dir / (midi_path.stem + ".wav")
     # Playback preview: render at 44.1 kHz / 16-bit. 96 kHz/float32 carries no
     # audible benefit for listening and the QMediaPlayer FFmpeg backend is
@@ -164,7 +178,7 @@ def _render_midi_to_tmp_preview_mp3(midi_path: Path) -> Path | None:
     """Render MIDI to a small temp MP3 (22 kHz) for fast preview listening."""
     from birka.infrastructure.midi_renderer import render_midi_preview_mp3
 
-    tmp_dir = Path(tempfile.mkdtemp(prefix="birka_midi_"))
+    tmp_dir = _preview_dir()
     mp3_path = tmp_dir / (midi_path.stem + ".mp3")
     if render_midi_preview_mp3(midi_path, mp3_path):
         return mp3_path
