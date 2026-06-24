@@ -397,7 +397,9 @@ def _configure_limiter(limiter):
     limiter.set_parameter(2, 0.28)  # Lookahead = 1.4 ms (premium transparent)
     limiter.set_parameter(3, 0.28)  # Attack ~60 ms (smooth gain riding)
     limiter.set_parameter(4, 0.3878)  # Release ~420 ms (smooth, no pumping)
-    limiter.set_parameter(9, 0.5)  # Oversampling = 8x (premium/CD quality)
+    limiter.set_parameter(9, 0.33)  # Oversampling = 4x (source is 96k -> 384k
+    #   internal, ample for true-peak detection; 8x doubled CPU for no audible
+    #   gain at this base rate — the limiter is the chain's heaviest plugin)
     limiter.set_parameter(
         10, 1.0
     )  # True Peak Limiting = On (catches inter-sample peaks)
