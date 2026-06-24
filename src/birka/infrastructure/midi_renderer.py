@@ -932,6 +932,14 @@ def _render_fast_vst_chain(dry_audio, np, daw, mode="digital"):
     # (Re)build the engine/graph when first used or when the mode changed, since
     # different modes use different plugin sets and routing.
     if _VST_FAST_ENGINE is None or _VST_FAST_MODE != mode:
+        # Park the OLD engine/graph in the leak bin before dropping our last
+        # reference. Reassigning _VST_FAST_ENGINE directly would run the
+        # DAWdreamer C++ destructor synchronously, which blocks forever (the
+        # app appears to hang on the next render after a mode switch). The leak
+        # bin keeps the object alive until os._exit() tears the process down.
+        if _VST_FAST_ENGINE is not None:
+            _VST_LEAK_BIN.append(_VST_FAST_ENGINE)
+            _VST_LEAK_BIN.append(_VST_FAST_GRAPH)
         _VST_FAST_ENGINE = daw.RenderEngine(_VST_SAMPLE_RATE, _VST_BUFFER_SIZE)
         dummy = np.zeros((2, _VST_BUFFER_SIZE), dtype=np.float32)
         pb = _VST_FAST_ENGINE.make_playback_processor("pb", dummy)
