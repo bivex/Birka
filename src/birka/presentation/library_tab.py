@@ -689,29 +689,45 @@ class LibraryTab(QtWidgets.QWidget):
         idx = self._quality_combo.findData(2)
         self._quality_combo.setCurrentIndex(idx if idx >= 0 else 0)
 
-        # Fast Master toggle: swaps the full 10-plugin two-pass VST chain for the
-        # lightweight single-pass Pro-Q -> Kotelnikov -> Pro-L chain (~5x faster,
-        # near-identical loudness). Drives the BIRKA_FAST_MASTER env var that
-        # midi_renderer._fast_master_enabled() reads at render time, so both Play
-        # and Render pick it up. Initialised from any pre-set env value so a
-        # launch with BIRKA_FAST_MASTER=1 shows the box already checked.
-        self._fast_master_check = QtWidgets.QCheckBox("Fast Master", self)
-        self._fast_master_check.setToolTip(
-            "Lightweight single-pass mastering chain (Pro-Q + Kotelnikov + "
-            "Pro-L). ~5x faster for quick previews/drafts. Off = full premium "
-            "chain for final export. Only affects the sfizz VST chain."
+        # Master Mode selector: chooses the VST mastering chain. "Full" runs the
+        # premium 10-plugin two-pass chain (best for export). The fast modes are
+        # single-pass and ~5-20x faster for previews/drafts. The combo's data is
+        # the BIRKA_FAST_MASTER value the renderer reads at render time (empty =
+        # full), so both Play and Render pick it up. Initialised from any pre-set
+        # env value.
+        self._master_label = QtWidgets.QLabel("Master Mode:", self)
+        self._master_combo = QtWidgets.QComboBox(self)
+        self._master_combo.setToolTip(
+            "VST mastering chain.\n"
+            "Full = premium 10-plugin two-pass (final export).\n"
+            "Digital fast = Pro-Q→Kotelnikov→Pro-L (cleanest, fastest).\n"
+            "Analog clean = Tape→Bus comp→passive EQ→Limiter.\n"
+            "Analog warm = Tape→Console(SDRR)→Bus comp→Limiter.\n"
+            "Analog ultra = Tape→Limiter (most musical, instant)."
         )
-        _env_fast = os.environ.get("BIRKA_FAST_MASTER", "").strip().lower() in (
-            "1", "true", "yes",
-        )
-        self._fast_master_check.setChecked(_env_fast)
-        self._fast_master_check.toggled.connect(self._on_fast_master_toggled)
+        self._master_combo.addItem("Full (premium, export)", "")
+        self._master_combo.addItem("Digital fast (clean)", "digital")
+        self._master_combo.addItem("Analog clean", "analog_clean")
+        self._master_combo.addItem("Analog warm (vintage)", "analog_warm")
+        self._master_combo.addItem("Analog ultra (tape→limiter)", "analog_ultra")
+        _env_mode = os.environ.get("BIRKA_FAST_MASTER", "").strip().lower()
+        _alias = {
+            "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
+            "clean": "analog_clean", "analog": "analog_clean",
+            "warm": "analog_warm", "vintage": "analog_warm",
+            "ultra": "analog_ultra", "tape": "analog_ultra",
+        }
+        _resolved = _alias.get(_env_mode, _env_mode)
+        _idx = self._master_combo.findData(_resolved)
+        self._master_combo.setCurrentIndex(_idx if _idx >= 0 else 0)
+        # Keep env in sync with the resolved initial selection.
+        os.environ["BIRKA_FAST_MASTER"] = self._master_combo.currentData() or ""
+        self._master_combo.currentIndexChanged.connect(self._on_master_mode_changed)
 
-    def _on_fast_master_toggled(self, checked: bool) -> None:
-        # Reflect the checkbox into the env var the renderer reads. Set to "1"
-        # when on; clear (empty string) when off so _fast_master_enabled() is
-        # False. Takes effect on the next render — no restart needed.
-        os.environ["BIRKA_FAST_MASTER"] = "1" if checked else ""
+    def _on_master_mode_changed(self, _index: int) -> None:
+        # Reflect the selected chain into the env var the renderer reads. Empty
+        # string = full premium chain. Takes effect on the next render.
+        os.environ["BIRKA_FAST_MASTER"] = self._master_combo.currentData() or ""
 
     def _init_pager_controls(self) -> None:
         self._count_label = QtWidgets.QLabel("Files: 0", self)
@@ -830,9 +846,11 @@ class LibraryTab(QtWidgets.QWidget):
         grid.addWidget(self._render_wav_button, 2, 4)
 
         # Row 3: Quality
-        grid.addWidget(self._fast_master_check, 3, 0, 1, 2)
-        grid.addWidget(self._quality_label, 3, 2)
-        grid.addWidget(self._quality_combo, 3, 3, 1, 2)
+        grid.addWidget(self._quality_label, 3, 0)
+        grid.addWidget(self._quality_combo, 3, 1, 1, 2)
+        # Row 3 (right): Master Mode selector
+        grid.addWidget(self._master_label, 3, 3)
+        grid.addWidget(self._master_combo, 3, 4)
 
         return grid
 

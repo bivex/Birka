@@ -682,24 +682,53 @@ _VST_ENGINE = None
 _VST_GRAPH = None
 _VST_FAST_ENGINE = None
 _VST_FAST_GRAPH = None
+_VST_FAST_MODE = None
 _VST_DISPOSED = False
 _VST_LEAK_BIN: list = []  # objects parked here survive until os._exit()
 _VST_LOCK = threading.Lock()
 
 
 def _fast_master_enabled() -> bool:
-    """True when BIRKA_FAST_MASTER selects the lightweight mastering chain.
+    """True when BIRKA_FAST_MASTER selects any lightweight mastering chain.
 
     Fast master swaps the full 10-plugin two-pass chain for a single-pass
-    Pro-Q (HPF + air tilt) -> Kotelnikov (gentle glue) -> Pro-L (2x, transparent)
-    graph. Profiled ~6x faster than the full chain at near-identical loudness,
-    intended for quick previews / draft masters. Opt-in via env var.
+    lightweight graph (~5-6x faster), intended for quick previews / draft
+    masters. The specific chain is chosen by _fast_master_mode(). Opt-in via
+    BIRKA_FAST_MASTER; an explicit mode name also enables it.
     """
-    return os.environ.get("BIRKA_FAST_MASTER", "").strip().lower() in (
-        "1",
-        "true",
-        "yes",
-    )
+    return _fast_master_mode() is not None
+
+
+# Fast-master chain modes. Each maps to an ordered list of plugin keys (graph
+# nodes after the playback node). All are single-pass, lighter than the full
+# chain. "digital" is the original corrective fast path; the analog modes follow
+# the classic Tape -> [console] -> Bus Comp -> [EQ] -> Limiter signal flow.
+_FAST_MASTER_CHAINS = {
+    "digital":      ["pro_q", "kot", "limiter"],          # corrective, cleanest
+    "analog_clean": ["tape", "kot", "pro_q", "limiter"],  # Studer->bus->passive EQ
+    "analog_warm":  ["tape", "sdrr", "kot", "limiter"],   # +console saturation
+    "analog_ultra": ["tape", "limiter"],                  # tape body + loudness
+}
+_FAST_MASTER_ALIASES = {
+    "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
+    "digital": "digital", "clean_digital": "digital",
+    "analog": "analog_clean", "clean": "analog_clean", "analog_clean": "analog_clean",
+    "warm": "analog_warm", "analog_warm": "analog_warm", "vintage": "analog_warm",
+    "ultra": "analog_ultra", "analog_ultra": "analog_ultra", "tape": "analog_ultra",
+}
+
+
+def _fast_master_mode():
+    """Resolve BIRKA_FAST_MASTER to a chain name in _FAST_MASTER_CHAINS, or None.
+
+    Accepts the legacy truthy values (1/true/yes -> digital) plus named modes
+    and friendly aliases (analog/clean/warm/vintage/ultra/tape). Unknown or
+    empty values disable fast master (returns None -> full chain).
+    """
+    raw = os.environ.get("BIRKA_FAST_MASTER", "").strip().lower()
+    if not raw:
+        return None
+    return _FAST_MASTER_ALIASES.get(raw)
 
 
 def _configure_proq_fast(pro_q):
@@ -719,6 +748,24 @@ def _configure_proq_fast(pro_q):
     pro_q.set_parameter(28, 0.30)  # High Shelf
 
 
+def _configure_proq_analog(pro_q):
+    # Passive-mastering-EQ emulation for analog chains: broad strokes only.
+    # HPF 30Hz (B1), +0.6 dB @ 100Hz low shelf (B2), tiny -0.5 dB dip @ 320Hz
+    # bell (B3), +0.8 dB @ 14kHz air shelf (B4). Wide, musical, no surgery.
+    pro_q.set_parameter(0, 1.0); pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(2, _freq_to_val(30.0)); pro_q.set_parameter(5, 0.20)
+    pro_q.set_parameter(7, 0.5)
+    pro_q.set_parameter(23, 1.0); pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(25, _freq_to_val(100.0))
+    pro_q.set_parameter(26, _gain_to_val(0.6)); pro_q.set_parameter(28, 0.10)  # Low Shelf
+    pro_q.set_parameter(46, 1.0); pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(48, _freq_to_val(320.0))
+    pro_q.set_parameter(49, _gain_to_val(-0.5)); pro_q.set_parameter(51, 0.0)  # Bell
+    pro_q.set_parameter(69, 1.0); pro_q.set_parameter(70, 1.0)
+    pro_q.set_parameter(71, _freq_to_val(14000.0))
+    pro_q.set_parameter(72, _gain_to_val(0.8)); pro_q.set_parameter(74, 0.30)  # High Shelf
+
+
 def _configure_kotelnikov_fast(kot):
     # Light, cheap glue: ~1.5:1 at a gentle threshold, 100% wet, unity out. No
     # parallel dry blend or deep GR — just cohesion for the draft master.
@@ -726,6 +773,34 @@ def _configure_kotelnikov_fast(kot):
     kot.set_parameter(5, 0.30)   # Ratio ~1.5:1
     kot.set_parameter(12, 0.0)   # Dry/Wet = 100% wet
     kot.set_parameter(14, 0.55)  # Out gain ~0 dB
+
+
+def _configure_tape_analog(tape):
+    # CHOWTape light "analog glue": low drive for soft clipping + harmonics,
+    # bias slightly up, wow/flutter negligible (CHOWTape defaults are subtle),
+    # full wet. Values mirror the proven neutral preset tape block.
+    tape.set_parameter(0, 0.889)  # Input Gain
+    tape.set_parameter(1, 0.68)   # Output Gain
+    tape.set_parameter(2, 1.0)    # Dry/Wet = full
+    tape.set_parameter(16, 0.16)  # Tape Drive (low, ~7%)
+    tape.set_parameter(17, 0.22)  # Tape Saturation
+    tape.set_parameter(18, 0.48)  # Tape Bias (slightly up)
+    tape.set_parameter(8, 0.52)   # Tone Bass
+    tape.set_parameter(9, 0.48)   # Tone Treble
+
+
+def _configure_sdrr_analog(sdrr):
+    # SDRR2 in DESK mode as console glue (analog density without dirt). Mirrors
+    # the neutral preset sdrr block: low drive, light compression, gentle tone,
+    # low mix. group-4 (DESK) params: 37 Drive, 40 Comp, 41 Bass, 42 Treble,
+    # 49 Mix. idx 56 = bypass, idx 0 = mode (1.0 = DESK).
+    sdrr.set_parameter(56, 0.0)    # Bypass off
+    sdrr.set_parameter(0, 1.0)     # Mode = DESK
+    sdrr.set_parameter(37, 0.16)   # Drive 1.6
+    sdrr.set_parameter(40, 0.22)   # Compression 2.2
+    sdrr.set_parameter(41, 0.5167) # Bass +0.4 dB
+    sdrr.set_parameter(42, 0.4667) # Treble -0.8 dB
+    sdrr.set_parameter(49, 0.20)   # Mix 20%
 
 
 def _configure_limiter_fast(limiter):
@@ -738,67 +813,90 @@ def _configure_limiter_fast(limiter):
     limiter.set_parameter(10, 0.0)   # True Peak Limiting = Off
 
 
-def _render_fast_vst_chain(dry_audio, np, daw):
-    """Single-pass lightweight master: Pro-Q -> Kotelnikov -> Pro-L (2x).
+# Per-plugin fast configurators, keyed by graph-node name. Limiter/EQ vary by
+# whether the chain is "analog" (broad passive EQ) or "digital" (corrective),
+# resolved when the chain is built.
+def _configure_fast_node(name, proc, analog):
+    if name == "tape":
+        _configure_tape_analog(proc)
+    elif name == "sdrr":
+        _configure_sdrr_analog(proc)
+    elif name == "kot":
+        _configure_kotelnikov_fast(proc)
+    elif name == "pro_q":
+        (_configure_proq_analog if analog else _configure_proq_fast)(proc)
+    elif name == "limiter":
+        _configure_limiter_fast(proc)
+
+
+# Graph-node name -> plugin path key in _VST_PLUGIN_PATHS.
+_FAST_NODE_PLUGIN = {
+    "tape": "chow", "sdrr": "sdrr", "kot": "kot", "pro_q": "pro_q", "limiter": "limiter",
+}
+
+
+def _render_fast_vst_chain(dry_audio, np, daw, mode="digital"):
+    """Single-pass lightweight master in one of several modes.
+
+    mode selects a chain from _FAST_MASTER_CHAINS:
+      digital      : Pro-Q -> Kotelnikov -> Pro-L (corrective, cleanest)
+      analog_clean : Tape -> Kotelnikov -> Pro-Q -> Pro-L
+      analog_warm  : Tape -> SDRR2(DESK) -> Kotelnikov -> Pro-L
+      analog_ultra : Tape -> Pro-L
 
     Caller has already resampled dry_audio to _VST_SAMPLE_RATE and redirected
     stderr. Returns the post-limiter audio (channels, frames) or None on failure.
-    Uses its own cached engine (_VST_FAST_ENGINE) independent of the full chain.
-
-    No two-pass calibration: a single gain is applied to the dry input from the
-    pass-1 measurement BEFORE the limiter, then we render once more only if the
-    correction is large — but we fold that into one extra render at most, so it
-    is still much cheaper than the full chain. To keep it truly single-pass and
-    fast, we render once, measure, and apply makeup via a final scalar that the
-    limiter has already constrained (the 2x limiter ceiling still protects us).
+    Uses its own cached engine (_VST_FAST_ENGINE), rebuilt when the mode changes.
     """
-    global _VST_FAST_ENGINE, _VST_FAST_GRAPH
-    if _VST_FAST_ENGINE is None:
+    global _VST_FAST_ENGINE, _VST_FAST_GRAPH, _VST_FAST_MODE
+    chain = _FAST_MASTER_CHAINS.get(mode, _FAST_MASTER_CHAINS["digital"])
+    analog = mode.startswith("analog")
+
+    # (Re)build the engine/graph when first used or when the mode changed, since
+    # different modes use different plugin sets and routing.
+    if _VST_FAST_ENGINE is None or _VST_FAST_MODE != mode:
         _VST_FAST_ENGINE = daw.RenderEngine(_VST_SAMPLE_RATE, _VST_BUFFER_SIZE)
-        pro_q = _VST_FAST_ENGINE.make_plugin_processor(
-            "pro_q", _VST_PLUGIN_PATHS["pro_q"]
-        )
-        kot = _VST_FAST_ENGINE.make_plugin_processor("kot", _VST_PLUGIN_PATHS["kot"])
-        limiter = _VST_FAST_ENGINE.make_plugin_processor(
-            "limiter", _VST_PLUGIN_PATHS["limiter"]
-        )
         dummy = np.zeros((2, _VST_BUFFER_SIZE), dtype=np.float32)
         pb = _VST_FAST_ENGINE.make_playback_processor("pb", dummy)
-        _VST_FAST_ENGINE.load_graph(
-            [
-                (pb, []),
-                (pro_q, ["pb"]),
-                (kot, ["pro_q"]),
-                (limiter, ["kot"]),
-            ]
-        )
-        _VST_FAST_GRAPH = {"pro_q": pro_q, "kot": kot, "limiter": limiter, "pb": pb}
+        procs = {"pb": pb}
+        connections = [(pb, [])]
+        prev = "pb"
+        for name in chain:
+            proc = _VST_FAST_ENGINE.make_plugin_processor(
+                name, _VST_PLUGIN_PATHS[_FAST_NODE_PLUGIN[name]]
+            )
+            procs[name] = proc
+            connections.append((proc, [prev]))
+            prev = name
+        _VST_FAST_ENGINE.load_graph(connections)
+        _VST_FAST_GRAPH = procs
+        _VST_FAST_MODE = mode
 
-    _configure_proq_fast(_VST_FAST_GRAPH["pro_q"])
-    _configure_kotelnikov_fast(_VST_FAST_GRAPH["kot"])
-    _configure_limiter_fast(_VST_FAST_GRAPH["limiter"])
+    # Configure each node every render (cheap; keeps params correct after reuse).
+    for name in chain:
+        _configure_fast_node(name, _VST_FAST_GRAPH[name], analog)
 
     pb = _VST_FAST_GRAPH["pb"]
+    out_node = chain[-1]  # always the limiter
     audio_2d = dry_audio.reshape(-1, 2).T.astype(np.float32)
     duration = audio_2d.shape[1] / _VST_SAMPLE_RATE
 
     # Pass 1: render at unity and measure post-limiter loudness.
     pb.set_data(audio_2d)
     _VST_FAST_ENGINE.render(duration)
-    out = _VST_FAST_ENGINE.get_audio("limiter")
+    out = _VST_FAST_ENGINE.get_audio(out_node)
     current_lufs = _measure_lufs(out, _VST_SAMPLE_RATE)
 
     # Single corrective re-render only when meaningfully off target. Applying
     # gain to the DRY input keeps the limiter ceiling intact (no post-limiter
-    # boost). This is at most a 2-render pass — still ~3x cheaper than the full
-    # chain — and only triggers when needed.
+    # boost). At most a 2-render pass — still much cheaper than the full chain.
     if current_lufs is not None:
         gain_db = max(-8.0, min(6.0, TARGET_LOUDNESS_LUFS - current_lufs))
         if abs(gain_db) > 0.5:
             scaled = audio_2d * (10.0 ** (gain_db / 20.0))
             pb.set_data(scaled.astype(np.float32))
             _VST_FAST_ENGINE.render(duration)
-            out = _VST_FAST_ENGINE.get_audio("limiter")
+            out = _VST_FAST_ENGINE.get_audio(out_node)
     return out
 
 
@@ -845,14 +943,15 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
 
     with _VST_LOCK:
         try:
-            global _VST_ENGINE, _VST_GRAPH, _VST_FAST_ENGINE, _VST_FAST_GRAPH
+            global _VST_ENGINE, _VST_GRAPH, _VST_FAST_ENGINE, _VST_FAST_GRAPH, _VST_FAST_MODE
 
             # Fast-master path: lightweight single-pass chain. Dispatched here so
             # it shares the same resampling + stderr-redirect + lock as the full
             # chain, but builds/uses its own cached engine and returns early.
-            if _fast_master_enabled():
+            mode = _fast_master_mode()
+            if mode is not None:
                 try:
-                    out = _render_fast_vst_chain(dry_audio, np, daw)
+                    out = _render_fast_vst_chain(dry_audio, np, daw, mode=mode)
                     if out is not None:
                         return _write_float_wav(
                             out.T.flatten(), output_path, _VST_SAMPLE_RATE,
@@ -861,6 +960,7 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                 except Exception:
                     _VST_FAST_ENGINE = None
                     _VST_FAST_GRAPH = None
+                    _VST_FAST_MODE = None
                     # fall through to the full chain on any fast-path failure
 
             if _VST_ENGINE is None:
