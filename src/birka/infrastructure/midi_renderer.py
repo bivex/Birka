@@ -706,8 +706,14 @@ def _fast_master_enabled() -> bool:
 _FAST_MASTER_CHAINS = {
     "digital":      ["pro_q", "kot", "limiter"],          # corrective, cleanest
     "analog_clean": ["tape", "kot", "pro_q", "limiter"],  # Studer->bus->passive EQ
-    "analog_warm":  ["tape", "sdrr", "kot", "limiter"],   # +console saturation
+    "analog_warm":  ["tape", "sdrr", "kot", "limiter"],   # +console saturation (DESK)
     "analog_ultra": ["tape", "limiter"],                  # tape body + loudness
+    # Vibe archetypes -------------------------------------------------------
+    "analog_thick": ["tape", "sdrr_tube", "pro_q", "limiter"],   # fat/punchy (hiphop/lofi)
+    "polished":     ["tape", "sdrr", "soothe", "limiter"],       # luxury smooth (vocal/pop)
+    "modern_loud":  ["tape", "pro_mb", "sdrr", "limiter"],       # controlled low + loud (EDM)
+    "airy":         ["tape", "fresh", "kot", "limiter"],         # warm bottom + air (R&B)
+    "punch":        ["tape", "spiff", "kot", "limiter"],         # tight transients (drill/techno)
 }
 _FAST_MASTER_ALIASES = {
     "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
@@ -715,6 +721,11 @@ _FAST_MASTER_ALIASES = {
     "analog": "analog_clean", "clean": "analog_clean", "analog_clean": "analog_clean",
     "warm": "analog_warm", "analog_warm": "analog_warm", "vintage": "analog_warm",
     "ultra": "analog_ultra", "analog_ultra": "analog_ultra", "tape": "analog_ultra",
+    "thick": "analog_thick", "analog_thick": "analog_thick", "fat": "analog_thick",
+    "polished": "polished", "luxury": "polished", "smooth": "polished",
+    "modern_loud": "modern_loud", "loud": "modern_loud", "modern": "modern_loud",
+    "airy": "airy", "air": "airy",
+    "punch": "punch", "punchy": "punch",
 }
 
 
@@ -803,6 +814,60 @@ def _configure_sdrr_analog(sdrr):
     sdrr.set_parameter(49, 0.20)   # Mix 20%
 
 
+def _configure_sdrr_tube(sdrr):
+    # SDRR2 in TUBE mode (mode 0.0 -> group 1): warm valve saturation, fatter
+    # mids. Low drive + moderate mix for "record-like" body without dirt.
+    # group-1 params: 2 Drive, 10 Mix. idx 56 = bypass, idx 0 = mode (0.0=TUBE).
+    sdrr.set_parameter(56, 0.0)    # Bypass off
+    sdrr.set_parameter(0, 0.0)     # Mode = TUBE
+    sdrr.set_parameter(2, 0.22)    # Drive (light valve warmth)
+    sdrr.set_parameter(10, 0.35)   # Mix 35% (more colour than the DESK glue)
+
+
+def _configure_spiff_fast(spiff):
+    # spiff transient shaper, gentle: adds attack/punch. Mirrors neutral preset
+    # (mode 0 = cut path) but here used to ENHANCE transients lightly. idx 38/41
+    # bypass off, idx0 mode, idx1 cut depth, idx3 sensitivity, idx35 mix.
+    spiff.set_parameter(38, 0.0)
+    spiff.set_parameter(41, 0.0)
+    spiff.set_parameter(0, 0.0)    # mode (cut/transient path)
+    spiff.set_parameter(1, 0.18)   # depth — light punch
+    spiff.set_parameter(3, 0.35)   # sensitivity
+    spiff.set_parameter(35, 1.0)   # mix full
+
+
+def _configure_soothe_fast(soothe):
+    # soothe2 resonance smoothing for the "polished/luxury" top end. Mirrors the
+    # neutral preset values (gentle, musical). idx53 bypass, 3 mode, 4 depth,
+    # 5 sharpness, 6 selectivity, 7 attack, 8 release, 50 mix, 16 band1 sens.
+    soothe.set_parameter(53, 0.0)
+    soothe.set_parameter(3, 0.40)
+    soothe.set_parameter(4, 0.18)   # depth
+    soothe.set_parameter(5, 0.43)   # sharpness
+    soothe.set_parameter(6, 0.22)   # selectivity
+    soothe.set_parameter(7, 0.25)
+    soothe.set_parameter(8, 0.20)
+    soothe.set_parameter(50, 1.0)
+    soothe.set_parameter(16, 0.19)  # band1 sensitivity
+
+
+def _configure_fresh_fast(fresh):
+    # Fresh Air spectral high-shelf "air". Light settings (mirror neutral preset)
+    # for an open, expensive top. idx2 bypass, idx0 mid air, idx1 high air, idx3 trim.
+    fresh.set_parameter(2, 0.0)     # bypass off
+    fresh.set_parameter(0, 0.04)    # mid air (a touch more than neutral's 0.02)
+    fresh.set_parameter(1, 0.16)    # high air
+    fresh.set_parameter(3, 1.0)     # trim
+
+
+def _configure_pro_mb_fast(pro_mb):
+    # Pro-MB controlled low-end for the "modern loud" master. Reuses the neutral
+    # preset's two bands (mono-bass anchor + mid-bass glue) verbatim. idx138 bypass.
+    pro_mb.set_parameter(138, 0.0)
+    for idx, val in _VST_NEUTRAL_PRESET["pro_mb"]["params"].items():
+        pro_mb.set_parameter(idx, val)
+
+
 def _configure_limiter_fast(limiter):
     # Reuse the premium limiter config, then drop oversampling to 2x and turn
     # off true-peak limiting for speed (the chain's heaviest plugin). For a
@@ -821,17 +886,29 @@ def _configure_fast_node(name, proc, analog):
         _configure_tape_analog(proc)
     elif name == "sdrr":
         _configure_sdrr_analog(proc)
+    elif name == "sdrr_tube":
+        _configure_sdrr_tube(proc)
     elif name == "kot":
         _configure_kotelnikov_fast(proc)
     elif name == "pro_q":
         (_configure_proq_analog if analog else _configure_proq_fast)(proc)
+    elif name == "soothe":
+        _configure_soothe_fast(proc)
+    elif name == "fresh":
+        _configure_fresh_fast(proc)
+    elif name == "pro_mb":
+        _configure_pro_mb_fast(proc)
+    elif name == "spiff":
+        _configure_spiff_fast(proc)
     elif name == "limiter":
         _configure_limiter_fast(proc)
 
 
 # Graph-node name -> plugin path key in _VST_PLUGIN_PATHS.
 _FAST_NODE_PLUGIN = {
-    "tape": "chow", "sdrr": "sdrr", "kot": "kot", "pro_q": "pro_q", "limiter": "limiter",
+    "tape": "chow", "sdrr": "sdrr", "sdrr_tube": "sdrr", "kot": "kot",
+    "pro_q": "pro_q", "soothe": "soothe", "fresh": "fresh", "pro_mb": "pro_mb",
+    "spiff": "spiff", "limiter": "limiter",
 }
 
 

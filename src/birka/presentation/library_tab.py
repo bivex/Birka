@@ -702,20 +702,34 @@ class LibraryTab(QtWidgets.QWidget):
             "Full = premium 10-plugin two-pass (final export).\n"
             "Digital fast = Pro-Q→Kotelnikov→Pro-L (cleanest, fastest).\n"
             "Analog clean = Tape→Bus comp→passive EQ→Limiter.\n"
-            "Analog warm = Tape→Console(SDRR)→Bus comp→Limiter.\n"
-            "Analog ultra = Tape→Limiter (most musical, instant)."
+            "Analog warm = Tape→Console(SDRR DESK)→Bus comp→Limiter.\n"
+            "Analog ultra = Tape→Limiter (most musical, instant).\n"
+            "Analog thick = Tape→SDRR Tube→Pro-Q→Limiter (hiphop/lofi/soul).\n"
+            "Polished = Tape→SDRR→soothe2→Limiter (vocal/pop/cinematic).\n"
+            "Modern loud = Tape→Pro-MB→SDRR→Limiter (EDM/phonk/rap).\n"
+            "Airy = Tape→Fresh Air→Kotelnikov→Limiter (R&B/acoustic).\n"
+            "Punch = Tape→Spiff→Kotelnikov→Limiter (drill/techno)."
         )
         self._master_combo.addItem("Full (premium, export)", "")
         self._master_combo.addItem("Digital fast (clean)", "digital")
         self._master_combo.addItem("Analog clean", "analog_clean")
         self._master_combo.addItem("Analog warm (vintage)", "analog_warm")
         self._master_combo.addItem("Analog ultra (tape→limiter)", "analog_ultra")
+        self._master_combo.addItem("Analog thick (fat/punchy)", "analog_thick")
+        self._master_combo.addItem("Polished (luxury smooth)", "polished")
+        self._master_combo.addItem("Modern loud", "modern_loud")
+        self._master_combo.addItem("Airy", "airy")
+        self._master_combo.addItem("Punch", "punch")
         _env_mode = os.environ.get("BIRKA_FAST_MASTER", "").strip().lower()
         _alias = {
             "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
             "clean": "analog_clean", "analog": "analog_clean",
             "warm": "analog_warm", "vintage": "analog_warm",
             "ultra": "analog_ultra", "tape": "analog_ultra",
+            "thick": "analog_thick", "fat": "analog_thick",
+            "luxury": "polished", "smooth": "polished",
+            "loud": "modern_loud", "modern": "modern_loud",
+            "air": "airy", "punchy": "punch",
         }
         _resolved = _alias.get(_env_mode, _env_mode)
         _idx = self._master_combo.findData(_resolved)
