@@ -593,6 +593,23 @@ class LibraryTab(QtWidgets.QWidget):
         self._table.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self._table.customContextMenuRequested.connect(self._show_context_menu)
 
+        # Modern table polish: hide the row-number gutter (visual clutter), drop
+        # the grid lines (rows are separated by the stylesheet's bottom border),
+        # give rows breathing room, and stretch the Name column so long file
+        # names use the available width instead of truncating early.
+        self._table.verticalHeader().setVisible(False)
+        self._table.setShowGrid(False)
+        self._table.verticalHeader().setDefaultSectionSize(30)
+        header = self._table.horizontalHeader()
+        header.setStretchLastSection(False)
+        try:
+            from PyQt6 import QtWidgets as _QtW
+            header.setSectionResizeMode(0, _QtW.QHeaderView.ResizeMode.Stretch)
+        except Exception:
+            pass
+        self._table.setWordWrap(False)
+        self._table.setTextElideMode(QtCore.Qt.TextElideMode.ElideMiddle)
+
     def _init_playback_controls(self) -> None:
         self._waveform = WaveformWidget(self)
         self._waveform.position_changed.connect(self._waveform_seek)

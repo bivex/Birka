@@ -53,7 +53,11 @@ class MediaFilterProxyModel(QtCore.QSortFilterProxyModel):
         row_values = []
         for col in range(model.columnCount()):
             idx = model.index(source_row, col, source_parent)
-            value = model.data(idx, QtCore.Qt.ItemDataRole.DisplayRole)
+            # UserRole carries the raw value (DisplayRole is now decorated with
+            # stars/emoji which would break numeric matching).
+            value = model.data(idx, QtCore.Qt.ItemDataRole.UserRole)
+            if value is None:
+                value = model.data(idx, QtCore.Qt.ItemDataRole.DisplayRole)
             row_values.append(str(value) if value is not None else "")
         text_blob = " ".join(row_values).lower()
 
@@ -98,8 +102,15 @@ class MediaFilterProxyModel(QtCore.QSortFilterProxyModel):
 
     def lessThan(self, left: QtCore.QModelIndex, right: QtCore.QModelIndex) -> bool:
         column = left.column()
-        left_data = self.sourceModel().data(left, QtCore.Qt.ItemDataRole.DisplayRole)
-        right_data = self.sourceModel().data(right, QtCore.Qt.ItemDataRole.DisplayRole)
+        # Sort on the raw UserRole value, not the decorated DisplayRole (stars/
+        # emoji would otherwise corrupt numeric ordering).
+        UserRole = QtCore.Qt.ItemDataRole.UserRole
+        left_data = self.sourceModel().data(left, UserRole)
+        right_data = self.sourceModel().data(right, UserRole)
+        if left_data is None:
+            left_data = self.sourceModel().data(left, QtCore.Qt.ItemDataRole.DisplayRole)
+        if right_data is None:
+            right_data = self.sourceModel().data(right, QtCore.Qt.ItemDataRole.DisplayRole)
 
         left_str = str(left_data) if left_data is not None else ""
         right_str = str(right_data) if right_data is not None else ""
