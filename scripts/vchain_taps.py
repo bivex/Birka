@@ -33,7 +33,6 @@ def _make_engine():
     soothe = engine.make_plugin_processor("soothe", _VST_PLUGIN_PATHS["soothe"])
     pro_q = engine.make_plugin_processor("pro_q", _VST_PLUGIN_PATHS["pro_q"])
     pro_mb = engine.make_plugin_processor("pro_mb", _VST_PLUGIN_PATHS["pro_mb"])
-    nova = engine.make_plugin_processor("nova", _VST_PLUGIN_PATHS["nova"])
     kot = engine.make_plugin_processor("kot", _VST_PLUGIN_PATHS["kot"])
     fresh = engine.make_plugin_processor("fresh", _VST_PLUGIN_PATHS["fresh"])
     cho = engine.make_plugin_processor("cho", _VST_PLUGIN_PATHS["cho"])
@@ -44,7 +43,6 @@ def _make_engine():
 
     _configure_kotelnikov_ge(kot)
     _configure_limiter(limiter)
-    _configure_nova(nova)
 
     # VISION — stereo waveform, all-round spectrum
     vision.set_parameter(7, 0.333)
@@ -59,7 +57,7 @@ def _make_engine():
         "engine": engine,
         "nodes": dict(
             tape=tape, sdrr=sdrr, spiff=spiff, soothe=soothe,
-            pro_q=pro_q, pro_mb=pro_mb, nova=nova, kot=kot,
+            pro_q=pro_q, pro_mb=pro_mb, kot=kot,
             fresh=fresh, cho=cho, ste=ste, reverb=reverb,
             vision=vision, limiter=limiter,
         ),
@@ -119,9 +117,8 @@ def _render_stage(engine, input_buf, nodes, upto_name, duration):
     n = engine.make_playback_processor("pb", input_buf.astype(np.float32))
 
     chain = [
-        "tape", "sdrr", "spiff", "soothe",
-        "pro_q", "pro_mb", "nova", "kot",
-        "fresh", "reverb", "vision", "limiter",
+        "tape", "spiff", "soothe", "pro_q", "pro_mb",
+        "kot", "sdrr", "reverb", "fresh", "vision", "limiter",
     ]
     # обрезаем до нужного узла включительно
     idx = chain.index(upto_name) + 1
@@ -154,9 +151,8 @@ def main():
     input_buf = np.stack([L, R]).astype(np.float32)
 
     stages = [
-        "tape", "sdrr", "spiff", "soothe",
-        "pro_q", "pro_mb", "nova", "kot",
-        "fresh", "reverb", "vision", "limiter",
+        "tape", "spiff", "soothe", "pro_q", "pro_mb",
+        "kot", "sdrr", "reverb", "fresh", "vision", "limiter",
     ]
 
     results = {}

@@ -704,9 +704,6 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                 pro_mb = _VST_ENGINE.make_plugin_processor(
                     "pro_mb", _VST_PLUGIN_PATHS["pro_mb"]
                 )
-                nova = _VST_ENGINE.make_plugin_processor(
-                    "nova", _VST_PLUGIN_PATHS["nova"]
-                )
                 kot = _VST_ENGINE.make_plugin_processor("kot", _VST_PLUGIN_PATHS["kot"])
                 fresh = _VST_ENGINE.make_plugin_processor(
                     "fresh", _VST_PLUGIN_PATHS["fresh"]
@@ -722,13 +719,12 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
 
                 _configure_kotelnikov_ge(kot)
                 _configure_limiter(limiter)
-                _configure_nova(nova)
 
                 dummy = np.zeros((2, _VST_BUFFER_SIZE), dtype=np.float32)
                 pb = _VST_ENGINE.make_playback_processor("pb", dummy)
                 # Premium chain (audio-engineer spec, AAC/Apple Music target):
-                #   tape → sdrr → spiff → soothe → pro_q → pro_mb → nova → kot
-                #   → fresh → reverb(dragonfly) → limiter
+                #   tape → spiff → soothe → pro_q → pro_mb → kot → sdrr
+                #   → reverb(dragonfly) → fresh → limiter
                 # A1StereoControl was REMOVED: stereo widening now happens
                 # inside Pro-Q 4 via per-band Stereo Placement (idx 7 per band).
                 # Bass band → Mid (mono bass), air band → Side (wide air). This
@@ -737,16 +733,15 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                 connections = [
                     (pb, []),
                     (tape, ["pb"]),
-                    (sdrr, ["tape"]),
-                    (spiff, ["sdrr"]),
+                    (spiff, ["tape"]),
                     (soothe, ["spiff"]),
                     (pro_q, ["soothe"]),
                     (pro_mb, ["pro_q"]),
-                    (nova, ["pro_mb"]),
-                    (kot, ["nova"]),
-                    (fresh, ["kot"]),
-                    (reverb, ["fresh"]),
-                    (limiter, ["reverb"]),
+                    (kot, ["pro_mb"]),
+                    (sdrr, ["kot"]),
+                    (reverb, ["sdrr"]),
+                    (fresh, ["reverb"]),
+                    (limiter, ["fresh"]),
                 ]
                 _VST_ENGINE.load_graph(connections)
                 _VST_GRAPH = {
@@ -756,7 +751,6 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                     "soothe": soothe,
                     "pro_q": pro_q,
                     "pro_mb": pro_mb,
-                    "nova": nova,
                     "kot": kot,
                     "fresh": fresh,
                     "cho": cho,

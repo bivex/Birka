@@ -29,7 +29,6 @@ spiff = engine.make_plugin_processor("spiff", _VST_PLUGIN_PATHS["spiff"])
 soothe = engine.make_plugin_processor("soothe", _VST_PLUGIN_PATHS["soothe"])
 pro_q = engine.make_plugin_processor("pro_q", _VST_PLUGIN_PATHS["pro_q"])
 pro_mb = engine.make_plugin_processor("pro_mb", _VST_PLUGIN_PATHS["pro_mb"])
-nova = engine.make_plugin_processor("nova", _VST_PLUGIN_PATHS["nova"])
 kot = engine.make_plugin_processor("kot", _VST_PLUGIN_PATHS["kot"])
 fresh = engine.make_plugin_processor("fresh", _VST_PLUGIN_PATHS["fresh"])
 cho = engine.make_plugin_processor("cho", _VST_PLUGIN_PATHS["cho"])
@@ -40,7 +39,6 @@ limiter = engine.make_plugin_processor("limiter", _VST_PLUGIN_PATHS["limiter"])
 
 _configure_kotelnikov_ge(kot)
 _configure_limiter(limiter)
-_configure_nova(nova)
 
 # VISION 4X: Stereo scope mode, Mid waveform
 vision.set_parameter(7, 0.333)   # Spectrum = All-round 4096
@@ -65,16 +63,15 @@ pb = engine.make_playback_processor("pb", stereo)
 connections = [
     (pb, []),
     (tape, ["pb"]),
-    (sdrr, ["tape"]),
-    (spiff, ["sdrr"]),
+    (spiff, ["tape"]),
     (soothe, ["spiff"]),
     (pro_q, ["soothe"]),
     (pro_mb, ["pro_q"]),
-    (nova, ["pro_mb"]),
-    (kot, ["nova"]),
-    (fresh, ["kot"]),
-    (reverb, ["fresh"]),
-    (vision, ["reverb"]),
+    (kot, ["pro_mb"]),
+    (sdrr, ["kot"]),
+    (reverb, ["sdrr"]),
+    (fresh, ["reverb"]),
+    (vision, ["fresh"]),
     (limiter, ["vision"]),
 ]
 engine.load_graph(connections)

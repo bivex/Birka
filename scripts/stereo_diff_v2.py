@@ -97,7 +97,7 @@ def _diff(prev: dict | None, cur: dict) -> list[str]:
 
 # ── one full render up to a tap ────────────────────────────────────────────
 
-TAP_ORDER = ["tape","sdrr","spiff","soothe","pro_q","pro_mb","nova","kot","fresh","reverb","limiter"]
+TAP_ORDER = ["tape","spiff","soothe","pro_q","pro_mb","kot","sdrr","reverb","fresh","limiter"]
 
 def render_tap(tap: str, stereo_in: np.ndarray) -> np.ndarray:
     engine = daw.RenderEngine(SR, BUF)
@@ -109,7 +109,6 @@ def render_tap(tap: str, stereo_in: np.ndarray) -> np.ndarray:
         "soothe":  engine.make_plugin_processor("soothe",  _VST_PLUGIN_PATHS["soothe"]),
         "pro_q":   engine.make_plugin_processor("pro_q",   _VST_PLUGIN_PATHS["pro_q"]),
         "pro_mb":  engine.make_plugin_processor("pro_mb",  _VST_PLUGIN_PATHS["pro_mb"]),
-        "nova":    engine.make_plugin_processor("nova",    _VST_PLUGIN_PATHS["nova"]),
         "kot":     engine.make_plugin_processor("kot",     _VST_PLUGIN_PATHS["kot"]),
         "fresh":   engine.make_plugin_processor("fresh",   _VST_PLUGIN_PATHS["fresh"]),
         "reverb":  engine.make_plugin_processor("reverb",  _VST_PLUGIN_PATHS["reverb"]),
@@ -121,7 +120,6 @@ def render_tap(tap: str, stereo_in: np.ndarray) -> np.ndarray:
 
     _configure_kotelnikov_ge(procs["kot"])
     _configure_limiter(procs["limiter"])
-    _configure_nova(procs["nova"])
 
     chain = TAP_ORDER[: TAP_ORDER.index(tap) + 1]
     conns = [(pb, [])]

@@ -65,7 +65,6 @@ def _build_chain(stereo_in, with_kot=True):
     soothe  = engine.make_plugin_processor("soothe", _VST_PLUGIN_PATHS["soothe"])
     pro_q   = engine.make_plugin_processor("pro_q",  _VST_PLUGIN_PATHS["pro_q"])
     pro_mb  = engine.make_plugin_processor("pro_mb", _VST_PLUGIN_PATHS["pro_mb"])
-    nova    = engine.make_plugin_processor("nova",   _VST_PLUGIN_PATHS["nova"])
     kot     = engine.make_plugin_processor("kot",    _VST_PLUGIN_PATHS["kot"])
     fresh   = engine.make_plugin_processor("fresh",  _VST_PLUGIN_PATHS["fresh"])
     reverb  = engine.make_plugin_processor("reverb", _VST_PLUGIN_PATHS["reverb"])
@@ -73,7 +72,6 @@ def _build_chain(stereo_in, with_kot=True):
 
     _configure_kotelnikov_ge(kot)
     _configure_limiter(limiter)
-    _configure_nova(nova)
 
     if not with_kot:
         kot.set_parameter(12, 1.0)  # Dry Wet = 0% wet → байпас
@@ -82,11 +80,11 @@ def _build_chain(stereo_in, with_kot=True):
     ste_d = engine.make_plugin_processor("ste_d", _VST_PLUGIN_PATHS.get("ste", _VST_PLUGIN_PATHS["reverb"]))
 
     nodes = dict(tape=tape,sdrr=sdrr,spiff=spiff,soothe=soothe,
-                 pro_q=pro_q,pro_mb=pro_mb,nova=nova,kot=kot,
+                 pro_q=pro_q,pro_mb=pro_mb,kot=kot,
                  fresh=fresh,reverb=reverb,limiter=limiter)
 
-    chain = ["tape","sdrr","spiff","soothe","pro_q","pro_mb","nova",
-             "kot","fresh","reverb","limiter"]
+    chain = ["tape","spiff","soothe","pro_q","pro_mb","kot","sdrr",
+             "reverb","fresh","limiter"]
     if not with_kot:
         chain = [c for c in chain if c != "kot"]
 
