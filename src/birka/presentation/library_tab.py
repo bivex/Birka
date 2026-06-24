@@ -44,14 +44,20 @@ VOLUME_SLIDER_MAX = 100
 MIDI_EXTENSIONS = {".mid", ".midi"}
 
 
-def _render_midi_to_tmp_wav(midi_path: Path) -> Path | None:
-    """Render MIDI to a temporary WAV file using sfizz. No normalization (fast)."""
+def _render_midi_to_tmp_wav(midi_path: Path, quality: int = 2) -> Path | None:
+    """Render MIDI to a temporary WAV file using sfizz. No normalization (fast).
+
+    quality is the sfizz sample-interpolation quality (2=Hermite3/fast,
+    6=Sinc24/standard, 10=Sinc72/studio); it is ignored by the tsf/fluidsynth
+    backends, which have no equivalent knob.
+    """
     from birka.infrastructure.midi_renderer import render_midi_to_wav
 
     tmp_dir = Path(tempfile.mkdtemp(prefix="birka_midi_"))
     wav_path = tmp_dir / (midi_path.stem + ".wav")
     if render_midi_to_wav(
-        midi_path, wav_path, sample_rate=96000, polyphony=64, bit_depth=24
+        midi_path, wav_path, sample_rate=96000, polyphony=64, bit_depth=24,
+        quality=quality,
     ):
         return wav_path
     return None
@@ -140,16 +146,17 @@ class _RenderWavWorker(QtCore.QObject):
 class _MidiPlayRenderWorker(QtCore.QObject):
     finished = QtCore.pyqtSignal(str)
 
-    def __init__(self, midi_path: Path, fast: bool = False) -> None:
+    def __init__(self, midi_path: Path, fast: bool = False, quality: int = 2) -> None:
         super().__init__()
         self._midi_path = midi_path
         self._fast = fast
+        self._quality = quality
 
     def run(self) -> None:
         if self._fast:
             rendered = _render_midi_to_tmp_preview_mp3(self._midi_path)
         else:
-            rendered = _render_midi_to_tmp_wav(self._midi_path)
+            rendered = _render_midi_to_tmp_wav(self._midi_path, quality=self._quality)
         self.finished.emit(str(rendered) if rendered is not None else "")
 
 
@@ -549,10 +556,26 @@ class LibraryTab(QtWidgets.QWidget):
         self._render_wav_button.clicked.connect(self._render_midi_wav)
         self._quality_label = QtWidgets.QLabel("Synth Quality:", self)
         self._quality_combo = QtWidgets.QComboBox(self)
-        self._quality_combo.addItem("Fast Quality (Hermite3)", 2)
-        self._quality_combo.addItem("Standard Quality (Sinc24)", 6)
-        self._quality_combo.addItem("Studio Quality (Sinc72)", 10)
-        self._quality_combo.setCurrentIndex(0)
+        # All 11 sfizz sample-interpolation levels (set_sample_quality 0..10),
+        # labelled with the exact interpolator each one selects in sfizz's
+        # Voice.cpp. Higher = cleaner high-frequency reproduction / less aliasing
+        # but more CPU. Levels apply to the sfizz backend only (tsf/fluidsynth
+        # ignore them). 0/1 are below the old default and exposed for speed/AB.
+        self._quality_combo.addItem("0 — Nearest (fastest, lo-fi)", 0)
+        self._quality_combo.addItem("1 — Linear", 1)
+        self._quality_combo.addItem("2 — Hermite3 (fast, default)", 2)
+        self._quality_combo.addItem("3 — Sinc8", 3)
+        self._quality_combo.addItem("4 — Sinc12", 4)
+        self._quality_combo.addItem("5 — Sinc16", 5)
+        self._quality_combo.addItem("6 — Sinc24 (standard)", 6)
+        self._quality_combo.addItem("7 — Sinc36", 7)
+        self._quality_combo.addItem("8 — Sinc48", 8)
+        self._quality_combo.addItem("9 — Sinc60", 9)
+        self._quality_combo.addItem("10 — Sinc72 (studio, slowest)", 10)
+        # Default to Hermite3 (quality 2) — sfizz's own default and the previous
+        # behaviour, so existing renders are unchanged unless the user opts up.
+        idx = self._quality_combo.findData(2)
+        self._quality_combo.setCurrentIndex(idx if idx >= 0 else 0)
 
     def _init_pager_controls(self) -> None:
         self._count_label = QtWidgets.QLabel("Files: 0", self)
@@ -805,7 +828,11 @@ class LibraryTab(QtWidgets.QWidget):
         button.setText("Loading...")
 
         self._midi_play_thread = QtCore.QThread()
-        self._midi_play_worker = _MidiPlayRenderWorker(path, fast=fast)
+        # Honour the Synth Quality combo for full-quality Play (Fast Play uses
+        # the fixed low-quality preview path and ignores it). currentData() is
+        # the sfizz quality int (2/6/10); falls back to 2 if unset.
+        quality = self._quality_combo.currentData() or 2
+        self._midi_play_worker = _MidiPlayRenderWorker(path, fast=fast, quality=quality)
         self._midi_play_worker.moveToThread(self._midi_play_thread)
         self._midi_play_thread.started.connect(self._midi_play_worker.run)
         self._midi_play_worker.finished.connect(self._on_midi_render_finished)
