@@ -604,7 +604,15 @@ class LibraryTab(QtWidgets.QWidget):
         header.setStretchLastSection(False)
         try:
             from PyQt6 import QtWidgets as _QtW
-            header.setSectionResizeMode(0, _QtW.QHeaderView.ResizeMode.Stretch)
+            RM = _QtW.QHeaderView.ResizeMode
+            # Name stretches to fill; metadata columns size to content so BPM/Key
+            # stay compact and Created/Modified don't hog width. Tags gets a small
+            # fixed width since it's often the "—" placeholder.
+            header.setSectionResizeMode(0, RM.Stretch)          # Name
+            for _c in (1, 2, 3, 4, 5, 7, 8):                     # Type..Rating, dates
+                header.setSectionResizeMode(_c, RM.ResizeToContents)
+            header.setSectionResizeMode(6, RM.Interactive)       # Tags
+            self._table.setColumnWidth(6, 110)
         except Exception:
             pass
         self._table.setWordWrap(False)

@@ -99,12 +99,13 @@ QTableView::item {
     border-bottom: 1px solid #20202d;
 }
 QTableView::item:selected {
-    background-color: #2c2c3e;
+    background-color: #103040;
     color: #00f0ff;
     font-weight: bold;
+    border-left: 3px solid #00f0ff;
 }
 QTableView::item:hover {
-    background-color: #202030;
+    background-color: #1c1c2a;
 }
 QHeaderView::section {
     background-color: #1a1a26;

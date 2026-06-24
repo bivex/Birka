@@ -19,6 +19,10 @@ class MediaRow:
     tags: str
     created: str
     modified: str
+    # Full "YYYY-MM-DD HH:MM" timestamps for tooltips; the created/modified
+    # fields above are the compact display form ("24 Jun, 22:42").
+    created_full: str = ""
+    modified_full: str = ""
 
 
 class MediaPresenter:
@@ -44,16 +48,24 @@ class MediaPresenter:
             except OSError:
                 stat = None
         if stat is not None:
-            created = datetime.fromtimestamp(stat.st_ctime).strftime("%Y-%m-%d %H:%M")
-            modified = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M")
+            created_dt = datetime.fromtimestamp(stat.st_ctime)
+            modified_dt = datetime.fromtimestamp(stat.st_mtime)
+            created_full = created_dt.strftime("%Y-%m-%d %H:%M")
+            modified_full = modified_dt.strftime("%Y-%m-%d %H:%M")
+            created = _format_compact_date(created_dt)
+            modified = _format_compact_date(modified_dt)
         else:
-            created = modified = ""
+            created = modified = created_full = modified_full = ""
         rating = _format_rating(item)
         tags = _format_tags(item)
         if isinstance(item, AudioItem):
-            return _audio_row(item, created, modified, rating, tags)
+            return _audio_row(
+                item, created, modified, rating, tags, created_full, modified_full
+            )
         if isinstance(item, MidiItem):
-            return _midi_row(item, created, modified, rating, tags)
+            return _midi_row(
+                item, created, modified, rating, tags, created_full, modified_full
+            )
         return MediaRow(
             path=str(item.path),
             name=item.name,
@@ -65,6 +77,8 @@ class MediaPresenter:
             tags=tags,
             created=created,
             modified=modified,
+            created_full=created_full,
+            modified_full=modified_full,
         )
 
 
@@ -72,6 +86,32 @@ def _format_optional(value) -> str:  # noqa: ANN001
     if value is None:
         return ""
     return str(value)
+
+
+def _format_compact_date(dt: datetime) -> str:
+    """Compact, low-noise timestamp for the table.
+
+    Recent files read as a relative age ("just now", "5m ago", "3h ago",
+    "2d ago"); older ones as "24 Jun, 22:42" (current year) or "24 Jun 2025"
+    (other years). The full "YYYY-MM-DD HH:MM" stays available for tooltips.
+    """
+    now = datetime.now()
+    delta = now - dt
+    secs = delta.total_seconds()
+    if secs < 0:
+        # Clock skew / future mtime — just show the absolute compact form.
+        pass
+    elif secs < 60:
+        return "just now"
+    elif secs < 3600:
+        return f"{int(secs // 60)}m ago"
+    elif secs < 86400:
+        return f"{int(secs // 3600)}h ago"
+    elif secs < 7 * 86400:
+        return f"{int(secs // 86400)}d ago"
+    if dt.year == now.year:
+        return dt.strftime("%-d %b, %H:%M")
+    return dt.strftime("%-d %b %Y")
 
 
 def _format_duration(seconds: float) -> str:
@@ -95,7 +135,8 @@ def _format_tags(item: MediaItem) -> str:
 
 
 def _audio_row(
-    item: AudioItem, created: str, modified: str, rating: str, tags: str
+    item: AudioItem, created: str, modified: str, rating: str, tags: str,
+    created_full: str = "", modified_full: str = "",
 ) -> MediaRow:
     metadata = item.metadata
     duration = _format_duration(metadata.duration_seconds) if metadata else ""
@@ -110,11 +151,14 @@ def _audio_row(
         tags=tags,
         created=created,
         modified=modified,
+        created_full=created_full,
+        modified_full=modified_full,
     )
 
 
 def _midi_row(
-    item: MidiItem, created: str, modified: str, rating: str, tags: str
+    item: MidiItem, created: str, modified: str, rating: str, tags: str,
+    created_full: str = "", modified_full: str = "",
 ) -> MediaRow:
     metadata = item.metadata
     has_dur = metadata and metadata.duration_seconds
@@ -130,4 +174,6 @@ def _midi_row(
         tags=tags,
         created=created,
         modified=modified,
+        created_full=created_full,
+        modified_full=modified_full,
     )
