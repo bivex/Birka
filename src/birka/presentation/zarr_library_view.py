@@ -54,6 +54,7 @@ class ZarrLibraryView(QtWidgets.QWidget):
         root = _build_zarr_hierarchy(self._root, self._items)
         viewer = ZarrViewer(root)
         self._viewer = viewer
+        _theme_zarr_tree(viewer)
         self._status.setText("Zarr tree view")
         layout.addWidget(viewer)
 
@@ -100,3 +101,29 @@ def _build_zarr_hierarchy(root: Path, items: Iterable[MediaItem]):
 def _apply_qt_compat() -> None:
     if not hasattr(QtCore.Qt, "DropActions") and hasattr(QtCore.Qt, "DropAction"):
         QtCore.Qt.DropActions = QtCore.Qt.DropAction  # type: ignore[attr-defined]
+
+
+def _theme_zarr_tree(viewer: QtWidgets.QWidget) -> None:
+    """Force the dark-theme selection colours onto the bundled ZarrViewer tree.
+
+    The third-party zarrview widget renders row selection through the widget
+    PALETTE, not the app stylesheet, so the global QSS leaves a glaring solid
+    white selection bar. We override the relevant palette roles (Highlight /
+    HighlightedText / Base / Text) directly on every QTreeView/QAbstractItemView
+    inside the viewer so selection matches the rest of the dark UI.
+    """
+    from PyQt6 import QtGui
+
+    pal = QtGui.QPalette()
+    Role = QtGui.QPalette.ColorRole
+    pal.setColor(Role.Base, QtGui.QColor("#161620"))
+    pal.setColor(Role.Text, QtGui.QColor("#e3e3e8"))
+    pal.setColor(Role.Highlight, QtGui.QColor("#103040"))
+    pal.setColor(Role.HighlightedText, QtGui.QColor("#00f0ff"))
+
+    targets = viewer.findChildren(QtWidgets.QAbstractItemView)
+    if isinstance(viewer, QtWidgets.QAbstractItemView):
+        targets = [viewer, *targets]
+    for view in targets:
+        view.setPalette(pal)
+        view.setAlternatingRowColors(False)

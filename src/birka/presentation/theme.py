@@ -120,6 +120,35 @@ QHeaderView::section:last {
     border-right: none;
 }
 
+/* Tree View styling (Zarr tree). Without this the row selection falls back to
+   the OS default — a glaring solid-white bar that clashes with the dark theme. */
+QTreeView, QTreeWidget {
+    background-color: #161620;
+    border: 1px solid #252535;
+    border-radius: 6px;
+    selection-background-color: #103040;
+    selection-color: #00f0ff;
+    outline: none;
+    padding: 4px;
+}
+QTreeView::item, QTreeWidget::item {
+    padding: 4px 2px;
+    border: none;
+}
+QTreeView::item:hover, QTreeWidget::item:hover {
+    background-color: #1c1c2a;
+}
+QTreeView::item:selected, QTreeWidget::item:selected {
+    background-color: #103040;
+    color: #00f0ff;
+}
+QTreeView::branch {
+    background: transparent;
+}
+QTreeView::branch:hover {
+    background-color: #1c1c2a;
+}
+
 /* Form Elements: Input fields, Combo boxes, Spin boxes */
 QLineEdit, QSpinBox, QComboBox {
     background-color: #161622;
