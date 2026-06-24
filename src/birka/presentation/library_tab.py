@@ -44,12 +44,80 @@ VOLUME_SLIDER_MAX = 100
 MIDI_EXTENSIONS = {".mid", ".midi"}
 
 
+def _normalize_wav_for_playback(
+    wav_path: Path, target_lufs: float = -16.0, tp_ceiling_db: float = -1.0
+) -> None:
+    """Loudness-normalise a preview WAV in place for comfortable playback.
+
+    The render paths are deliberately quiet/inconsistent: raw sfizz sits around
+    -14 LUFS, but the VST mastering chain (USE_VST_CHAIN) can land near -28 LUFS
+    when its +6 dB calibration cap can't reach the target on quiet material.
+    For *listening* we just want a consistent level, so we measure integrated
+    loudness and apply a single gain to hit target_lufs, then guard the true
+    (inter-sample) peak so nothing clips. Mastering for export is untouched —
+    this only affects the throwaway preview file handed to the player.
+
+    Best-effort: any failure (missing deps, silent/too-short audio) leaves the
+    file as-is.
+    """
+    try:
+        import numpy as np
+        import soundfile as sf
+    except Exception:
+        return
+    try:
+        audio, sr = sf.read(str(wav_path))
+    except Exception:
+        return
+    if audio.size == 0:
+        return
+    if audio.ndim == 1:
+        audio = audio[:, None]
+
+    gain = 1.0
+    try:
+        import pyloudnorm as pyln
+
+        if len(audio) / sr > 0.4:
+            loudness = pyln.Meter(sr).integrated_loudness(audio)
+            if not np.isinf(loudness) and not np.isnan(loudness):
+                gain = 10.0 ** ((target_lufs - loudness) / 20.0)
+    except Exception:
+        # Fallback: peak-anchor to roughly -1 dBFS so quiet renders come up.
+        peak = float(np.max(np.abs(audio)))
+        if peak > 1e-6:
+            gain = 0.891 / peak
+
+    audio = audio * gain
+
+    # True-peak guard via 4x oversampling so the boosted preview never clips.
+    ceiling = 10.0 ** (tp_ceiling_db / 20.0)
+    try:
+        from scipy.signal import resample_poly
+
+        tp = 0.0
+        for c in range(audio.shape[1]):
+            up = resample_poly(audio[:, c], 4, 1)
+            if up.size:
+                tp = max(tp, float(np.max(np.abs(up))))
+    except Exception:
+        tp = float(np.max(np.abs(audio)))
+    if tp > ceiling and tp > 0:
+        audio = audio * (ceiling / tp)
+
+    try:
+        sf.write(str(wav_path), audio, sr, subtype="FLOAT")
+    except Exception:
+        pass
+
+
 def _render_midi_to_tmp_wav(midi_path: Path, quality: int = 2) -> Path | None:
-    """Render MIDI to a temporary WAV file using sfizz. No normalization (fast).
+    """Render MIDI to a temporary WAV file using sfizz, normalised for playback.
 
     quality is the sfizz sample-interpolation quality (2=Hermite3/fast,
     6=Sinc24/standard, 10=Sinc72/studio); it is ignored by the tsf/fluidsynth
-    backends, which have no equivalent knob.
+    backends, which have no equivalent knob. The rendered preview is loudness-
+    normalised to a comfortable listening level (export rendering is unaffected).
     """
     from birka.infrastructure.midi_renderer import render_midi_to_wav
 
@@ -59,6 +127,7 @@ def _render_midi_to_tmp_wav(midi_path: Path, quality: int = 2) -> Path | None:
         midi_path, wav_path, sample_rate=96000, polyphony=64, bit_depth=24,
         quality=quality,
     ):
+        _normalize_wav_for_playback(wav_path)
         return wav_path
     return None
 
