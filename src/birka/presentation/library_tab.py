@@ -106,7 +106,7 @@ def _normalize_wav_for_playback(
         audio = audio * (ceiling / tp)
 
     try:
-        sf.write(str(wav_path), audio, sr, subtype="FLOAT")
+        sf.write(str(wav_path), audio, sr, subtype="PCM_16")
     except Exception:
         pass
 
@@ -123,8 +123,12 @@ def _render_midi_to_tmp_wav(midi_path: Path, quality: int = 2) -> Path | None:
 
     tmp_dir = Path(tempfile.mkdtemp(prefix="birka_midi_"))
     wav_path = tmp_dir / (midi_path.stem + ".wav")
+    # Playback preview: render at 44.1 kHz / 16-bit. 96 kHz/float32 carries no
+    # audible benefit for listening and the QMediaPlayer FFmpeg backend is
+    # flaky with high-rate float WAVs (silent playback on some output devices).
+    # CD-standard 44.1/16 is universally decodable and renders faster.
     if render_midi_to_wav(
-        midi_path, wav_path, sample_rate=96000, polyphony=64, bit_depth=24,
+        midi_path, wav_path, sample_rate=44100, polyphony=64, bit_depth=16,
         quality=quality,
     ):
         _normalize_wav_for_playback(wav_path)
