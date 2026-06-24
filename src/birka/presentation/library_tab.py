@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -688,6 +689,30 @@ class LibraryTab(QtWidgets.QWidget):
         idx = self._quality_combo.findData(2)
         self._quality_combo.setCurrentIndex(idx if idx >= 0 else 0)
 
+        # Fast Master toggle: swaps the full 10-plugin two-pass VST chain for the
+        # lightweight single-pass Pro-Q -> Kotelnikov -> Pro-L chain (~5x faster,
+        # near-identical loudness). Drives the BIRKA_FAST_MASTER env var that
+        # midi_renderer._fast_master_enabled() reads at render time, so both Play
+        # and Render pick it up. Initialised from any pre-set env value so a
+        # launch with BIRKA_FAST_MASTER=1 shows the box already checked.
+        self._fast_master_check = QtWidgets.QCheckBox("Fast Master", self)
+        self._fast_master_check.setToolTip(
+            "Lightweight single-pass mastering chain (Pro-Q + Kotelnikov + "
+            "Pro-L). ~5x faster for quick previews/drafts. Off = full premium "
+            "chain for final export. Only affects the sfizz VST chain."
+        )
+        _env_fast = os.environ.get("BIRKA_FAST_MASTER", "").strip().lower() in (
+            "1", "true", "yes",
+        )
+        self._fast_master_check.setChecked(_env_fast)
+        self._fast_master_check.toggled.connect(self._on_fast_master_toggled)
+
+    def _on_fast_master_toggled(self, checked: bool) -> None:
+        # Reflect the checkbox into the env var the renderer reads. Set to "1"
+        # when on; clear (empty string) when off so _fast_master_enabled() is
+        # False. Takes effect on the next render — no restart needed.
+        os.environ["BIRKA_FAST_MASTER"] = "1" if checked else ""
+
     def _init_pager_controls(self) -> None:
         self._count_label = QtWidgets.QLabel("Files: 0", self)
         self._page_label = QtWidgets.QLabel("Page 1/1", self)
@@ -805,6 +830,7 @@ class LibraryTab(QtWidgets.QWidget):
         grid.addWidget(self._render_wav_button, 2, 4)
 
         # Row 3: Quality
+        grid.addWidget(self._fast_master_check, 3, 0, 1, 2)
         grid.addWidget(self._quality_label, 3, 2)
         grid.addWidget(self._quality_combo, 3, 3, 1, 2)
 
