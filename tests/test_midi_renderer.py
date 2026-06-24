@@ -43,6 +43,7 @@ MIDI_DIR = Path("/Volumes/External/Code/Birka/data/library/midi")
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _read_wav_samples(wav_path: Path) -> tuple[int, int, int, np.ndarray]:
     """Return (channels, sampwidth, framerate, int data array).
 
@@ -102,6 +103,7 @@ def _make_silence_wav(path: Path, duration_s: float = 1.0, sr: int = 44100) -> N
 # Soundfont / backend
 # ---------------------------------------------------------------------------
 
+
 class TestBackend(unittest.TestCase):
     def test_soundfont_found(self) -> None:
         sf = _find_soundfont()
@@ -114,6 +116,7 @@ class TestBackend(unittest.TestCase):
     def test_backend_name_is_tsf_by_default(self) -> None:
         # With no BIRKA_BACKEND override, the default is tsf (when available).
         from birka.infrastructure import midi_renderer as mr
+
         old = os.environ.pop("BIRKA_BACKEND", None)
         try:
             self.assertEqual(mr._backend_name(), "tsf")
@@ -232,6 +235,7 @@ class TestFindSfz(unittest.TestCase):
 # WAV output format
 # ---------------------------------------------------------------------------
 
+
 class TestWavFormat(unittest.TestCase):
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
@@ -256,7 +260,7 @@ class TestWavFormat(unittest.TestCase):
         wav = self.tmp / "out.wav"
         self.assertTrue(render_midi_to_wav(MIDI_PATH, wav))
         _, _, fr, _ = _read_wav_samples(wav)
-        self.assertEqual(fr, 44100)
+        self.assertEqual(fr, 96000)
 
     def test_wav_custom_sample_rate(self) -> None:
         wav = self.tmp / "out_48k.wav"
@@ -274,6 +278,7 @@ class TestWavFormat(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Audio content (not silent)
 # ---------------------------------------------------------------------------
+
 
 class TestWavContent(unittest.TestCase):
     def setUp(self) -> None:
@@ -339,6 +344,7 @@ class TestWavContent(unittest.TestCase):
 # _synth_tsf_to_wav
 # ---------------------------------------------------------------------------
 
+
 class TestSynthTsfToWav(unittest.TestCase):
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
@@ -381,12 +387,15 @@ class TestSynthTsfToWav(unittest.TestCase):
             ok = _synth_tsf_to_wav(self.sf, midi, out)
             self.assertTrue(ok, f"Failed to render {midi.name}")
             _, _, _, data = _read_wav_samples(out)
-            self.assertGreater(int(np.max(np.abs(data))), 0, f"Silent output for {midi.name}")
+            self.assertGreater(
+                int(np.max(np.abs(data))), 0, f"Silent output for {midi.name}"
+            )
 
 
 # ---------------------------------------------------------------------------
 # Loudnorm stats
 # ---------------------------------------------------------------------------
+
 
 class TestMeasureStats(unittest.TestCase):
     def setUp(self) -> None:
@@ -404,12 +413,20 @@ class TestMeasureStats(unittest.TestCase):
 
     def test_required_keys_present(self) -> None:
         stats = _measure_stats(self.wav)
-        for key in ("input_i", "input_lra", "input_tp", "input_thresh", "target_offset"):
+        for key in (
+            "input_i",
+            "input_lra",
+            "input_tp",
+            "input_thresh",
+            "target_offset",
+        ):
             self.assertIn(key, stats)
 
     def test_values_are_not_inf_for_audible_wav(self) -> None:
         stats = _measure_stats(self.wav)
-        self.assertNotEqual(stats["input_i"], "-inf", "input_i should not be -inf for audible audio")
+        self.assertNotEqual(
+            stats["input_i"], "-inf", "input_i should not be -inf for audible audio"
+        )
 
     def test_returns_none_for_missing_file(self) -> None:
         stats = _measure_stats(Path("/nonexistent.wav"))
@@ -427,6 +444,7 @@ class TestMeasureStats(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # _parse_loudnorm_stats
 # ---------------------------------------------------------------------------
+
 
 class TestParseLoudnormStats(unittest.TestCase):
     VALID_JSON_STDERR = """
@@ -466,6 +484,7 @@ class TestParseLoudnormStats(unittest.TestCase):
 # _build_loudnorm_filter
 # ---------------------------------------------------------------------------
 
+
 class TestBuildLoudnormFilter(unittest.TestCase):
     STATS = {
         "input_i": "-14.20",
@@ -494,6 +513,7 @@ class TestBuildLoudnormFilter(unittest.TestCase):
 # _encode_mp3
 # ---------------------------------------------------------------------------
 
+
 class TestEncodeMp3(unittest.TestCase):
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
@@ -514,6 +534,7 @@ class TestEncodeMp3(unittest.TestCase):
     def test_encodes_with_loudnorm_filter(self) -> None:
         stats = _measure_stats(self.wav)
         from birka.infrastructure.midi_renderer import _build_loudnorm_filter
+
         af = _build_loudnorm_filter(stats)
         mp3 = self.tmp / "out_norm.mp3"
         ok = _encode_mp3(self.wav, af, mp3)
@@ -529,6 +550,7 @@ class TestEncodeMp3(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # render_midi_to_mp3
 # ---------------------------------------------------------------------------
+
 
 class TestRenderMidiToMp3(unittest.TestCase):
     def setUp(self) -> None:
@@ -565,6 +587,7 @@ class TestRenderMidiToMp3(unittest.TestCase):
 # render_midi_to_mp3_batch
 # ---------------------------------------------------------------------------
 
+
 class TestRenderMidiToMp3Batch(unittest.TestCase):
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
@@ -595,7 +618,9 @@ class TestRenderMidiToMp3Batch(unittest.TestCase):
         render_midi_to_mp3_batch(
             self.midi_files,
             self.tmp,
-            on_progress=lambda done, total, path, success: calls.append((done, total, success)),
+            on_progress=lambda done, total, path, success: calls.append(
+                (done, total, success)
+            ),
         )
         self.assertEqual(len(calls), len(self.midi_files))
         # All should succeed
@@ -610,6 +635,7 @@ class TestRenderMidiToMp3Batch(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # render_midi_preview_mp3
 # ---------------------------------------------------------------------------
+
 
 class TestRenderMidiPreviewMp3(unittest.TestCase):
     def setUp(self) -> None:
@@ -660,6 +686,7 @@ class TestRenderMidiPreviewMp3(unittest.TestCase):
 # Soft-clipping (regression: dense polyphony must not pin samples to ceiling)
 # ---------------------------------------------------------------------------
 
+
 class TestSoftClipping(unittest.TestCase):
     """A dense chord should sum past full scale; the render must not hard-clip.
 
@@ -704,6 +731,7 @@ class TestSoftClipping(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # _soft_clip_to_int16 (unit tests for the clip-bug fix)
 # ---------------------------------------------------------------------------
+
 
 class TestSoftClipToInt16(unittest.TestCase):
     """Unit tests for the float->int16 soft-clipper.
@@ -840,6 +868,7 @@ class TestSoftClipToInt16(unittest.TestCase):
 # _synth_sfizz_to_wav (sfizz backend; skips when pysfizz/SFZ unavailable)
 # ---------------------------------------------------------------------------
 
+
 def _sfizz_test_sfz() -> Optional[Path]:
     """An SFZ file usable for integration tests: a real GM bank if found, else
     pysfizz's bundled sine-generator SFZ (sample=*sine, no external samples).
@@ -893,7 +922,7 @@ class TestSynthSfizzToWav(unittest.TestCase):
         self.assertTrue(_synth_sfizz_to_wav(self.sfz, MIDI_PATH, out))
         ch, fr, data = _read_wav_float(out)
         self.assertEqual(ch, 2, "Expected stereo")
-        self.assertEqual(fr, 44100)
+        self.assertEqual(fr, 96000)
         self.assertEqual(data.dtype, np.float32)
 
     def test_output_file_created(self) -> None:
