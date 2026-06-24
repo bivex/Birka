@@ -320,9 +320,41 @@ class LibraryTab(QtWidgets.QWidget):
         sel_model.selectionChanged.connect(self._on_selection_changed)
 
     def stop_all(self) -> None:
+        """Stop all playback and background work.
+
+        Called from the window's closeEvent so the event loop can return and
+        the process exits. Stops the player (and clears its source to prevent
+        the media pipeline re-emitting LoadedMedia -> auto-play() during
+        teardown), then joins every background QThread and stops the periodic
+        timers. Without this the player re-plays on close and the QThreads
+        keep the Qt event loop alive so app.exec() never returns.
+        """
+        # Stop timers first so they can't rearm during teardown.
+        for timer_attr in ("_auto_refresh_timer", "_audio_output_timer"):
+            timer = getattr(self, timer_attr, None)
+            if timer is not None:
+                timer.stop()
+
+        # Stop the player, clear its source, disconnect signals, then
+        # explicitly unparent and destroy it. QMediaPlayer holds an
+        # AVFoundation (macOS) pipeline that keeps the Qt event loop alive
+        # even after app.quit() if the object stays referenced.
         self._player.stop()
+        self._player.setSource(QtCore.QUrl())
+        try:
+            self._player.positionChanged.disconnect()
+            self._player.durationChanged.disconnect()
+            self._player.mediaStatusChanged.disconnect()
+        except (TypeError, RuntimeError):
+            pass
+        self._player.setAudioOutput(None)
+        self._player.setParent(None)
+        self._player.deleteLater()
+
         self._cleanup_tmp_wav()
         self._stop_midi_render_thread()
+        self._stop_render_thread()
+        self._stop_refresh_thread()
 
     def _cleanup_tmp_wav(self) -> None:
         if self._tmp_midi_wav is not None:
@@ -333,6 +365,17 @@ class LibraryTab(QtWidgets.QWidget):
                 logger.debug("Failed to clean up temp WAV: %s", exc)
             self._tmp_midi_wav = None
 
+    @staticmethod
+    def _join_thread(thread: QtCore.QThread) -> None:
+        """Terminate a QThread without blocking the main thread.
+
+        Workers running native C++ code (dawdreamer, sfizz) can't be stopped
+        via quit() — they never check the event loop. We terminate immediately;
+        os._exit() in main() will kill the process cleanly right after anyway.
+        """
+        thread.quit()
+        thread.terminate()
+
     def _stop_midi_render_thread(self) -> None:
         self._loading_midi_path = None
         if self._midi_play_thread is not None:
@@ -342,10 +385,21 @@ class LibraryTab(QtWidgets.QWidget):
                 )
             except (TypeError, RuntimeError):
                 pass
-            self._midi_play_thread.quit()
-            self._midi_play_thread.wait()
+            self._join_thread(self._midi_play_thread)
             self._midi_play_thread = None
             self._midi_play_worker = None
+
+    def _stop_render_thread(self) -> None:
+        """Join the batch render thread so it can't keep the event loop alive."""
+        thread = getattr(self, "_render_thread", None)
+        if thread is not None:
+            self._join_thread(thread)
+            self._render_thread = None
+            self._render_worker = None
+
+    def _stop_refresh_thread(self) -> None:
+        """Join the library refresh thread (alias of _cleanup_refresh_thread)."""
+        self._cleanup_refresh_thread()
 
     def _build_ui(self) -> None:
         self._init_filter_and_pager()

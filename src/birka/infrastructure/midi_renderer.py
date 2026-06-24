@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import atexit
 import json
 import math
 import os
@@ -115,6 +116,33 @@ _VST_PLUGIN_PATHS = {
 # -14. Single source of truth shared by the VST two-pass calibration and the
 # pedalboard fallback — keeps both paths at the same loudness target.
 TARGET_LOUDNESS_LUFS = -13.8
+
+
+def _make_temp_wav() -> Path:
+    """Create a unique temp WAV path atomically.
+
+    Uses tempfile.mkstemp (which creates the file and returns an open fd) rather
+    than the deprecated tempfile.mktemp, which only returns a name and leaves a
+    TOCTOU window where two batch-render threads could collide on the same path.
+    We close the fd immediately; the synth/ffmpeg subprocess then writes to it.
+    """
+    fd, name = tempfile.mkstemp(suffix=".wav")
+    os.close(fd)
+    return Path(name)
+
+
+def _sfizz_self_masters() -> bool:
+    """True when the sfizz backend will be used AND can actually render.
+
+    The sfizz path (_synth_sfizz_to_wav) always applies its own loudness
+    mastering (VST chain or pedalboard fallback) to TARGET_LOUDNESS_LUFS. So a
+    subsequent ffmpeg loudnorm pass would re-normalize already-mastered audio
+    (double normalization, undoing the limiter ceiling). This mirrors the
+    fallback logic in _synth_to_wav_for_backend: sfizz only stays selected when
+    an SFZ bank is present, otherwise it falls back to raw tsf/fluidsynth which
+    DO need loudnorm.
+    """
+    return _resolve_backend() == "sfizz" and _find_sfz() is not None
 
 
 def _measure_lufs(buf: np.ndarray, sample_rate: int) -> Optional[float]:
@@ -279,6 +307,7 @@ _VST_NEUTRAL_PRESET = {
             1: 0.0,  # Low Crossover 30 Hz (full lower edge, below bass)
             3: 0.2007,  # High Crossover 120 Hz (upper boundary of bass band)
             6: 0.70,  # Threshold -18 dB
+            7: 0.40,  # Range -6 dB max GR (idx7 defaults to 0 dB = NO compression!)
             8: 0.30,  # Ratio 1.5:1 (log-mapped; verified live)
             9: 0.15,  # Attack 15%
             10: 0.30,  # Release 30%
@@ -524,6 +553,7 @@ def _apply_vst_preset(
     pro_q.set_parameter(5, 0.20)  # Low Cut
     pro_q.set_parameter(7, 0.5)  # Stereo (full)
     # Band 2: Low Shelf 110Hz — Mid only (mono bass, phase-stable)
+    pro_q.set_parameter(23, 1.0)  # Band 2 Used (defaults 0 = band inert!)
     pro_q.set_parameter(24, 1.0)
     pro_q.set_parameter(25, _freq_to_val(eq_settings["b1_freq"]))
     pro_q.set_parameter(26, _gain_to_val(eq_settings["b1_gain"]))
@@ -536,6 +566,7 @@ def _apply_vst_preset(
     # while leaving the stereo width of the band untouched: the cut tightens
     # the center image rather than narrowing the whole scene.
     pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(46, 1.0)  # Band 3 Used
     pro_q.set_parameter(48, _freq_to_val(eq_settings["b2_freq"]))
     pro_q.set_parameter(49, _gain_to_val(eq_settings["b2_gain"]))
     pro_q.set_parameter(50, _q_to_val(eq_settings["b2_q"]))
@@ -552,6 +583,7 @@ def _apply_vst_preset(
         pro_q.set_parameter(56, 0.0)
     # Band 4: static bell at 3.4 kHz — Stereo
     pro_q.set_parameter(70, 1.0)
+    pro_q.set_parameter(69, 1.0)  # Band 4 Used
     pro_q.set_parameter(71, _freq_to_val(eq_settings["b3_freq"]))
     pro_q.set_parameter(72, _gain_to_val(eq_settings["b3_gain"]))
     pro_q.set_parameter(73, _q_to_val(eq_settings["b3_q"]))
@@ -561,6 +593,7 @@ def _apply_vst_preset(
     pro_q.set_parameter(79, 0.0)
     # Band 5: static bell at 6.8 kHz — Stereo
     pro_q.set_parameter(93, 1.0)
+    pro_q.set_parameter(92, 1.0)  # Band 5 Used
     pro_q.set_parameter(94, _freq_to_val(eq_settings["b4_freq"]))
     pro_q.set_parameter(95, _gain_to_val(eq_settings["b4_gain"]))
     pro_q.set_parameter(96, _q_to_val(eq_settings["b4_q"]))
@@ -570,6 +603,7 @@ def _apply_vst_preset(
     pro_q.set_parameter(102, 0.0)
     # Band 6: high shelf at 13 kHz (air) — Side only (wide top end)
     pro_q.set_parameter(116, 1.0)
+    pro_q.set_parameter(115, 1.0)  # Band 6 Used
     pro_q.set_parameter(117, _freq_to_val(eq_settings["b5_freq"]))
     pro_q.set_parameter(118, _gain_to_val(eq_settings["b5_gain"]))
     pro_q.set_parameter(119, _q_to_val(eq_settings["b5_q"]))
@@ -644,6 +678,8 @@ def _apply_vst_preset(
 
 _VST_ENGINE = None
 _VST_GRAPH = None
+_VST_DISPOSED = False
+_VST_LEAK_BIN: list = []  # objects parked here survive until os._exit()
 _VST_LOCK = threading.Lock()
 
 
@@ -662,6 +698,13 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
     # buf_arr = interleaved stereo (frames*2,) из sfizz на sample_rate.
     # DAWdreamer и VST-плагины инициализированы на _VST_SAMPLE_RATE.
     # Если SR не совпадает — питч сдвинут вниз, тембр плывёт.
+    #
+    # resample_poly работает в обе стороны: up<dn — даунсемпл (напр. 192k→96k),
+    # up>dn — апсемпл (44.1k→96k: up=320, dn=147). По умолчанию Kaiser β=5.0,
+    # stopband ≈ -60 dB — достаточно для мастеринга на 96 kHz. Если когда-нибудь
+    # сюда придёт preview-путь (22050→96k, большой up), стоит поднять β для более
+    # крутого фильтра. Диапазон SR не валидируется — полагаемся на то, что sfizz
+    # рендерит на разумной частоте (≤ 192 kHz).
     if sample_rate != _VST_SAMPLE_RATE:
         try:
             import scipy.signal as _sps
@@ -919,14 +962,21 @@ def render_midi_to_mp3(
         return _render_tsf_to_mp3(midi_path, output_dir, soundfont)
     output_dir.mkdir(parents=True, exist_ok=True)
     mp3_path = output_dir / (midi_path.stem + ".mp3")
-    tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
+    tmp_wav = _make_temp_wav()
     try:
         if not _synth_to_wav_for_backend(
             backend, midi_path, tmp_wav, 96000, 256, quality=quality
         ):
             return None
-        stats = _measure_stats(tmp_wav)
-        af = _build_loudnorm_filter(stats)
+        # sfizz already masters to TARGET_LOUDNESS_LUFS (VST chain / pedalboard).
+        # Re-running ffmpeg loudnorm on top would double-normalize and pull the
+        # already-limited master to a different target. Encode straight through
+        # in that case; only the raw tsf/fluidsynth output needs loudnorm.
+        if _sfizz_self_masters():
+            af = None
+        else:
+            stats = _measure_stats(tmp_wav)
+            af = _build_loudnorm_filter(stats)
         if not _encode_mp3(tmp_wav, af, mp3_path):
             return None
         return mp3_path
@@ -1008,7 +1058,7 @@ def render_midi_preview_mp3(
         return False
     backend = _resolve_backend()
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
+    tmp_wav = _make_temp_wav()
     try:
         if backend == "sfizz":
             sfz = _find_sfz()
@@ -1074,19 +1124,32 @@ def render_midi_to_mp3_batch(
             midi_paths, output_dir, soundfont, on_progress=on_progress
         )
     output_dir.mkdir(parents=True, exist_ok=True)
-    max_workers = min(len(midi_paths), os.cpu_count() or 4)
+    # The VST mastering chain (_render_sfizz_vst_chain) is guarded by a global
+    # _VST_LOCK and reuses one cached DAWdreamer engine, so only one render can
+    # run at a time. Spawning os.cpu_count() workers there just piles them up
+    # blocked on the lock (context-switch overhead, no speedup). Serialize to a
+    # single worker in that case; the per-render work is already inside the lock.
+    vst_active = _sfizz_self_masters() and os.environ.get(
+        "USE_VST_CHAIN", ""
+    ).lower() in ("1", "true", "yes")
+    self_masters = _sfizz_self_masters()
+    max_workers = 1 if vst_active else min(len(midi_paths), os.cpu_count() or 4)
     results: List[Tuple[Path, Optional[Path]]] = []
 
     def _render_one(midi_path: Path) -> Tuple[Path, Optional[Path]]:
         mp3_path = output_dir / (midi_path.stem + ".mp3")
-        tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
+        tmp_wav = _make_temp_wav()
         try:
             if not _synth_to_wav_for_backend(
                 backend, midi_path, tmp_wav, 96000, 256, quality=quality
             ):
                 return midi_path, None
-            stats = _measure_stats(tmp_wav)
-            af = _build_loudnorm_filter(stats)
+            # Skip loudnorm when sfizz already mastered (see render_midi_to_mp3).
+            if self_masters:
+                af = None
+            else:
+                stats = _measure_stats(tmp_wav)
+                af = _build_loudnorm_filter(stats)
             if _encode_mp3(tmp_wav, af, mp3_path):
                 return midi_path, mp3_path
             return midi_path, None
@@ -1129,7 +1192,13 @@ def render_midi_to_wav_batch(
     if not midi_paths:
         return [], []
     output_dir.mkdir(parents=True, exist_ok=True)
-    max_workers = min(len(midi_paths), os.cpu_count() or 4)
+    # Serialize to one worker when the VST chain is active: it holds a global
+    # lock + single cached engine, so extra workers only block (see
+    # render_midi_to_mp3_batch for the full rationale).
+    vst_active = _sfizz_self_masters() and os.environ.get(
+        "USE_VST_CHAIN", ""
+    ).lower() in ("1", "true", "yes")
+    max_workers = 1 if vst_active else min(len(midi_paths), os.cpu_count() or 4)
     results: List[Tuple[Path, Optional[Path]]] = []
 
     def _render_one(midi_path: Path) -> Tuple[Path, Optional[Path]]:
@@ -1194,7 +1263,7 @@ def _render_tsf_to_mp3(
 ) -> Optional[Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     mp3_path = output_dir / (midi_path.stem + ".mp3")
-    tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
+    tmp_wav = _make_temp_wav()
     try:
         if not _synth_tsf_to_wav(soundfont, midi_path, tmp_wav):
             return None
@@ -1221,7 +1290,7 @@ def _render_tsf_to_mp3_batch(
 
     def _render_one(midi_path: Path) -> Tuple[Path, Optional[Path]]:
         mp3_path = output_dir / (midi_path.stem + ".mp3")
-        tmp_wav = Path(tempfile.mktemp(suffix=".wav"))
+        tmp_wav = _make_temp_wav()
         try:
             if not _synth_tsf_to_wav(soundfont, midi_path, tmp_wav):
                 return midi_path, None
@@ -1434,7 +1503,11 @@ def _write_int24_wav(
         try:
             import numpy as np
 
-            arr = np.asarray(int24_samples, dtype=np.int32)
+            # Force little-endian int32 so the [:, :3] byte-slice below always
+            # takes the low 3 bytes regardless of host endianness. On a
+            # big-endian host a native int32 stores [MSB, b2, b1, LSB] and the
+            # slice would grab the high bytes (an 8-bit-shifted, wrong sample).
+            arr = np.asarray(int24_samples, dtype="<i4")
             # View as uint8, reshape to N x 4, slice first 3 columns, and convert to bytes.
             # This is 3.4x faster than a pure-Python generator expression.
             packed = arr.view(np.uint8).reshape(-1, 4)[:, :3].tobytes()
@@ -1457,9 +1530,15 @@ def _write_float_wav(
     interleaved: List[float],
     output_path: Path,
     sample_rate: int,
-    soft_clip: bool = True,
+    soft_clip: bool = False,
 ) -> bool:
     """Write a flat interleaved float buffer as a 32-bit IEEE_FLOAT stereo WAV.
+
+    soft_clip defaults to False: the buffers reaching this writer are already
+    mastered (VST limiter to -1 dBTP, or the pedalboard limiter), so a default
+    tanh would re-saturate an already-limited signal and silently shave ~2.4 dB
+    off the peaks. Callers that pass raw, unlimited float (none in-tree today)
+    must opt in with soft_clip=True.
 
     Skips integer quantization entirely, so sfizz's native float output is
     preserved at full precision. Faster than the int16 path (no per-sample
@@ -1509,6 +1588,7 @@ def _write_float_wav(
 
 
 _SFIZZ_SYNTH_CACHE = {}
+_SFIZZ_DISPOSED = False
 
 
 def dispose_sfizz_cache() -> None:
@@ -1521,6 +1601,10 @@ def dispose_sfizz_cache() -> None:
     Call this from the application's aboutToQuit handler to drop the cache
     before Python finalization.
     """
+    global _SFIZZ_DISPOSED
+    if _SFIZZ_DISPOSED:
+        return
+    _SFIZZ_DISPOSED = True
     for synth in _SFIZZ_SYNTH_CACHE.values():
         try:
             synth.all_sound_off()
@@ -1536,11 +1620,44 @@ def dispose_sfizz_cache() -> None:
 
 
 def dispose_vst_chain_cache() -> None:
-    global _VST_ENGINE, _VST_GRAPH
+    """Prevent dispose from blocking — intentionally leak the engine.
+
+    Setting _VST_ENGINE = None triggers the DAWdreamer C++ destructor which
+    blocks forever in native code. Instead we move the reference into a
+    module-level 'leak bin' that keeps the object alive until os._exit()
+    kills the process without running any destructors.
+    """
+    global _VST_ENGINE, _VST_GRAPH, _VST_DISPOSED
+    if _VST_DISPOSED:
+        return
+    _VST_DISPOSED = True
+    # Park references in a leak bin — os._exit() will kill the process
+    # without decrementing refcounts or calling C++ destructors.
+    _VST_LEAK_BIN.append(_VST_ENGINE)
+    _VST_LEAK_BIN.append(_VST_GRAPH)
     _VST_ENGINE = None
     _VST_GRAPH = None
-    _VST_ENGINE = None
-    _VST_GRAPH = None
+
+
+def _dispose_all_audio_backends() -> None:
+    """atexit handler: tear down every native audio backend before Python exits.
+
+    This is the safety net for exit paths where Qt's aboutToQuit never fires
+    (unhandled exception -> SystemExit -> Py_Exit). Tearing the VST engine down
+    here, while the interpreter is fully alive, prevents the plugin destructors
+    from running during finalization and segfaulting.
+    """
+    try:
+        dispose_vst_chain_cache()
+    except Exception:
+        pass
+    try:
+        dispose_sfizz_cache()
+    except Exception:
+        pass
+
+
+atexit.register(_dispose_all_audio_backends)
 
 
 def _synth_sfizz_to_wav(

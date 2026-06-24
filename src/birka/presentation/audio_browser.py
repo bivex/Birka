@@ -37,6 +37,13 @@ class AudioBrowserWindow(QtWidgets.QMainWindow):
             if hasattr(tab, "stop_all"):
                 tab.stop_all()
         super().closeEvent(event)
+        # Schedule a hard exit via os._exit after a short delay.
+        # app.quit() alone is not reliable when native VST3/AVFoundation
+        # threads keep the Qt event loop alive — the timer fires one last
+        # event-loop tick and then kills the process unconditionally.
+        from PyQt6 import QtCore
+        import os
+        QtCore.QTimer.singleShot(300, lambda: os._exit(0))
 
     def _build_menu(self) -> None:
         menu = self.menuBar().addMenu("Library")
