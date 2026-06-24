@@ -698,28 +698,36 @@ class LibraryTab(QtWidgets.QWidget):
         self._master_label = QtWidgets.QLabel("Master Mode:", self)
         self._master_combo = QtWidgets.QComboBox(self)
         self._master_combo.setToolTip(
-            "VST mastering chain.\n"
-            "Full = premium 10-plugin two-pass (final export).\n"
-            "Digital fast = Pro-Q→Kotelnikov→Pro-L (cleanest, fastest).\n"
-            "Analog clean = Tape→Bus comp→passive EQ→Limiter.\n"
-            "Analog warm = Tape→Console(SDRR DESK)→Bus comp→Limiter.\n"
-            "Analog ultra = Tape→Limiter (most musical, instant).\n"
-            "Analog thick = Tape→SDRR Tube→Pro-Q→Limiter (hiphop/lofi/soul).\n"
-            "Polished = Tape→SDRR→soothe2→Limiter (vocal/pop/cinematic).\n"
-            "Modern loud = Tape→Pro-MB→SDRR→Limiter (EDM/phonk/rap).\n"
-            "Airy = Tape→Fresh Air→Kotelnikov→Limiter (R&B/acoustic).\n"
-            "Punch = Tape→Spiff→Kotelnikov→Limiter (drill/techno)."
+            "Цепочка VST-мастеринга:\n"
+            "💎 Full — кристальный, эталонный. Полная цепь из 10 плагинов в два\n"
+            "    прохода. Для финального экспорта (самый качественный, медленный).\n"
+            "⚡ Digital fast — быстрый, чистый. Pro-Q→Kotelnikov→Pro-L.\n"
+            "    Хирургически прозрачный, самый быстрый превью.\n"
+            "🌤 Analog clean — лёгкий, прозрачный. Tape→шина→пассивный EQ→лимитер.\n"
+            "🔥 Analog warm — тёплый, ламповый. Tape→консоль SDRR(DESK)→шина→лимитер.\n"
+            "📼 Analog ultra — плёнка, минимализм. Tape→лимитер. Самый музыкальный,\n"
+            "    мгновенный.\n"
+            "🧈 Analog thick — жирный, маслянистый. Tape→SDRR Tube→Pro-Q→лимитер.\n"
+            "    Под hip-hop / lo-fi / soul.\n"
+            "✨ Polished — дорогой, гладкий. Tape→SDRR→soothe2→лимитер.\n"
+            "    Под вокал / поп / кино.\n"
+            "🔊 Modern loud — громкий, плотный. Tape→Pro-MB→SDRR→лимитер.\n"
+            "    Контроль низов + громкость. Под EDM / phonk / рэп.\n"
+            "☁️ Airy — воздушный, открытый. Tape→Fresh Air→Kotelnikov→лимитер.\n"
+            "    Под R&B / акустику / вокал.\n"
+            "🥁 Punch — ударный, транзиентный. Tape→Spiff→Kotelnikov→лимитер.\n"
+            "    Под drill / techno / перкуссию."
         )
-        self._master_combo.addItem("Full (premium, export)", "")
-        self._master_combo.addItem("Digital fast (clean)", "digital")
-        self._master_combo.addItem("Analog clean", "analog_clean")
-        self._master_combo.addItem("Analog warm (vintage)", "analog_warm")
-        self._master_combo.addItem("Analog ultra (tape→limiter)", "analog_ultra")
-        self._master_combo.addItem("Analog thick (fat/punchy)", "analog_thick")
-        self._master_combo.addItem("Polished (luxury smooth)", "polished")
-        self._master_combo.addItem("Modern loud", "modern_loud")
-        self._master_combo.addItem("Airy", "airy")
-        self._master_combo.addItem("Punch", "punch")
+        self._master_combo.addItem("💎 Full — кристальный, эталонный (экспорт)", "")
+        self._master_combo.addItem("⚡ Digital fast — быстрый, чистый", "digital")
+        self._master_combo.addItem("🌤 Analog clean — лёгкий, прозрачный", "analog_clean")
+        self._master_combo.addItem("🔥 Analog warm — тёплый, ламповый", "analog_warm")
+        self._master_combo.addItem("📼 Analog ultra — плёнка, минимализм", "analog_ultra")
+        self._master_combo.addItem("🧈 Analog thick — жирный, маслянистый", "analog_thick")
+        self._master_combo.addItem("✨ Polished — дорогой, гладкий", "polished")
+        self._master_combo.addItem("🔊 Modern loud — громкий, плотный", "modern_loud")
+        self._master_combo.addItem("☁️ Airy — воздушный, открытый", "airy")
+        self._master_combo.addItem("🥁 Punch — ударный, транзиентный", "punch")
         _env_mode = os.environ.get("BIRKA_FAST_MASTER", "").strip().lower()
         _alias = {
             "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
