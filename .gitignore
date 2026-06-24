@@ -34,3 +34,4 @@ htmlcov/
 data/.scan_cache.sqlite
 data/.scan_cache.sqlite-shm
 data/.scan_cache.sqlite-wal
+fix_bug.md
