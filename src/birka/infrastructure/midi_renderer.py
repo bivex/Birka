@@ -2387,6 +2387,8 @@ def _synth_tsf_to_wav(
     total_seconds = max(1.0, mid.length + 2.0)
     frames_needed = int(total_seconds * sample_rate)
 
+    samples: List[float] = []
+    samples_needed: int = 0
     try:
         with TinySoundFont(str(soundfont)) as synth:
             synth.set_output(
@@ -2430,9 +2432,74 @@ def _synth_tsf_to_wav(
     except Exception:
         return False
 
-    # Soft-clip (tanh) + 16-bit stereo WAV. Shared with the sfizz renderer via
-    # _write_int16_wav so both backends produce identical output format.
-    return _write_int16_wav(samples[:samples_needed], output_path, sample_rate)
+    # Route through VST mastering chain when available (same path as sfizz).
+    # This ensures fast-master presets (digital, cinematic, etc.) apply to tsf
+    # output too, not just sfizz. Falls back to soft-clip 16-bit if VST fails.
+    buf: List[float] = samples[:samples_needed] if samples and samples_needed else []
+    if not buf:
+        return False
+    try:
+        import numpy as np
+
+        buf_arr = np.asarray(buf, dtype=np.float32)
+        if _render_sfizz_vst_chain(buf_arr, sample_rate, output_path):
+            return True
+    except Exception:
+        pass
+
+    # Fallback: pedalboard mastering (EQ + tape + comp + loudness + limiter)
+    try:
+        import numpy as np
+        from pedalboard import (  # noqa: PLC0415
+            Pedalboard,
+            HighpassFilter,
+            LowShelfFilter,
+            HighShelfFilter,
+            PeakFilter,
+            Compressor,
+            Limiter,
+        )
+
+        buf_arr = np.asarray(buf, dtype=np.float32)
+        stereo = buf_arr.reshape(-1, 2).T  # (2, frames)
+
+        eq_stage = Pedalboard([
+            HighpassFilter(cutoff_frequency_hz=30.0),
+            LowShelfFilter(cutoff_frequency_hz=120.0, gain_db=-1.0),
+            PeakFilter(cutoff_frequency_hz=3500.0, gain_db=-0.5, q=2.0),
+            HighShelfFilter(cutoff_frequency_hz=8000.0, gain_db=1.0),
+        ])
+        stereo = eq_stage(stereo, sample_rate)
+
+        drive = 1.19
+        stereo = np.tanh(stereo * drive) / np.tanh(drive)
+
+        comp_stage = Pedalboard([
+            Compressor(threshold_db=-18.0, ratio=1.5, attack_ms=10.0, release_ms=100.0),
+        ])
+        stereo = comp_stage(stereo, sample_rate)
+
+        pre_mono = np.mean(stereo, axis=0)
+        pre_peak = float(np.max(np.abs(pre_mono)))
+        pre_rms = float(np.sqrt(np.mean(pre_mono ** 2)))
+        crest = pre_peak / (pre_rms + 1e-9) if pre_rms > 1e-9 else 10.0
+        clip_db = 4.0 if crest > 10.0 else 3.0 if crest > 7.0 else 2.0
+        clip_drive = 10 ** (clip_db / 20.0)
+        stereo = np.tanh(stereo * clip_drive) / np.tanh(clip_drive)
+
+        current_lufs = _measure_lufs(stereo, sample_rate)
+        if current_lufs is not None:
+            gain_db = max(-10.0, min(8.0, TARGET_LOUDNESS_LUFS - current_lufs))
+            stereo = stereo * (10 ** (gain_db / 20.0))
+
+        lim_stage = Pedalboard([Limiter(threshold_db=-1.0, release_ms=50.0)])
+        stereo = lim_stage(stereo, sample_rate)
+
+        buf = np.asarray(stereo, dtype=np.float32).T.flatten().tolist()
+    except Exception:
+        pass
+
+    return _write_int16_wav(buf, output_path, sample_rate, soft_clip=False)
 
 
 def _write_int16_wav(
