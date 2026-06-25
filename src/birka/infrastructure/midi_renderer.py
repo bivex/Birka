@@ -1611,34 +1611,18 @@ def _render_fast_vst_chain(dry_audio, np, daw, mode="digital"):
     if current_lufs is not None:
         gain_db = TARGET_LOUDNESS_LUFS - current_lufs
         if gain_db > 0.5:
-            # UNDERSHOOT (common with tape/HF-rolloff chains: the limiter never
-            # engaged, leaving lots of headroom). Boosting the dry input is
-            # ineffective here — the tape stages are non-linear and eat the
-            # gain. Instead apply makeup to the OUTPUT, clamped so the true
-            # (inter-sample) peak stays under -1 dBTP. This reaches the target
-            # loudness exactly when there is headroom, and stops at the ceiling
-            # otherwise — no clipping, no extra render.
-            ceiling = 10.0 ** (-1.0 / 20.0)  # -1 dBTP
-            try:
-                from scipy.signal import resample_poly
-
-                tp = 0.0
-                for c in range(out.shape[0]):
-                    up = resample_poly(out[c], 4, 1)
-                    if up.size:
-                        tp = max(tp, float(np.max(np.abs(up))))
-            except Exception:
-                tp = float(np.max(np.abs(out))) if out.size else 1.0
-            want = 10.0 ** (gain_db / 20.0)
-            headroom = (ceiling / tp) if tp > 1e-9 else want
-            actual_gain = min(want, headroom)
-            out = out * actual_gain
-            actual_lufs = _measure_lufs(out, _VST_SAMPLE_RATE)
+            # UNDERSHOOT: scale the dry input and re-render so the limiter
+            # catches new peaks cleanly. Same approach as the overshoot branch —
+            # applying gain to the OUTPUT after Pro-L is blocked by headroom.
+            gain_db = min(gain_db, 8.0)
+            scaled = audio_2d * (10.0 ** (gain_db / 20.0))
+            pb.set_data(scaled.astype(np.float32))
+            _VST_FAST_ENGINE.render(duration)
+            out = _VST_FAST_ENGINE.get_audio(out_node)
+            post_lufs = _measure_lufs(out, _VST_SAMPLE_RATE)
             logger.info(
-                "VST normalize: target=%.1f  pre=%.1f  gain=%.1f dB  headroom=%.1f dB  post=%.1f LUFS",
-                TARGET_LOUDNESS_LUFS, current_lufs, 20*float(np.log10(max(actual_gain,1e-9))),
-                20*float(np.log10(max(headroom,1e-9))),
-                actual_lufs if actual_lufs is not None else -99.0,
+                "VST normalize pass2: gain=%.1f dB  pre=%.1f  post=%.1f LUFS",
+                gain_db, current_lufs, post_lufs if post_lufs is not None else -99.0,
             )
         elif gain_db < -0.5:
             # OVERSHOOT: too loud. Scale the dry input down and re-render so the
@@ -1709,7 +1693,12 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
             if mode is not None:
                 try:
                     out = _render_fast_vst_chain(dry_audio, np, daw, mode=mode)
-                    logger_vst.info("fast-chain returned: %s (mode=%s)", type(out).__name__ if out is not None else "None", mode)
+                    logger_vst.info(
+                        "fast-chain returned: type=%s shape=%s (mode=%s)",
+                        type(out).__name__,
+                        getattr(out, 'shape', 'N/A'),
+                        mode,
+                    )
                     if out is not None:
                         return _write_float_wav(
                             out.T.flatten(),
