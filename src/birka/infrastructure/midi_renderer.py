@@ -2993,25 +2993,81 @@ def _synth_sfizz_to_wav(
         # checks msg.channel == 9 (MIDI ch10) and sends those notes to the
         # drum synth; all other notes go to the melodic synth. Both outputs
         # are summed into the final mix.
-        cache_key = (str(sfz_path), sample_rate, polyphony, quality)
-        if cache_key in _SFIZZ_SYNTH_CACHE:
-            synth = _SFIZZ_SYNTH_CACHE[cache_key]
-            logger_sfizz.debug("sfizz: reusing cached synth for %s", sfz_path)
-            synth.all_sound_off()
-        else:
-            logger_sfizz.info("sfizz: loading SFZ bank: %s", sfz_path)
-            synth = _sfizz.Synth(sample_rate, _SFIZZ_BLOCK_FRAMES)
-            synth.enable_freewheeling()
-            synth.set_num_voices(max(1, min(polyphony, 512)))
-            synth.set_sample_quality(quality)
-            if not synth.load_sfz_file(str(sfz_path)):
-                logger_sfizz.error(
-                    "sfizz: failed to load SFZ file (bad path, parse error, or missing samples): %s",
-                    sfz_path,
-                )
-                return False
-            logger_sfizz.info("sfizz: SFZ loaded OK: %s", sfz_path)
-            _SFIZZ_SYNTH_CACHE[cache_key] = synth
+        # ── Per-channel sfizz instances ──────────────────────────────────────
+        # sfizz note_on() has NO channel parameter — all notes go to one voice
+        # pool. To get per-channel pan/volume we create one Synth per melodic
+        # channel, route only that channel's notes to it, render separately,
+        # then apply a pan/vol matrix when summing.
+        active_mel_channels = sorted({
+            getattr(m, "channel", 0) for _, m in events
+            if getattr(m, "type", "") == "note_on"
+            and getattr(m, "velocity", 0) > 0
+            and getattr(m, "channel", 0) != 9
+        })
+
+        # Analyse GM programs to assign pan/vol (same logic as TSF path)
+        ch_programs: dict = {}
+        for _, m in events:
+            if getattr(m, "type", "") == "program_change":
+                ch = getattr(m, "channel", 0)
+                if ch not in ch_programs:
+                    ch_programs[ch] = getattr(m, "program", 0)
+
+        guitar_chs = [ch for ch in active_mel_channels if 24 <= ch_programs.get(ch, 0) <= 31]
+        bass_chs   = [ch for ch in active_mel_channels if 32 <= ch_programs.get(ch, 0) <= 39]
+        pad_chs    = [ch for ch in active_mel_channels if ch_programs.get(ch, 0) in range(88, 104)]
+        other_chs  = [ch for ch in active_mel_channels if ch not in guitar_chs and ch not in bass_chs]
+
+        _gpans = [38, 90] if len(guitar_chs) >= 2 else ([44] if len(guitar_chs) == 1 else [])
+        _opans: list = {1: [64], 2: [54, 74], 3: [44, 64, 84]}.get(len(other_chs), [64] * len(other_chs))
+
+        # pan 0..127 → -1..1
+        def _pan_norm(p: int) -> float:
+            return (p - 64) / 63.0
+
+        ch_mix: dict = {}  # ch → (pan_norm, vol_lin)
+        for i, ch in enumerate(guitar_chs):
+            ch_mix[ch] = (_pan_norm(_gpans[i] if i < len(_gpans) else 64), 0.95)
+        for ch in bass_chs:
+            ch_mix[ch] = (0.0, 0.88)
+        for i, ch in enumerate(other_chs):
+            pan = _opans[i] if i < len(_opans) else 64
+            vol = 0.85 if ch in pad_chs else 1.0
+            ch_mix[ch] = (_pan_norm(pan), vol)
+
+        logger_sfizz.info(
+            "sfizz: per-channel mix — %d melodic channels: %s",
+            len(active_mel_channels),
+            ", ".join(
+                f"ch{ch}(prog={ch_programs.get(ch,0)} pan={ch_mix.get(ch,(0,1))[0]:+.2f} vol={ch_mix.get(ch,(0,1))[1]:.2f})"
+                for ch in active_mel_channels
+            ),
+        )
+
+        # Build one sfizz Synth per melodic channel
+        ch_synths: dict = {}
+        voices_per_ch = max(32, polyphony // max(len(active_mel_channels), 1))
+        for ch in active_mel_channels:
+            ck = (str(sfz_path), sample_rate, ch, quality)
+            if ck in _SFIZZ_SYNTH_CACHE:
+                s = _SFIZZ_SYNTH_CACHE[ck]
+                s.all_sound_off()
+            else:
+                s = _sfizz.Synth(sample_rate, _SFIZZ_BLOCK_FRAMES)
+                s.enable_freewheeling()
+                s.set_num_voices(voices_per_ch)
+                s.set_sample_quality(quality)
+                if not s.load_sfz_file(str(sfz_path)):
+                    logger_sfizz.warning("sfizz: ch%d failed to load SFZ, skipping", ch)
+                    continue
+                _SFIZZ_SYNTH_CACHE[ck] = s
+            ch_synths[ch] = s
+
+        # Keep legacy single synth reference for the event dispatch below
+        synth = ch_synths.get(active_mel_channels[0]) if active_mel_channels else None
+        if synth is None and not active_mel_channels:
+            logger_sfizz.error("sfizz: no melodic channels found")
+            return False
 
         # Drum synth: load drum-only SFZ that sits next to the main bank.
         # Falls back to melodic synth (no separate drums) if file is absent.
@@ -3045,17 +3101,22 @@ def _synth_sfizz_to_wav(
         while rendered < frames_needed:
             block_start = rendered
             block_end = rendered + _SFIZZ_BLOCK_FRAMES
-            # Dispatch every event whose sample time falls within this block,
-            # computing the per-event sample delay relative to block_start.
+            # Dispatch every event whose sample time falls within this block.
             while event_index < n_events:
                 msg_time, msg = events[event_index]
                 event_frame = int(msg_time * sample_rate)
                 if event_frame >= block_end:
                     break
                 delay = max(0, min(_SFIZZ_BLOCK_FRAMES, event_frame - block_start))
-                # Channel 10 (index 9) = GM drums → route to drum synth
-                is_drum = getattr(msg, "channel", None) == 9 and drum_synth is not None
-                target = drum_synth if is_drum else synth
+                ch = getattr(msg, "channel", 0)
+                is_drum = ch == 9 and drum_synth is not None
+                if is_drum:
+                    target = drum_synth
+                else:
+                    target = ch_synths.get(ch)
+                if target is None:
+                    event_index += 1
+                    continue
                 if msg.type == "note_on" and msg.velocity > 0:
                     target.note_on(delay, msg.note, msg.velocity)
                 elif msg.type in ("note_off", "note_on"):
@@ -3065,25 +3126,35 @@ def _synth_sfizz_to_wav(
                 elif msg.type == "pitchwheel":
                     target.pitch_wheel(delay, msg.pitch)
                 elif msg.type == "program_change" and not is_drum:
-                    synth.program_change(delay, msg.program)
+                    target.program_change(delay, getattr(msg, "program", 0))
                 event_index += 1
 
-            # Render both synths — keep drum blocks separate for post-processing.
-            left, right = synth.render_block()
-            left_arr = np.asarray(left, dtype=np.float32)
-            right_arr = np.asarray(right, dtype=np.float32)
+            # Render all per-channel synths and apply pan/vol matrix.
+            # pan_norm ∈ [-1,1]: L gain = cos((pan+1)*π/4), R gain = sin((pan+1)*π/4)
+            # This gives -3 dB at centre (constant power panning).
+            import math as _math
+            ch_L = np.zeros(_SFIZZ_BLOCK_FRAMES, dtype=np.float32)
+            ch_R = np.zeros(_SFIZZ_BLOCK_FRAMES, dtype=np.float32)
+            for ch, s in ch_synths.items():
+                bl, br = s.render_block()
+                bl_arr = np.asarray(bl, dtype=np.float32)
+                br_arr = np.asarray(br, dtype=np.float32)
+                pan_n, vol = ch_mix.get(ch, (0.0, 1.0))
+                angle = (pan_n + 1.0) * _math.pi / 4.0
+                l_gain = vol * _math.cos(angle)
+                r_gain = vol * _math.sin(angle)
+                ch_L += bl_arr * l_gain
+                ch_R += br_arr * r_gain
+
             if drum_synth is not None:
                 d_block = drum_synth.render_block()
                 d_left  = np.asarray(d_block[0], dtype=np.float32)
                 d_right = np.asarray(d_block[1], dtype=np.float32)
                 drum_left_blocks.append(d_left)
                 drum_right_blocks.append(d_right)
-            mel_left_blocks.append(left_arr)
-            mel_right_blocks.append(right_arr)
-            # NOTE: soft-clipping moved to the pedalboard mastering stage (tape
-            # saturation + adaptive clipper). Keeping raw sfizz output here
-            # avoids double-tanh when the pedalboard fallback is used.
-            rendered += len(left_arr)
+            mel_left_blocks.append(ch_L)
+            mel_right_blocks.append(ch_R)
+            rendered += _SFIZZ_BLOCK_FRAMES
     except Exception as exc:
         logger_sfizz.error("sfizz: render exception: %s", exc, exc_info=True)
         return False
