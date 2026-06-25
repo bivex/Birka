@@ -1686,10 +1686,8 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                 _VST_FAST_GRAPH, \
                 _VST_FAST_MODE
 
-            # Fast-master path: lightweight single-pass chain. Dispatched here so
-            # it shares the same resampling + stderr-redirect + lock as the full
-            # chain, but builds/uses its own cached engine and returns early.
             mode = _fast_master_mode()
+            logger_vst.info("_render_sfizz_vst_chain: inside lock, mode=%r", mode)
             if mode is not None:
                 try:
                     out = _render_fast_vst_chain(dry_audio, np, daw, mode=mode)
