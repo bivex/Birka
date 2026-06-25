@@ -3207,12 +3207,11 @@ def _synth_sfizz_to_wav(
         drm_L = np.concatenate(drum_left_blocks)[:frames_needed]
         drm_R = np.concatenate(drum_right_blocks)[:frames_needed]
 
-        # 1. GAIN STAGING: drums over-render relative to melodic by ~3-4 dB.
-        #    Target: kick RMS sits ~3 dB above melodic RMS for natural punch.
+        # 1. GAIN STAGING: target drum RMS = melodic RMS * 0.71 (-3 dB).
+        #    Drums should punch through but not dominate the melodic content.
         mel_rms  = float(np.sqrt(np.mean(mel_L ** 2))) + 1e-9
         drm_rms  = float(np.sqrt(np.mean(drm_L ** 2))) + 1e-9
-        # Target drum RMS = melodic RMS * 1.41 (+3 dB). Clamp to ±6 dB range.
-        target_gain = (mel_rms * 1.41) / drm_rms
+        target_gain = (mel_rms * 0.71) / drm_rms
         drum_gain = float(np.clip(target_gain, 0.5, 2.0))
         drm_L = drm_L * drum_gain
         drm_R = drm_R * drum_gain
