@@ -1709,6 +1709,7 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
             if mode is not None:
                 try:
                     out = _render_fast_vst_chain(dry_audio, np, daw, mode=mode)
+                    logger_vst.info("fast-chain returned: %s (mode=%s)", type(out).__name__ if out is not None else "None", mode)
                     if out is not None:
                         return _write_float_wav(
                             out.T.flatten(),
