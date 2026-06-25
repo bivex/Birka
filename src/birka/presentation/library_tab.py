@@ -753,7 +753,11 @@ class LibraryTab(QtWidgets.QWidget):
             "🎯 Reference — классический мастеринг-гайд. Балансирующий M/S EQ\n"
             "    (HPF на side, дип 250/2.8k) → RMS-клей Kotelnikov → ламповый\n"
             "    сатуратор SDRR(TUBE) → tone-shaping M/S EQ (тело, presence, air на\n"
-            "    side) → лимитер. Линейная фаза, EQ до и после динамики."
+            "    side) → лимитер. Линейная фаза, EQ до и после динамики.\n"
+            "🎧 Sonic Scoop (Justin Kedy) — 6 стадий по методологии инженера:\n"
+            "    Pro-MB динамик проблемных частот (1-й в чейне) → subtractive EQ\n"
+            "    (до компресора) → Kotelnikov клей → SDRR(TUBE) сатурация →\n"
+            "    boost+wide EQ (после компресора, стерео-расширение) → лимитер."
         )
         self._master_combo.addItem("💎 Full — кристальный, эталонный (экспорт)", "")
         self._master_combo.addItem("⚡ Digital fast — быстрый, чистый", "digital")
@@ -767,6 +771,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._master_combo.addItem("🥁 Punch — ударный, транзиентный", "punch")
         self._master_combo.addItem("🎞 Reel-to-reel — двойная плёнка (tracking→mixdown)", "reel")
         self._master_combo.addItem("🎯 Reference — классический M/S мастеринг-гайд", "reference")
+        self._master_combo.addItem("🎧 Sonic Scoop — 6 стадий (Justin Kedy)", "sonic_scoop")
         _env_mode = os.environ.get("BIRKA_FAST_MASTER", "").strip().lower()
         _alias = {
             "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
@@ -779,6 +784,7 @@ class LibraryTab(QtWidgets.QWidget):
             "air": "airy", "punchy": "punch",
             "reel": "reel", "reel2reel": "reel", "double_tape": "reel", "tape2": "reel",
             "reference": "reference", "mastering": "reference", "classic": "reference",
+            "sonic_scoop": "sonic_scoop", "kedy": "sonic_scoop", "scoop": "sonic_scoop",
         }
         _resolved = _alias.get(_env_mode, _env_mode)
         _idx = self._master_combo.findData(_resolved)

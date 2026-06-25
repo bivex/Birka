@@ -731,7 +731,7 @@ _FAST_MASTER_CHAINS = {
     # saturation on the now-even signal, a stereo widener, and the limiter
     # LAST. Boost-EQ lives in the widener/tone stage AFTER the compressor —
     # per Kedy "boost EQ sometimes better AFTER the compressor".
-    "sonic_scoop":  ["pro_mb", "pro_q_cut", "kot", "sdrr_tube", "pro_q_widen", "limiter"],
+    "sonic_scoop":  ["pro_mb_sonic", "pro_q_cut", "kot", "sdrr_tube", "pro_q_widen", "limiter"],
 }
 _FAST_MASTER_ALIASES = {
     "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
@@ -1171,6 +1171,8 @@ def _render_fast_vst_chain(dry_audio, np, daw, mode="digital"):
       analog_ultra : Tape -> Pro-L
       reference    : Balancing M/S EQ -> Kotelnikov -> SDRR2(TUBE) ->
                      Tone-shaping M/S EQ -> Pro-L (practical mastering guide)
+      sonic_scoop  : Pro-MB -> Subtractive EQ -> Kotelnikov -> SDRR2(TUBE) ->
+                     Boost+Wide EQ -> Pro-L (Justin Kedy methodology)
 
     Caller has already resampled dry_audio to _VST_SAMPLE_RATE and redirected
     stderr. Returns the post-limiter audio (channels, frames) or None on failure.
