@@ -890,8 +890,17 @@ def _fast_master_mode():
     """
     raw = os.environ.get("BIRKA_FAST_MASTER", "").strip().lower()
     if not raw:
+        logger_vst.debug("fast-master: BIRKA_FAST_MASTER unset -> full chain")
         return None
-    return _FAST_MASTER_ALIASES.get(raw)
+    mode = _FAST_MASTER_ALIASES.get(raw)
+    if mode is None:
+        logger_vst.warning("fast-master: BIRKA_FAST_MASTER=%r unknown -> full chain "
+                           "(valid: %s)", raw, ", ".join(sorted(_FAST_MASTER_CHAINS)))
+    else:
+        chain = _FAST_MASTER_CHAINS[mode]
+        logger_vst.info("fast-master: BIRKA_FAST_MASTER=%r -> mode=%r  chain=[%s]",
+                        raw, mode, " -> ".join(chain))
+    return mode
 
 
 def _configure_proq_fast(pro_q):
@@ -1567,6 +1576,10 @@ def _render_fast_vst_chain(dry_audio, np, daw, mode="digital"):
     global _VST_FAST_ENGINE, _VST_FAST_GRAPH, _VST_FAST_MODE
     chain = _FAST_MASTER_CHAINS.get(mode, _FAST_MASTER_CHAINS["digital"])
     analog = mode.startswith("analog")
+    audio_2d = dry_audio.reshape(-1, 2).T.astype(np.float32)
+    duration = audio_2d.shape[1] / _VST_SAMPLE_RATE
+    logger_vst.info("render_fast: mode=%s  chain=[%s]  %.2fs @ %dHz  %d ch",
+                    mode, " -> ".join(chain), duration, _VST_SAMPLE_RATE, audio_2d.shape[0])
 
     # (Re)build the engine/graph when first used or when the mode changed, since
     # different modes use different plugin sets and routing.
@@ -1595,6 +1608,8 @@ def _render_fast_vst_chain(dry_audio, np, daw, mode="digital"):
         _VST_FAST_ENGINE.load_graph(connections)
         _VST_FAST_GRAPH = procs
         _VST_FAST_MODE = mode
+        logger_vst.info("render_fast: graph rebuilt for mode=%s (%d nodes: %s)",
+                        mode, len(chain), " -> ".join(["pb"] + chain))
 
     # Configure each node every render (cheap; keeps params correct after reuse).
     for name in chain:
@@ -1647,6 +1662,12 @@ def _render_fast_vst_chain(dry_audio, np, daw, mode="digital"):
             pb.set_data(scaled.astype(np.float32))
             _VST_FAST_ENGINE.render(duration)
             out = _VST_FAST_ENGINE.get_audio(out_node)
+    final_lufs = _measure_lufs(out, _VST_SAMPLE_RATE)
+    peak = float(np.max(np.abs(out))) if out is not None else 0.0
+    logger_vst.info("render_fast: done  mode=%s  out=%s  LUFS=%.2f  peak=%.4f (%.2f dBFS)",
+                    mode, None if out is None else f"{out.shape}",
+                    final_lufs if final_lufs is not None else -99.0,
+                    peak, 20.0 * float(__import__('math').log10(max(peak, 1e-9))))
     return out
 
 
@@ -1664,6 +1685,9 @@ def _render_vst_chain_subprocess(dry_audio, sample_rate, output_path, mode="digi
     if not worker.exists():
         logger_vst.warning("vst_worker.py not found at %s", worker)
         return False
+    logger_vst.info("vst_subprocess: mode=%s  in=%d ch %dHz  -> %s",
+                    mode, dry_audio.shape[-1] if hasattr(dry_audio, 'shape') else '?',
+                    sample_rate, Path(output_path).name)
 
     # Write dry audio to a temp WAV for the worker
     tmp_in_name  = None
@@ -1710,8 +1734,11 @@ def _render_vst_chain_subprocess(dry_audio, sample_rate, output_path, mode="digi
         ]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
         if result.returncode != 0:
-            logger_vst.error("vst_worker failed (rc=%d): %s", result.returncode, result.stderr[-500:])
+            logger_vst.error("vst_subprocess: FAILED rc=%d: %s",
+                             result.returncode, result.stderr[-500:])
             return False
+        logger_vst.info("vst_subprocess: OK rc=0 (%.1fs)  -> %s",
+                        result.returncode, Path(output_path).name)
         for line in result.stdout.splitlines():
             line = line.strip()
             if line:
@@ -1770,6 +1797,10 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
             L = _sps.resample_poly(stereo[0], up, dn)
             R = _sps.resample_poly(stereo[1], up, dn)
             dry_audio = np.stack([L, R]).T.flatten().astype(np.float32)
+            logger_vst.info("resample: %dHz -> %dHz  (up=%d dn=%d, %.2fs -> %.2fs)",
+                            sample_rate, _VST_SAMPLE_RATE, up, dn,
+                            stereo.shape[1] / sample_rate,
+                            L.shape[0] / _VST_SAMPLE_RATE)
         except Exception:
             return False
 
@@ -1799,12 +1830,16 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                         mode,
                     )
                     if out is not None:
-                        return _write_float_wav(
+                        ok = _write_float_wav(
                             out.T.flatten(),
                             output_path,
                             _VST_SAMPLE_RATE,
                             soft_clip=False,
                         )
+                        logger_vst.info("sfizz_vst_chain: fast -> %s  %s",
+                                        "OK" if ok else "WAV WRITE FAILED",
+                                        Path(output_path).name)
+                        return ok
                 except Exception as _fast_exc:
                     logger_vst.error("fast-chain exception (falling back to full chain): %s", _fast_exc, exc_info=True)
                     _VST_FAST_ENGINE = None
@@ -1937,8 +1972,12 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
             success = _write_float_wav(
                 out.T.flatten(), output_path, _VST_SAMPLE_RATE, soft_clip=False
             )
+            logger_vst.info("sfizz_vst_chain: full -> %s  %s",
+                            "OK" if success else "WAV WRITE FAILED",
+                            Path(output_path).name)
             return success
         except Exception:
+            logger_vst.error("sfizz_vst_chain: exception, resetting engine", exc_info=True)
             if _VST_ENGINE is not None:
                 try:
                     _VST_ENGINE.load_graph([])
@@ -2115,6 +2154,9 @@ def render_midi_to_wav(
     """
     backend = _resolve_backend()
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    logger.info("render_midi_to_wav: %s -> %s  backend=%s  %dHz  poly=%d  q=%d  bits=%d",
+                midi_path.name, output_path.name, backend, sample_rate,
+                polyphony, quality, bit_depth)
 
     if backend == "sfizz":
         sfz = _find_sfz()
@@ -2246,6 +2288,8 @@ def render_midi_to_mp3_batch(
     ).lower() in ("1", "true", "yes")
     self_masters = _sfizz_self_masters()
     max_workers = 1 if vst_active else min(len(midi_paths), os.cpu_count() or 4)
+    logger.info("mp3_batch: %d files  backend=%s  self_masters=%s  vst_active=%s  workers=%d",
+                len(midi_paths), backend, self_masters, vst_active, max_workers)
     results: List[Tuple[Path, Optional[Path]]] = []
 
     def _render_one(midi_path: Path) -> Tuple[Path, Optional[Path]]:
@@ -2281,6 +2325,8 @@ def render_midi_to_mp3_batch(
 
     successful = [mp3 for _, mp3 in results if mp3 is not None]
     failed = [mid for mid, mp3 in results if mp3 is None]
+    logger.info("mp3_batch: done  ok=%d  failed=%d  of %d",
+                len(successful), len(failed), total)
     return successful, failed
 
 
@@ -2311,6 +2357,8 @@ def render_midi_to_wav_batch(
         "USE_VST_CHAIN", ""
     ).lower() in ("1", "true", "yes")
     max_workers = 1 if vst_active else min(len(midi_paths), os.cpu_count() or 4)
+    logger.info("wav_batch: %d files  backend=%s  vst_active=%s  workers=%d",
+                len(midi_paths), backend, vst_active, max_workers)
     results: List[Tuple[Path, Optional[Path]]] = []
 
     def _render_one(midi_path: Path) -> Tuple[Path, Optional[Path]]:
@@ -2338,6 +2386,8 @@ def render_midi_to_wav_batch(
 
     successful = [wav for _, wav in results if wav is not None]
     failed = [mid for mid, wav in results if wav is None]
+    logger.info("wav_batch: done  ok=%d  failed=%d  of %d",
+                len(successful), len(failed), total)
     return successful, failed
 
 
