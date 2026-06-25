@@ -2855,6 +2855,10 @@ def _synth_sfizz_to_wav(
                     drum_synth = None
 
         interleaved_blocks: List[np.ndarray] = []
+        mel_left_blocks:    List[np.ndarray] = []
+        mel_right_blocks:   List[np.ndarray] = []
+        drum_left_blocks:   List[np.ndarray] = []
+        drum_right_blocks:  List[np.ndarray] = []
         event_index = 0
         n_events = len(events)
         rendered = 0
@@ -2885,7 +2889,7 @@ def _synth_sfizz_to_wav(
                     synth.program_change(delay, msg.program)
                 event_index += 1
 
-            # Render both synths and mix drums through a proper drum bus.
+            # Render both synths — keep drum blocks separate for post-processing.
             left, right = synth.render_block()
             left_arr = np.asarray(left, dtype=np.float32)
             right_arr = np.asarray(right, dtype=np.float32)
@@ -2893,30 +2897,10 @@ def _synth_sfizz_to_wav(
                 d_block = drum_synth.render_block()
                 d_left  = np.asarray(d_block[0], dtype=np.float32)
                 d_right = np.asarray(d_block[1], dtype=np.float32)
-                # ── Drum bus svedenie ──────────────────────────────────────────
-                # 1. Gain staging: drums typically over-render vs melodic.
-                #    Pull back by ~2 dB so kick sits in the mix not on top.
-                DRUM_GAIN = 0.794  # -2 dB
-                d_left  = d_left  * DRUM_GAIN
-                d_right = d_right * DRUM_GAIN
-
-                # 2. Transient punch: soft-knee upward expander via tanh inverse.
-                #    Brings out attack of kick/snare without clipping.
-                punch = 1.15  # subtle — just enough bite
-                d_left  = np.tanh(d_left  * punch) / np.tanh(punch)
-                d_right = np.tanh(d_right * punch) / np.tanh(punch)
-
-                # 3. Stereo image: drums are mostly centre (kick/snare mono),
-                #    but add subtle width via M/S tilt (+3% side).
-                mid  = (d_left + d_right) * 0.5
-                side = (d_left - d_right) * 0.5
-                side = side * 1.06  # widen by ~0.5 dB on side
-                d_left  = mid + side
-                d_right = mid - side
-
-                # 4. Sum into mix. Melodic stays untouched — only drum bus processed.
-                left_arr  = left_arr  + d_left
-                right_arr = right_arr + d_right
+                drum_left_blocks.append(d_left)
+                drum_right_blocks.append(d_right)
+            mel_left_blocks.append(left_arr)
+            mel_right_blocks.append(right_arr)
             # NOTE: soft-clipping moved to the pedalboard mastering stage (tape
             # saturation + adaptive clipper). Keeping raw sfizz output here
             # avoids double-tanh when the pedalboard fallback is used.
