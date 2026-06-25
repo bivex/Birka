@@ -2840,6 +2840,53 @@ def _synth_sfizz_to_wav(
             events.append((abs_time, msg))
 
     total_seconds = max(1.0, mid.length + 2.0)
+
+    # ── Adaptive velocity scaling (same logic as TSF path) ───────────────────
+    try:
+        import numpy as _np_vel
+
+        _mel_vels = [
+            getattr(m, "velocity", 0)
+            for _, m in events
+            if getattr(m, "type", "") == "note_on"
+            and getattr(m, "velocity", 0) > 0
+            and getattr(m, "channel", 0) != 9
+        ]
+        _drm_vels = [
+            getattr(m, "velocity", 0)
+            for _, m in events
+            if getattr(m, "type", "") == "note_on"
+            and getattr(m, "velocity", 0) > 0
+            and getattr(m, "channel", 0) == 9
+        ]
+
+        def _sfizz_vel_scale(vels: List[int], target_p95: int) -> float:
+            if not vels:
+                return 1.0
+            p95 = float(_np_vel.percentile(vels, 95))
+            return min(target_p95 / p95, 4.0) if p95 >= 1 else 1.0
+
+        mel_scale = _sfizz_vel_scale(_mel_vels, 100)
+        drm_scale = _sfizz_vel_scale(_drm_vels, 90)
+
+        if abs(mel_scale - 1.0) > 0.05 or abs(drm_scale - 1.0) > 0.05:
+            logger_sfizz.info(
+                "sfizz: velocity scaling: melodic x%.2f  drums x%.2f  (mel_p95=%.0f drm_p95=%.0f)",
+                mel_scale, drm_scale,
+                float(_np_vel.percentile(_mel_vels, 95)) if _mel_vels else 0.0,
+                float(_np_vel.percentile(_drm_vels, 95)) if _drm_vels else 0.0,
+            )
+            scaled: List[Tuple[float, Any]] = []
+            for t, m in events:
+                if getattr(m, "type", "") == "note_on" and getattr(m, "velocity", 0) > 0:
+                    is_drum = getattr(m, "channel", 0) == 9
+                    scale   = drm_scale if is_drum else mel_scale
+                    new_vel = int(min(127, round(getattr(m, "velocity", 0) * scale)))
+                    m = m.copy(velocity=new_vel)
+                scaled.append((t, m))
+            events = scaled
+    except Exception as _e:
+        logger_sfizz.debug("sfizz: velocity scaling skipped: %s", _e)
     frames_needed = int(total_seconds * sample_rate)
 
     logger_sfizz.info(
