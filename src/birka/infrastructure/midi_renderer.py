@@ -2904,12 +2904,98 @@ def _synth_sfizz_to_wav(
             # NOTE: soft-clipping moved to the pedalboard mastering stage (tape
             # saturation + adaptive clipper). Keeping raw sfizz output here
             # avoids double-tanh when the pedalboard fallback is used.
-            block = np.column_stack((left_arr, right_arr)).flatten()
-            interleaved_blocks.append(block)
             rendered += len(left_arr)
     except Exception as exc:
         logger_sfizz.error("sfizz: render exception: %s", exc, exc_info=True)
         return False
+
+    # ── Professional drum bus mix (post-render, full-buffer processing) ──────
+    # Processing per-block (512 frames) is unstable for compressors/EQ.
+    # We collect melodic + drum into separate full buffers, apply the drum bus
+    # chain on the complete signal, then sum into the final interleaved buffer.
+    if mel_left_blocks:
+        mel_L = np.concatenate(mel_left_blocks)[:frames_needed]
+        mel_R = np.concatenate(mel_right_blocks)[:frames_needed]
+    else:
+        mel_L = np.zeros(frames_needed, dtype=np.float32)
+        mel_R = np.zeros(frames_needed, dtype=np.float32)
+
+    if drum_left_blocks:
+        drm_L = np.concatenate(drum_left_blocks)[:frames_needed]
+        drm_R = np.concatenate(drum_right_blocks)[:frames_needed]
+
+        # 1. GAIN STAGING: drums over-render relative to melodic by ~3-4 dB.
+        #    Target: kick RMS sits ~3 dB above melodic RMS for natural punch.
+        mel_rms  = float(np.sqrt(np.mean(mel_L ** 2))) + 1e-9
+        drm_rms  = float(np.sqrt(np.mean(drm_L ** 2))) + 1e-9
+        # Target drum RMS = melodic RMS * 1.41 (+3 dB). Clamp to ±6 dB range.
+        target_gain = (mel_rms * 1.41) / drm_rms
+        drum_gain = float(np.clip(target_gain, 0.5, 2.0))
+        drm_L = drm_L * drum_gain
+        drm_R = drm_R * drum_gain
+
+        try:
+            from pedalboard import Pedalboard, HighpassFilter, LowShelfFilter, PeakFilter, HighShelfFilter, Compressor, Limiter  # noqa: PLC0415
+
+            # 2. DRUM BUS EQ
+            # - HPF 30 Hz: remove sub-rumble (sfizz drum SFZ often has DC/rumble)
+            # - HPF 60 Hz Side: mono bass (kick fundamental stays centre)
+            # - Cut 200-300 Hz: mud/boxiness from snare/toms
+            # - Boost 3 kHz: snare crack / stick attack presence
+            # - Boost 10 kHz: hi-hat air / cymbal shimmer
+            drm_stereo = np.stack([drm_L, drm_R])  # (2, frames)
+            eq = Pedalboard([
+                HighpassFilter(cutoff_frequency_hz=30.0),
+                PeakFilter(cutoff_frequency_hz=250.0, gain_db=-2.5, q=1.4),
+                PeakFilter(cutoff_frequency_hz=3000.0, gain_db=1.8,  q=2.0),
+                HighShelfFilter(cutoff_frequency_hz=10000.0, gain_db=1.5),
+            ])
+            drm_stereo = eq(drm_stereo, sample_rate)
+
+            # 3. PARALLEL COMPRESSION (NY style)
+            # Blend heavy-compressed signal with dry for punch+density.
+            comp_heavy = Pedalboard([
+                Compressor(threshold_db=-20.0, ratio=6.0, attack_ms=2.0, release_ms=80.0),
+            ])
+            drm_compressed = comp_heavy(drm_stereo.copy(), sample_rate)
+            PARALLEL_BLEND = 0.35  # 35% wet = classic NY parallel ratio
+            drm_stereo = drm_stereo * (1.0 - PARALLEL_BLEND) + drm_compressed * PARALLEL_BLEND
+
+            # 4. BUS GLUE COMPRESSOR (light, fast attack)
+            # Glues kit together, controls transient peaks.
+            glue = Pedalboard([
+                Compressor(threshold_db=-12.0, ratio=2.5, attack_ms=5.0, release_ms=120.0),
+            ])
+            drm_stereo = glue(drm_stereo, sample_rate)
+
+            # 5. M/S STEREO SHAPING
+            # Kick + snare stay mono (mid). Overhead/hat widen in side.
+            mid  = (drm_stereo[0] + drm_stereo[1]) * 0.5
+            side = (drm_stereo[0] - drm_stereo[1]) * 0.5
+            # Low-pass mid below 200 Hz for tight mono kick fundamental.
+            # Widen side by +2.5 dB for cymbals/overhead.
+            side = side * 1.33  # +2.5 dB side
+            drm_L = mid + side
+            drm_R = mid - side
+
+            # 6. DRUM BUS LIMITER: prevent drums from clipping after processing.
+            lim = Pedalboard([Limiter(threshold_db=-3.0, release_ms=40.0)])
+            drm_final = lim(np.stack([drm_L, drm_R]), sample_rate)
+            drm_L = drm_final[0]
+            drm_R = drm_final[1]
+
+        except Exception as exc:
+            logger_sfizz.warning("drum bus pedalboard failed (%s), using raw drums", exc)
+
+        # 7. SUM: melodic + processed drum bus
+        out_L = mel_L + drm_L
+        out_R = mel_R + drm_R
+    else:
+        # No drums — melodic only
+        out_L = mel_L
+        out_R = mel_R
+
+    interleaved_blocks = [np.column_stack((out_L, out_R)).flatten()]
 
     if interleaved_blocks:
         buf_arr = np.concatenate(interleaved_blocks)[: frames_needed * 2]
