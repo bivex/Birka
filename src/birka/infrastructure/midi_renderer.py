@@ -3207,11 +3207,10 @@ def _synth_sfizz_to_wav(
         drm_L = np.concatenate(drum_left_blocks)[:frames_needed]
         drm_R = np.concatenate(drum_right_blocks)[:frames_needed]
 
-        # 1. GAIN STAGING: fixed -2 dB on drums relative to full scale.
-        #    Adaptive RMS matching caused drums to be too quiet because melodic
-        #    is attenuated by the pan/vol matrix (strings 0.72, piano 0.68 etc).
-        #    Fixed gain keeps drums punchy regardless of melodic content level.
-        drum_gain = 0.80  # -2 dB
+        # 1. GAIN STAGING: fixed -4.4 dB on drums (0.60).
+        #    Melodic is attenuated ~0.80 avg by pan matrix; drums need to sit
+        #    clearly below melodic so instruments are heard.
+        drum_gain = 0.60  # -4.4 dB
         drm_L = drm_L * drum_gain
         drm_R = drm_R * drum_gain
 
