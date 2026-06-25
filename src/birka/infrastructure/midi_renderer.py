@@ -804,7 +804,10 @@ def _configure_proq_linear_phase(pro_q):
     # tone-shaping stages so each band cuts/boosts without phase rotation
     # smearing the work of the compressor/saturator around it. Offline render,
     # so the added latency is irrelevant. Resolution stays Medium (idx 553).
-    pro_q.set_parameter(552, 0.25)  # Processing Mode = Linear Phase
+    # NB: idx 552 is 3-step (Zero Latency 0.0 / Natural Phase 0.5 / Linear Phase
+    # 1.0); the dump's norm_range was misleading — verified live that 0.25 lands
+    # on Natural Phase, NOT Linear Phase. 0.75+ is required.
+    pro_q.set_parameter(552, 1.0)  # Processing Mode = Linear Phase
 
 
 def _configure_proq_balance(pro_q):
