@@ -2542,13 +2542,18 @@ def _synth_tsf_to_wav(
         clip_drive = 10 ** (clip_db / 20.0)
         stereo = np.tanh(stereo * clip_drive) / np.tanh(clip_drive)
 
+        # Limit first, then loudness-normalize so the limiter can't undo the gain.
+        lim_stage = Pedalboard([Limiter(threshold_db=-1.0, release_ms=50.0)])
+        stereo = lim_stage(stereo, sample_rate)
+
         current_lufs = _measure_lufs(stereo, sample_rate)
         if current_lufs is not None:
             gain_db = max(-10.0, min(8.0, TARGET_LOUDNESS_LUFS - current_lufs))
             stereo = stereo * (10 ** (gain_db / 20.0))
-
-        lim_stage = Pedalboard([Limiter(threshold_db=-1.0, release_ms=50.0)])
-        stereo = lim_stage(stereo, sample_rate)
+            # Final true-peak clamp after loudness gain
+            tp = float(np.max(np.abs(stereo)))
+            if tp > 0.891:  # -1 dBTP
+                stereo = stereo * (0.891 / tp)
 
         buf = np.asarray(stereo, dtype=np.float32).T.flatten().tolist()
     except Exception:
