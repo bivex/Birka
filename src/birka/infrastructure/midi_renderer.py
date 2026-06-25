@@ -3329,12 +3329,19 @@ def _synth_sfizz_to_wav(
             return butter(order, [lo_hz / (_SR / 2), hi_hz / (_SR / 2)], btype="band", output="sos")
 
         # Pre-build filters per role
+        # Professional frequency zones — no overlap between instrument roles:
+        #   Bass:    40–300 Hz   (body + punch, no mid bleed)
+        #   Guitar:  100–8k Hz   (full range but HPF clears bass mud)
+        #   Piano:   180–8k Hz   (support zone, below strings air)
+        #   Strings: 250–14k Hz  (mid-high field, above piano, below air)
+        #   Pad:     300–6k Hz   (background wash, narrow zone)
+        #   Other:   200–10k Hz  (general melodic instruments)
         _filters: dict = {
-            "bass":    (_make_hpf(40.0),   None),
-            "guitar":  (_make_hpf(100.0),  None),
-            "piano":   (_make_hpf(180.0),  _make_lpf(10000.0)),
-            "strings": (_make_hpf(200.0),  _make_lpf(12000.0)),
-            "pad":     (_make_hpf(250.0),  _make_lpf(8000.0)),
+            "bass":    (_make_hpf(40.0),   _make_lpf(300.0)),
+            "guitar":  (_make_hpf(100.0),  _make_lpf(8000.0)),
+            "piano":   (_make_hpf(180.0),  _make_lpf(8000.0)),
+            "strings": (_make_hpf(250.0),  _make_lpf(14000.0)),
+            "pad":     (_make_hpf(300.0),  _make_lpf(6000.0)),
             "other":   (_make_hpf(200.0),  _make_lpf(10000.0)),
         }
 
