@@ -1716,11 +1716,9 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                             _VST_SAMPLE_RATE,
                             soft_clip=False,
                         )
-                except Exception:
+                except Exception as _fast_exc:
+                    logger_vst.error("fast-chain exception (falling back to full chain): %s", _fast_exc, exc_info=True)
                     _VST_FAST_ENGINE = None
-                    _VST_FAST_GRAPH = None
-                    _VST_FAST_MODE = None
-                    # fall through to the full chain on any fast-path failure
 
             if _VST_ENGINE is None:
                 _VST_ENGINE = daw.RenderEngine(_VST_SAMPLE_RATE, _VST_BUFFER_SIZE)
