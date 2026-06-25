@@ -3214,6 +3214,14 @@ def _synth_sfizz_to_wav(
         drm_L = drm_L * drum_gain
         drm_R = drm_R * drum_gain
 
+        # Diagnostic: log RMS levels before sum so we can tune gain
+        _mel_rms_db = 20 * float(np.log10(max(float(np.sqrt(np.mean(mel_L ** 2))), 1e-9)))
+        _drm_rms_db = 20 * float(np.log10(max(float(np.sqrt(np.mean(drm_L ** 2))), 1e-9)))
+        logger_sfizz.info(
+            "sfizz: levels before sum — mel_RMS=%.1f dB  drm_RMS=%.1f dB  diff=%.1f dB",
+            _mel_rms_db, _drm_rms_db, _drm_rms_db - _mel_rms_db,
+        )
+
         try:
             from pedalboard import Pedalboard, HighpassFilter, LowShelfFilter, PeakFilter, HighShelfFilter, Compressor, Limiter  # noqa: PLC0415
 
