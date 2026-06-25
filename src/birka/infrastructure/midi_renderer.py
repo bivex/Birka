@@ -2943,7 +2943,7 @@ def _synth_sfizz_to_wav(
             # - Cut 200-300 Hz: mud/boxiness from snare/toms
             # - Boost 3 kHz: snare crack / stick attack presence
             # - Boost 10 kHz: hi-hat air / cymbal shimmer
-            drm_stereo = np.stack([drm_L, drm_R])  # (2, frames)
+            drm_stereo = np.stack([drm_L, drm_R]).astype(np.float32)  # (2, frames)
             eq = Pedalboard([
                 HighpassFilter(cutoff_frequency_hz=30.0),
                 PeakFilter(cutoff_frequency_hz=250.0, gain_db=-2.5, q=1.4),
@@ -2957,7 +2957,7 @@ def _synth_sfizz_to_wav(
             comp_heavy = Pedalboard([
                 Compressor(threshold_db=-20.0, ratio=6.0, attack_ms=2.0, release_ms=80.0),
             ])
-            drm_compressed = comp_heavy(drm_stereo.copy(), sample_rate)
+            drm_compressed = comp_heavy(np.asarray(drm_stereo, dtype=np.float32).copy(), sample_rate)
             PARALLEL_BLEND = 0.35  # 35% wet = classic NY parallel ratio
             drm_stereo = drm_stereo * (1.0 - PARALLEL_BLEND) + drm_compressed * PARALLEL_BLEND
 
@@ -2966,7 +2966,7 @@ def _synth_sfizz_to_wav(
             glue = Pedalboard([
                 Compressor(threshold_db=-12.0, ratio=2.5, attack_ms=5.0, release_ms=120.0),
             ])
-            drm_stereo = glue(drm_stereo, sample_rate)
+            drm_stereo = glue(np.asarray(drm_stereo, dtype=np.float32), sample_rate)
 
             # 5. M/S STEREO SHAPING
             # Kick + snare stay mono (mid). Overhead/hat widen in side.
