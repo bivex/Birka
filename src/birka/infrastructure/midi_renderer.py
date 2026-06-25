@@ -3241,6 +3241,8 @@ def _synth_sfizz_to_wav(
         mel_right_blocks:   List[np.ndarray] = []
         drum_left_blocks:   List[np.ndarray] = []
         drum_right_blocks:  List[np.ndarray] = []
+        _ch_full_L: dict = {}  # ch → list of blocks (for post-render per-ch EQ)
+        _ch_full_R: dict = {}
         event_index = 0
         n_events = len(events)
         rendered = 0
@@ -3276,9 +3278,8 @@ def _synth_sfizz_to_wav(
                     target.program_change(delay, getattr(msg, "program", 0))
                 event_index += 1
 
-            # Render all per-channel synths and apply pan/vol matrix.
-            # pan_norm ∈ [-1,1]: L gain = cos((pan+1)*π/4), R gain = sin((pan+1)*π/4)
-            # This gives -3 dB at centre (constant power panning).
+            # Render all per-channel synths into separate full buffers.
+            # EQ (HPF/LPF) will be applied after concatenation on the full signal.
             import math as _math
             ch_L = np.zeros(_SFIZZ_BLOCK_FRAMES, dtype=np.float32)
             ch_R = np.zeros(_SFIZZ_BLOCK_FRAMES, dtype=np.float32)
@@ -3286,12 +3287,11 @@ def _synth_sfizz_to_wav(
                 bl, br = s.render_block()
                 bl_arr = np.asarray(bl, dtype=np.float32)
                 br_arr = np.asarray(br, dtype=np.float32)
-                pan_n, vol = ch_mix.get(ch, (0.0, 1.0))
-                angle = (pan_n + 1.0) * _math.pi / 4.0
-                l_gain = vol * _math.cos(angle)
-                r_gain = vol * _math.sin(angle)
-                ch_L += bl_arr * l_gain
-                ch_R += br_arr * r_gain
+                if ch not in _ch_full_L:
+                    _ch_full_L[ch] = []
+                    _ch_full_R[ch] = []
+                _ch_full_L[ch].append(bl_arr)
+                _ch_full_R[ch].append(br_arr)
 
             if drum_synth is not None:
                 d_block = drum_synth.render_block()
@@ -3299,23 +3299,109 @@ def _synth_sfizz_to_wav(
                 d_right = np.asarray(d_block[1], dtype=np.float32)
                 drum_left_blocks.append(d_left)
                 drum_right_blocks.append(d_right)
-            mel_left_blocks.append(ch_L)
-            mel_right_blocks.append(ch_R)
             rendered += _SFIZZ_BLOCK_FRAMES
     except Exception as exc:
         logger_sfizz.error("sfizz: render exception: %s", exc, exc_info=True)
         return False
 
+    # ── Per-channel frequency separation (post-render, full-buffer EQ) ───────
+    # Apply HPF/LPF per instrument role so frequency zones don't overlap.
+    # Signal flow: concat blocks → scipy butterworth → pan/vol → sum to mel_L/R
+    #
+    # Frequency zones (professional arrangement):
+    #   Bass        HPF 40 Hz   (remove sub-rumble, keep body 40-200 Hz)
+    #   Guitar      HPF 100 Hz  (clear bass space, keeps 100 Hz-12 kHz)
+    #   Piano       HPF 180 Hz  LPF 10 kHz  (support zone, no bass/air fight)
+    #   Strings     HPF 200 Hz  LPF 12 kHz  (mid-field, no mud, no high-air)
+    #   Pads/Other  HPF 250 Hz  LPF 8 kHz   (background texture zone)
+    #   Lead synth  HPF 120 Hz              (melody sits above bass/guitar)
+    try:
+        from scipy.signal import butter, sosfilt
+        _SR = float(sample_rate)
+
+        def _make_hpf(freq_hz: float, order: int = 4):
+            return butter(order, freq_hz / (_SR / 2), btype="high", output="sos")
+
+        def _make_lpf(freq_hz: float, order: int = 4):
+            return butter(order, freq_hz / (_SR / 2), btype="low", output="sos")
+
+        def _make_bpf(lo_hz: float, hi_hz: float, order: int = 4):
+            return butter(order, [lo_hz / (_SR / 2), hi_hz / (_SR / 2)], btype="band", output="sos")
+
+        # Pre-build filters per role
+        _filters: dict = {
+            "bass":    (_make_hpf(40.0),   None),
+            "guitar":  (_make_hpf(100.0),  None),
+            "piano":   (_make_hpf(180.0),  _make_lpf(10000.0)),
+            "strings": (_make_hpf(200.0),  _make_lpf(12000.0)),
+            "pad":     (_make_hpf(250.0),  _make_lpf(8000.0)),
+            "other":   (_make_hpf(200.0),  _make_lpf(10000.0)),
+        }
+
+        def _role(ch: int) -> str:
+            prog = ch_programs.get(ch, 0)
+            if ch in bass_chs:    return "bass"
+            if ch in guitar_chs:  return "guitar"
+            if ch in piano_chs:   return "piano"
+            if ch in strings_chs: return "strings"
+            if ch in pad_chs:     return "pad"
+            return "other"
+
+        import math as _math
+        mel_L = np.zeros(frames_needed, dtype=np.float32)
+        mel_R = np.zeros(frames_needed, dtype=np.float32)
+
+        for ch, blocks_L in _ch_full_L.items():
+            blocks_R = _ch_full_R[ch]
+            buf_L = np.concatenate(blocks_L)[:frames_needed]
+            buf_R = np.concatenate(blocks_R)[:frames_needed]
+
+            role = _role(ch)
+            hpf_sos, lpf_sos = _filters[role]
+
+            if hpf_sos is not None:
+                buf_L = np.asarray(sosfilt(hpf_sos, buf_L), dtype=np.float32)
+                buf_R = np.asarray(sosfilt(hpf_sos, buf_R), dtype=np.float32)
+            if lpf_sos is not None:
+                buf_L = np.asarray(sosfilt(lpf_sos, buf_L), dtype=np.float32)
+                buf_R = np.asarray(sosfilt(lpf_sos, buf_R), dtype=np.float32)
+
+            pan_n, vol = ch_mix.get(ch, (0.0, 1.0))
+            angle  = (pan_n + 1.0) * _math.pi / 4.0
+            l_gain = vol * _math.cos(angle)
+            r_gain = vol * _math.sin(angle)
+            mel_L += buf_L * l_gain
+            mel_R += buf_R * r_gain
+
+            logger_sfizz.debug(
+                "sfizz: ch%d role=%-7s hpf=%s lpf=%s pan=%+.2f vol=%.2f",
+                ch, role,
+                f"{hpf_sos is not None}",
+                f"{lpf_sos is not None}",
+                pan_n, vol,
+            )
+
+        logger_sfizz.info("sfizz: per-ch EQ applied (%d channels)", len(_ch_full_L))
+
+    except Exception as _eq_exc:
+        logger_sfizz.warning("sfizz: per-ch EQ failed (%s) — falling back to flat mix", _eq_exc)
+        import math as _math
+        mel_L = np.zeros(frames_needed, dtype=np.float32)
+        mel_R = np.zeros(frames_needed, dtype=np.float32)
+        for ch, blocks_L in _ch_full_L.items():
+            blocks_R = _ch_full_R[ch]
+            buf_L = np.concatenate(blocks_L)[:frames_needed]
+            buf_R = np.concatenate(blocks_R)[:frames_needed]
+            pan_n, vol = ch_mix.get(ch, (0.0, 1.0))
+            angle  = (pan_n + 1.0) * _math.pi / 4.0
+            mel_L += buf_L * (vol * _math.cos(angle))
+            mel_R += buf_R * (vol * _math.sin(angle))
+
     # ── Professional drum bus mix (post-render, full-buffer processing) ──────
     # Processing per-block (512 frames) is unstable for compressors/EQ.
     # We collect melodic + drum into separate full buffers, apply the drum bus
     # chain on the complete signal, then sum into the final interleaved buffer.
-    if mel_left_blocks:
-        mel_L = np.concatenate(mel_left_blocks)[:frames_needed]
-        mel_R = np.concatenate(mel_right_blocks)[:frames_needed]
-    else:
-        mel_L = np.zeros(frames_needed, dtype=np.float32)
-        mel_R = np.zeros(frames_needed, dtype=np.float32)
+    # mel_L / mel_R are already built by the per-channel EQ block above.
 
     # Per-channel RMS diagnostic
     _rms_db = lambda x: 20 * float(np.log10(max(float(np.sqrt(np.mean(x ** 2))), 1e-9)))
