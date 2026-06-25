@@ -1675,7 +1675,6 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
 
     devnull = open(os.devnull, "w")
     old_stderr = os.dup(2)
-    os.dup2(devnull.fileno(), 2)
 
     with _VST_LOCK:
         try:
@@ -1690,7 +1689,9 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
             logger_vst.info("_render_sfizz_vst_chain: inside lock, mode=%r", mode)
             if mode is not None:
                 try:
+                    os.dup2(devnull.fileno(), 2)  # suppress VST stderr during render
                     out = _render_fast_vst_chain(dry_audio, np, daw, mode=mode)
+                    os.dup2(old_stderr, 2)         # restore before logging
                     logger_vst.info(
                         "fast-chain returned: type=%s shape=%s (mode=%s)",
                         type(out).__name__,
@@ -1844,8 +1845,15 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                 _VST_GRAPH = None
             return False
         finally:
-            os.dup2(old_stderr, 2)
-            os.close(old_stderr)
+            # Restore stderr if it was redirected (may already be restored in fast-chain path).
+            try:
+                os.dup2(old_stderr, 2)
+            except OSError:
+                pass
+            try:
+                os.close(old_stderr)
+            except OSError:
+                pass
             devnull.close()
 
 
