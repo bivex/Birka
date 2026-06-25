@@ -1815,6 +1815,10 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
             _VST_ENGINE.render(duration)
             out = _VST_ENGINE.get_audio("limiter")
             current_lufs = _measure_lufs(out, _VST_SAMPLE_RATE)
+            logger_vst.info("full chain pass1: LUFS=%.1f  target=%.1f  gain_db=%.1f",
+                current_lufs if current_lufs is not None else -99.0,
+                TARGET_LOUDNESS_LUFS,
+                (TARGET_LOUDNESS_LUFS - current_lufs) if current_lufs is not None else 0.0)
 
             # Pass 2: if off-target, scale the dry input and re-render so the
             # limiter re-clamps. Gain is applied to the SOURCE, not the master,
@@ -1826,6 +1830,9 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                     pb.set_data(scaled.astype(np.float32))
                     _VST_ENGINE.render(duration)
                     out = _VST_ENGINE.get_audio("limiter")
+                    post_lufs = _measure_lufs(out, _VST_SAMPLE_RATE)
+                    logger_vst.info("full chain pass2: gain=%.1f dB  post=%.1f LUFS",
+                        gain_db, post_lufs if post_lufs is not None else -99.0)
 
             success = _write_float_wav(
                 out.T.flatten(), output_path, _VST_SAMPLE_RATE, soft_clip=False
