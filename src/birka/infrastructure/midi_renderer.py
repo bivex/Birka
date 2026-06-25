@@ -1611,19 +1611,28 @@ def _render_fast_vst_chain(dry_audio, np, daw, mode="digital"):
     if current_lufs is not None:
         gain_db = TARGET_LOUDNESS_LUFS - current_lufs
         if gain_db > 0.5:
-            # UNDERSHOOT: scale the dry input and re-render so the limiter
-            # catches new peaks cleanly. Same approach as the overshoot branch —
-            # applying gain to the OUTPUT after Pro-L is blocked by headroom.
-            gain_db = min(gain_db, 8.0)
-            scaled = audio_2d * (10.0 ** (gain_db / 20.0))
-            pb.set_data(scaled.astype(np.float32))
-            _VST_FAST_ENGINE.render(duration)
-            out = _VST_FAST_ENGINE.get_audio(out_node)
-            post_lufs = _measure_lufs(out, _VST_SAMPLE_RATE)
-            logger.info(
-                "VST normalize pass2: gain=%.1f dB  pre=%.1f  post=%.1f LUFS",
-                gain_db, current_lufs, post_lufs if post_lufs is not None else -99.0,
-            )
+            # UNDERSHOOT: iterative normalize — apply gain to dry input and
+            # re-render up to 4 times until within 0.5 dB of target.
+            # No per-pass clamp — full gain each pass, limiter catches peaks.
+            cumulative_gain = 1.0
+            for _pass in range(4):
+                step_db = min(gain_db, 24.0)  # safety ceiling per pass
+                cumulative_gain *= 10.0 ** (step_db / 20.0)
+                pb.set_data((audio_2d * cumulative_gain).astype(np.float32))
+                _VST_FAST_ENGINE.render(duration)
+                out = _VST_FAST_ENGINE.get_audio(out_node)
+                post_lufs = _measure_lufs(out, _VST_SAMPLE_RATE)
+                logger.info(
+                    "VST normalize pass%d: gain=%.1f dB  cumulative=%.1f dB  post=%.1f LUFS",
+                    _pass + 2, step_db,
+                    20.0 * float(__import__('math').log10(max(cumulative_gain, 1e-9))),
+                    post_lufs if post_lufs is not None else -99.0,
+                )
+                if post_lufs is None:
+                    break
+                gain_db = TARGET_LOUDNESS_LUFS - post_lufs
+                if abs(gain_db) <= 0.5:
+                    break
         elif gain_db < -0.5:
             # OVERSHOOT: too loud. Scale the dry input down and re-render so the
             # limiter re-clamps cleanly (cheaper/cleaner than pulling the master).
