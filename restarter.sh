@@ -44,6 +44,10 @@ case "${BACKEND}" in
       fi
     fi
     export BIRKA_SFZ
+    if [[ ! -f "${BIRKA_SFZ}" ]]; then
+      echo "[birka] ERROR: SFZ file not found: ${BIRKA_SFZ}"
+      exit 1
+    fi
     echo "[birka] backend: sfizz | SFZ: ${BIRKA_SFZ}"
     ;;
   tsf|fluidsynth|auto)

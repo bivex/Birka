@@ -25,6 +25,7 @@ def main() -> int:
     )
     logging.getLogger("PyQt6").setLevel(logging.WARNING)
     logging.getLogger("ffmpeg").setLevel(logging.WARNING)
+    logging.getLogger("numcodecs").setLevel(logging.WARNING)
     # SIGUSR1 dumps all thread stacks to stderr — send it when GUI freezes:
     # kill -USR1 <pid>
     faulthandler.register(signal.SIGUSR1, all_threads=True, chain=False)
