@@ -2456,6 +2456,78 @@ def _synth_tsf_to_wav(
             for ch in range(16):
                 synth.channel_set_preset_number(ch, 0, midi_drums=(ch == 9))
 
+            # ── Per-channel intelligent mixing ───────────────────────────────
+            # Analyse programs from events to assign pan/volume by instrument role.
+            # GM program groups:
+            #   0-7   piano       — centre, slight roll-off
+            #   8-15  chromatic   — slight L/R spread
+            #   16-23 organ       — centre
+            #   24-31 guitar      — spread L/R when duplicated
+            #   32-39 bass        — centre, -2 dB (don't compete with kick)
+            #   40-47 strings     — centre, slight presence
+            #   48-55 ensemble    — wide, slight presence
+            #   56-63 brass       — slight spread
+            #   64-71 reed        — slight R
+            #   72-79 pipe        — slight L
+            #   80-87 synth lead  — centre
+            #   88-95 synth pad   — wide
+            #   96-103 synth fx   — wide
+            #   104-111 ethnic    — centre
+            #   112-119 percussive— centre
+            ch_programs: dict = {}
+            for _, m in events:
+                if getattr(m, "type", "") == "program_change":
+                    ch_programs[getattr(m, "channel", 0)] = getattr(m, "program", 0)
+            # Also scan initial program from events list (first program_change per ch)
+            # Default program per channel if no program_change seen
+            active_mel_channels = sorted({
+                getattr(m, "channel", 0) for _, m in events
+                if getattr(m, "type", "") == "note_on"
+                and getattr(m, "velocity", 0) > 0
+                and getattr(m, "channel", 0) != 9
+            })
+
+            # Assign pan positions: guitars spread L/R, bass centre, rest spread gently
+            guitar_channels = [ch for ch in active_mel_channels if 24 <= ch_programs.get(ch, 0) <= 31]
+            bass_channels   = [ch for ch in active_mel_channels if 32 <= ch_programs.get(ch, 0) <= 39]
+            pad_channels    = [ch for ch in active_mel_channels if ch_programs.get(ch, 0) in range(88, 104)]
+
+            # Guitar spread: first guitar L, second guitar R (classic double-track)
+            _guitar_pans = [38, 90] if len(guitar_channels) >= 2 else [64]
+
+            # Gentle spread for remaining melodic channels (not bass/guitar)
+            _other_mel = [ch for ch in active_mel_channels if ch not in guitar_channels and ch not in bass_channels]
+            _other_pans: list = []
+            if len(_other_mel) == 1:
+                _other_pans = [64]
+            elif len(_other_mel) == 2:
+                _other_pans = [54, 74]   # slight L/R
+            elif len(_other_mel) >= 3:
+                _other_pans = [44, 64, 84]
+            else:
+                _other_pans = []
+
+            for i, ch in enumerate(guitar_channels):
+                pan = _guitar_pans[i] if i < len(_guitar_pans) else 64
+                synth.channel_midi_control(ch, 10, pan)   # CC10 = pan
+                synth.channel_midi_control(ch, 7, 95)     # CC7  = volume (slightly under lead)
+                logger.debug("tsf mix: ch%d Guitar pan=%d vol=95", ch, pan)
+
+            for ch in bass_channels:
+                synth.channel_midi_control(ch, 10, 64)    # centre
+                synth.channel_midi_control(ch, 7, 90)     # -2 dB vs default
+                logger.debug("tsf mix: ch%d Bass pan=64 vol=90", ch)
+
+            for i, ch in enumerate(_other_mel):
+                pan = _other_pans[i] if i < len(_other_pans) else 64
+                vol = 100
+                # Pads slightly lower so lead cuts through
+                if ch in pad_channels:
+                    vol = 88
+                synth.channel_midi_control(ch, 10, pan)
+                synth.channel_midi_control(ch, 7, vol)
+                logger.debug("tsf mix: ch%d prog=%d pan=%d vol=%d", ch, ch_programs.get(ch, 0), pan, vol)
+
             samples: List[float] = []
             event_index = 0
             channels = 2
