@@ -17,7 +17,9 @@ from typing import Callable, List, Optional, Tuple
 
 import logging
 
+logger = logging.getLogger("birka.midi_renderer")
 logger_sfizz = logging.getLogger("birka.midi_renderer.sfizz")
+logger_vst = logging.getLogger("birka.midi_renderer.vst")
 
 try:
     try:
@@ -25,7 +27,6 @@ try:
     except ImportError:
         import sys
 
-        # Search parent directories for tsfpy.py and add its directory to sys.path
         _current = Path(__file__).resolve().parent
         _found = False
         for _parent in _current.parents:
@@ -39,10 +40,12 @@ try:
         from tsfpy import TinySoundFont, TSF_STEREO_INTERLEAVED
 
     _TSF_AVAILABLE = True
-except ImportError:
+    logger.info("tsf (TinySoundFont) backend available")
+except ImportError as exc:
     TinySoundFont = None
     TSF_STEREO_INTERLEAVED = 0
     _TSF_AVAILABLE = False
+    logger.info("tsf backend unavailable: %s", exc)
 
 # sfizz backend (SFZ instruments via pysfizz). Opt-in via BIRKA_BACKEND=sfizz.
 # pysfizz ships as a submodule under modules/pysfizz and is SFZ-only, so it is
@@ -63,25 +66,35 @@ try:
 
         _sfizz_root = Path(__file__).resolve().parent
         _added = False
+        _reason = "pysfizz not installed and no compiled _sfizz extension found"
         for _ancestor in _sfizz_root.parents:
             _candidate = _ancestor / "modules" / "pysfizz"
             _pkg = _candidate / "pysfizz"
             if (_pkg / "__init__.py").exists():
-                # Only use the source dir if it actually has a compiled extension,
-                # so we never shadow the installed package with a source-only copy.
-                if any(_pkg.glob("_sfizz*.so")) or any(_pkg.glob("_sfizz*.pyd")):
+                _so_files = list(_pkg.glob("_sfizz*.so")) + list(
+                    _pkg.glob("_sfizz*.pyd")
+                )
+                if _so_files:
                     if str(_candidate) not in _sys.path:
                         _sys.path.insert(0, str(_candidate))
                     _added = True
+                    _reason = (
+                        f"found compiled extension(s): {[f.name for f in _so_files]}"
+                    )
+                else:
+                    _reason = (
+                        f"found {_pkg} but no compiled _sfizz extension "
+                        "(source-only, will not shadow installed package)"
+                    )
                 break
-        if _added:
-            import pysfizz  # noqa: F401
-            from pysfizz import _sfizz as _sfizz_check  # noqa: F401
-        else:
-            raise ImportError("pysfizz not importable (no compiled _sfizz extension)")
+        if not _added:
+            logger.info("sfizz backend unavailable: %s", _reason)
+        raise ImportError(_reason)
     _SFIZZ_AVAILABLE = True
-except Exception:
+    logger.info("sfizz backend available (pysfizz + _sfizz loaded)")
+except Exception as exc:
     _SFIZZ_AVAILABLE = False
+    logger.info("sfizz backend unavailable: %s", exc)
 
 FLUIDSYNTH_GAIN = "0.8"
 LOUDNORM_TARGET = "loudnorm=I=-16:TP=-1.5:LRA=11"
@@ -704,17 +717,22 @@ def _fast_master_enabled() -> bool:
 # chain. "digital" is the original corrective fast path; the analog modes follow
 # the classic Tape -> [console] -> Bus Comp -> [EQ] -> Limiter signal flow.
 _FAST_MASTER_CHAINS = {
-    "digital":      ["pro_q", "kot", "limiter"],          # corrective, cleanest
+    "digital": ["pro_q", "kot", "limiter"],  # corrective, cleanest
     "analog_clean": ["tape", "kot", "pro_q", "limiter"],  # Studer->bus->passive EQ
-    "analog_warm":  ["tape", "sdrr", "kot", "limiter"],   # +console saturation (DESK)
-    "analog_ultra": ["tape", "limiter"],                  # tape body + loudness
+    "analog_warm": ["tape", "sdrr", "kot", "limiter"],  # +console saturation (DESK)
+    "analog_ultra": ["tape", "limiter"],  # tape body + loudness
     # Vibe archetypes -------------------------------------------------------
-    "analog_thick": ["tape", "sdrr_tube", "pro_q", "limiter"],   # fat/punchy (hiphop/lofi)
-    "polished":     ["tape", "sdrr", "soothe", "limiter"],       # luxury smooth (vocal/pop)
-    "modern_loud":  ["tape", "pro_mb", "sdrr", "limiter"],       # controlled low + loud (EDM)
-    "airy":         ["tape", "fresh", "kot", "limiter"],         # warm bottom + air (R&B)
-    "punch":        ["tape", "spiff", "kot", "limiter"],         # tight transients (drill/techno)
-    "reel":         ["tape_track", "tape_mix", "limiter"],       # 2x tape: tracking->mixdown
+    "analog_thick": [
+        "tape",
+        "sdrr_tube",
+        "pro_q",
+        "limiter",
+    ],  # fat/punchy (hiphop/lofi)
+    "polished": ["tape", "sdrr", "soothe", "limiter"],  # luxury smooth (vocal/pop)
+    "modern_loud": ["tape", "pro_mb", "sdrr", "limiter"],  # controlled low + loud (EDM)
+    "airy": ["tape", "fresh", "kot", "limiter"],  # warm bottom + air (R&B)
+    "punch": ["tape", "spiff", "kot", "limiter"],  # tight transients (drill/techno)
+    "reel": ["tape_track", "tape_mix", "limiter"],  # 2x tape: tracking->mixdown
     # Practical mastering guide (M/S, two-stage EQ) -------------------------
     # Reference chain after the classic signal-flow guide: a balancing M/S EQ
     # (HPF on sides + low/high-mid cleanups) feeds a gentle RMS bus glue, then
@@ -722,7 +740,7 @@ _FAST_MASTER_CHAINS = {
     # M/S EQ (body + side-image width + air) and the limiter. Two Pro-Q nodes
     # keep the balance/tone split the guide prescribes (EQ before AND after the
     # dynamics), each routed per-band to Mid/Side instead of a passive EQ.
-    "reference":    ["pro_q_balance", "kot", "sdrr_tube", "pro_q_tone", "limiter"],
+    "reference": ["pro_q_balance", "kot", "sdrr_tube", "pro_q_tone", "limiter"],
     # Justin Kedy / Sonic Scoop methodology -------------------------------
     # Six-stage master following the engineer's working chain ORDER (not the
     # order he builds it in). Dynamic/multiband control goes FIRST in signal
@@ -731,22 +749,54 @@ _FAST_MASTER_CHAINS = {
     # saturation on the now-even signal, a stereo widener, and the limiter
     # LAST. Boost-EQ lives in the widener/tone stage AFTER the compressor —
     # per Kedy "boost EQ sometimes better AFTER the compressor".
-    "sonic_scoop":  ["pro_mb_sonic", "pro_q_cut", "kot", "sdrr_tube", "pro_q_widen", "limiter"],
+    "sonic_scoop": [
+        "pro_mb_sonic",
+        "pro_q_cut",
+        "kot",
+        "sdrr_tube",
+        "pro_q_widen",
+        "limiter",
+    ],
 }
 _FAST_MASTER_ALIASES = {
-    "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
-    "digital": "digital", "clean_digital": "digital",
-    "analog": "analog_clean", "clean": "analog_clean", "analog_clean": "analog_clean",
-    "warm": "analog_warm", "analog_warm": "analog_warm", "vintage": "analog_warm",
-    "ultra": "analog_ultra", "analog_ultra": "analog_ultra", "tape": "analog_ultra",
-    "thick": "analog_thick", "analog_thick": "analog_thick", "fat": "analog_thick",
-    "polished": "polished", "luxury": "polished", "smooth": "polished",
-    "modern_loud": "modern_loud", "loud": "modern_loud", "modern": "modern_loud",
-    "airy": "airy", "air": "airy",
-    "punch": "punch", "punchy": "punch",
-    "reel": "reel", "reel2reel": "reel", "double_tape": "reel", "tape2": "reel",
-    "reference": "reference", "mastering": "reference", "classic": "reference",
-    "sonic_scoop": "sonic_scoop", "kedy": "sonic_scoop", "scoop": "sonic_scoop",
+    "1": "digital",
+    "true": "digital",
+    "yes": "digital",
+    "on": "digital",
+    "digital": "digital",
+    "clean_digital": "digital",
+    "analog": "analog_clean",
+    "clean": "analog_clean",
+    "analog_clean": "analog_clean",
+    "warm": "analog_warm",
+    "analog_warm": "analog_warm",
+    "vintage": "analog_warm",
+    "ultra": "analog_ultra",
+    "analog_ultra": "analog_ultra",
+    "tape": "analog_ultra",
+    "thick": "analog_thick",
+    "analog_thick": "analog_thick",
+    "fat": "analog_thick",
+    "polished": "polished",
+    "luxury": "polished",
+    "smooth": "polished",
+    "modern_loud": "modern_loud",
+    "loud": "modern_loud",
+    "modern": "modern_loud",
+    "airy": "airy",
+    "air": "airy",
+    "punch": "punch",
+    "punchy": "punch",
+    "reel": "reel",
+    "reel2reel": "reel",
+    "double_tape": "reel",
+    "tape2": "reel",
+    "reference": "reference",
+    "mastering": "reference",
+    "classic": "reference",
+    "sonic_scoop": "sonic_scoop",
+    "kedy": "sonic_scoop",
+    "scoop": "sonic_scoop",
 }
 
 
@@ -772,7 +822,7 @@ def _configure_proq_fast(pro_q):
     pro_q.set_parameter(1, 1.0)  # Band 1 Enabled
     pro_q.set_parameter(2, _freq_to_val(30.0))
     pro_q.set_parameter(5, 0.20)  # Low Cut
-    pro_q.set_parameter(7, 0.5)   # Stereo
+    pro_q.set_parameter(7, 0.5)  # Stereo
     pro_q.set_parameter(23, 1.0)  # Band 2 Used
     pro_q.set_parameter(24, 1.0)  # Band 2 Enabled
     pro_q.set_parameter(25, _freq_to_val(10000.0))
@@ -784,18 +834,26 @@ def _configure_proq_analog(pro_q):
     # Passive-mastering-EQ emulation for analog chains: broad strokes only.
     # HPF 30Hz (B1), +0.6 dB @ 100Hz low shelf (B2), tiny -0.5 dB dip @ 320Hz
     # bell (B3), +0.8 dB @ 14kHz air shelf (B4). Wide, musical, no surgery.
-    pro_q.set_parameter(0, 1.0); pro_q.set_parameter(1, 1.0)
-    pro_q.set_parameter(2, _freq_to_val(30.0)); pro_q.set_parameter(5, 0.20)
+    pro_q.set_parameter(0, 1.0)
+    pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(2, _freq_to_val(30.0))
+    pro_q.set_parameter(5, 0.20)
     pro_q.set_parameter(7, 0.5)
-    pro_q.set_parameter(23, 1.0); pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(23, 1.0)
+    pro_q.set_parameter(24, 1.0)
     pro_q.set_parameter(25, _freq_to_val(100.0))
-    pro_q.set_parameter(26, _gain_to_val(0.6)); pro_q.set_parameter(28, 0.10)  # Low Shelf
-    pro_q.set_parameter(46, 1.0); pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(26, _gain_to_val(0.6))
+    pro_q.set_parameter(28, 0.10)  # Low Shelf
+    pro_q.set_parameter(46, 1.0)
+    pro_q.set_parameter(47, 1.0)
     pro_q.set_parameter(48, _freq_to_val(320.0))
-    pro_q.set_parameter(49, _gain_to_val(-0.5)); pro_q.set_parameter(51, 0.0)  # Bell
-    pro_q.set_parameter(69, 1.0); pro_q.set_parameter(70, 1.0)
+    pro_q.set_parameter(49, _gain_to_val(-0.5))
+    pro_q.set_parameter(51, 0.0)  # Bell
+    pro_q.set_parameter(69, 1.0)
+    pro_q.set_parameter(70, 1.0)
     pro_q.set_parameter(71, _freq_to_val(14000.0))
-    pro_q.set_parameter(72, _gain_to_val(0.8)); pro_q.set_parameter(74, 0.30)  # High Shelf
+    pro_q.set_parameter(72, _gain_to_val(0.8))
+    pro_q.set_parameter(74, 0.30)  # High Shelf
 
 
 def _configure_proq_linear_phase(pro_q):
@@ -820,24 +878,27 @@ def _configure_proq_balance(pro_q):
     # +7 Stereo Placement (Stereo 0.5, Mid 0.7, Side 1.0).
     _configure_proq_linear_phase(pro_q)
     # Band 1: Low Cut on SIDES @ 100 Hz — strips bass from the stereo image only
-    pro_q.set_parameter(0, 1.0); pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(0, 1.0)
+    pro_q.set_parameter(1, 1.0)
     pro_q.set_parameter(2, _freq_to_val(100.0))
-    pro_q.set_parameter(5, 0.20)   # Low Cut
-    pro_q.set_parameter(7, 1.0)    # Side (mono bass stays in center)
+    pro_q.set_parameter(5, 0.20)  # Low Cut
+    pro_q.set_parameter(7, 1.0)  # Side (mono bass stays in center)
     # Band 2: low-mid dip @ 250 Hz — mudiness / masking, full stereo
-    pro_q.set_parameter(23, 1.0); pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(23, 1.0)
+    pro_q.set_parameter(24, 1.0)
     pro_q.set_parameter(25, _freq_to_val(250.0))
     pro_q.set_parameter(26, _gain_to_val(-1.5))
     pro_q.set_parameter(27, _q_to_val(1.0))
-    pro_q.set_parameter(28, 0.0)   # Bell
-    pro_q.set_parameter(30, 0.5)   # Stereo
+    pro_q.set_parameter(28, 0.0)  # Bell
+    pro_q.set_parameter(30, 0.5)  # Stereo
     # Band 3: high-mid dip @ 2.8 kHz — nasal / overloaded mid range, full stereo
-    pro_q.set_parameter(46, 1.0); pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(46, 1.0)
+    pro_q.set_parameter(47, 1.0)
     pro_q.set_parameter(48, _freq_to_val(2800.0))
     pro_q.set_parameter(49, _gain_to_val(-1.0))
     pro_q.set_parameter(50, _q_to_val(1.4))
-    pro_q.set_parameter(51, 0.0)   # Bell
-    pro_q.set_parameter(53, 0.5)   # Stereo
+    pro_q.set_parameter(51, 0.0)  # Bell
+    pro_q.set_parameter(53, 0.5)  # Stereo
 
 
 def _configure_proq_tone(pro_q):
@@ -847,31 +908,35 @@ def _configure_proq_tone(pro_q):
     # the sides (boost on sides = widening, per the guide). Linear phase.
     _configure_proq_linear_phase(pro_q)
     # Band 1: Low Shelf @ 100 Hz +1.0 dB — body / mono bass (Mid only)
-    pro_q.set_parameter(0, 1.0); pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(0, 1.0)
+    pro_q.set_parameter(1, 1.0)
     pro_q.set_parameter(2, _freq_to_val(100.0))
     pro_q.set_parameter(3, _gain_to_val(1.0))
-    pro_q.set_parameter(5, 0.10)   # Low Shelf
-    pro_q.set_parameter(7, 0.7)    # Mid (phase-stable mono bass)
+    pro_q.set_parameter(5, 0.10)  # Low Shelf
+    pro_q.set_parameter(7, 0.7)  # Mid (phase-stable mono bass)
     # Band 2: Bell @ 3 kHz +0.8 dB — presence / high-mid focus, full stereo
-    pro_q.set_parameter(23, 1.0); pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(23, 1.0)
+    pro_q.set_parameter(24, 1.0)
     pro_q.set_parameter(25, _freq_to_val(3000.0))
     pro_q.set_parameter(26, _gain_to_val(0.8))
     pro_q.set_parameter(27, _q_to_val(1.1))
-    pro_q.set_parameter(28, 0.0)   # Bell
-    pro_q.set_parameter(30, 0.5)   # Stereo
+    pro_q.set_parameter(28, 0.0)  # Bell
+    pro_q.set_parameter(30, 0.5)  # Stereo
     # Band 3: Bell @ 2 kHz +0.8 dB on SIDES — wider mid-range stereo image
-    pro_q.set_parameter(46, 1.0); pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(46, 1.0)
+    pro_q.set_parameter(47, 1.0)
     pro_q.set_parameter(48, _freq_to_val(2000.0))
     pro_q.set_parameter(49, _gain_to_val(0.8))
     pro_q.set_parameter(50, _q_to_val(1.2))
-    pro_q.set_parameter(51, 0.0)   # Bell
-    pro_q.set_parameter(53, 1.0)   # Side (width without freq imbalance)
+    pro_q.set_parameter(51, 0.0)  # Bell
+    pro_q.set_parameter(53, 1.0)  # Side (width without freq imbalance)
     # Band 4: High Shelf @ 10 kHz +1.0 dB on SIDES — air / top-end widening
-    pro_q.set_parameter(69, 1.0); pro_q.set_parameter(70, 1.0)
+    pro_q.set_parameter(69, 1.0)
+    pro_q.set_parameter(70, 1.0)
     pro_q.set_parameter(71, _freq_to_val(10000.0))
     pro_q.set_parameter(72, _gain_to_val(1.0))
     pro_q.set_parameter(74, 0.30)  # High Shelf
-    pro_q.set_parameter(76, 1.0)   # Side (air widening)
+    pro_q.set_parameter(76, 1.0)  # Side (air widening)
 
 
 def _configure_proq_cut(pro_q):
@@ -882,29 +947,33 @@ def _configure_proq_cut(pro_q):
     # the cuts don't smear phase into the compressor.
     _configure_proq_linear_phase(pro_q)
     # Band 1: High-pass rumble @ 30 Hz, full stereo
-    pro_q.set_parameter(0, 1.0); pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(0, 1.0)
+    pro_q.set_parameter(1, 1.0)
     pro_q.set_parameter(2, _freq_to_val(30.0))
-    pro_q.set_parameter(5, 0.20)   # Low Cut
-    pro_q.set_parameter(7, 0.5)    # Stereo
+    pro_q.set_parameter(5, 0.20)  # Low Cut
+    pro_q.set_parameter(7, 0.5)  # Stereo
     # Band 2: Bell cut @ 400 Hz -1.2 dB — boxiness / low-mid masking
-    pro_q.set_parameter(23, 1.0); pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(23, 1.0)
+    pro_q.set_parameter(24, 1.0)
     pro_q.set_parameter(25, _freq_to_val(400.0))
     pro_q.set_parameter(26, _gain_to_val(-1.2))
     pro_q.set_parameter(27, _q_to_val(1.2))
-    pro_q.set_parameter(28, 0.0)   # Bell
-    pro_q.set_parameter(30, 0.5)   # Stereo
+    pro_q.set_parameter(28, 0.0)  # Bell
+    pro_q.set_parameter(30, 0.5)  # Stereo
     # Band 3: Bell cut @ 2.5 kHz -1.0 dB — harshness / ear fatigue band
-    pro_q.set_parameter(46, 1.0); pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(46, 1.0)
+    pro_q.set_parameter(47, 1.0)
     pro_q.set_parameter(48, _freq_to_val(2500.0))
     pro_q.set_parameter(49, _gain_to_val(-1.0))
     pro_q.set_parameter(50, _q_to_val(1.5))
-    pro_q.set_parameter(51, 0.0)   # Bell
-    pro_q.set_parameter(53, 0.5)   # Stereo
+    pro_q.set_parameter(51, 0.0)  # Bell
+    pro_q.set_parameter(53, 0.5)  # Stereo
     # Band 4: High Cut @ 19 kHz — tames stray top-end Brilliance / aliasing feel
-    pro_q.set_parameter(69, 1.0); pro_q.set_parameter(70, 1.0)
+    pro_q.set_parameter(69, 1.0)
+    pro_q.set_parameter(70, 1.0)
     pro_q.set_parameter(71, _freq_to_val(19000.0))
     pro_q.set_parameter(74, 0.40)  # High Cut
-    pro_q.set_parameter(76, 0.5)   # Stereo
+    pro_q.set_parameter(76, 0.5)  # Stereo
 
 
 def _configure_proq_widen(pro_q):
@@ -916,31 +985,35 @@ def _configure_proq_widen(pro_q):
     # favour of selective per-band routing). Linear phase.
     _configure_proq_linear_phase(pro_q)
     # Band 1: Low Shelf @ 80 Hz +1.0 dB on MID — mono bass body (narrow lows)
-    pro_q.set_parameter(0, 1.0); pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(0, 1.0)
+    pro_q.set_parameter(1, 1.0)
     pro_q.set_parameter(2, _freq_to_val(80.0))
     pro_q.set_parameter(3, _gain_to_val(1.0))
-    pro_q.set_parameter(5, 0.10)   # Low Shelf
-    pro_q.set_parameter(7, 0.7)    # Mid (keep bass centered/narrow)
+    pro_q.set_parameter(5, 0.10)  # Low Shelf
+    pro_q.set_parameter(7, 0.7)  # Mid (keep bass centered/narrow)
     # Band 2: Bell @ 5 kHz +1.0 dB on STEREO — presence focus
-    pro_q.set_parameter(23, 1.0); pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(23, 1.0)
+    pro_q.set_parameter(24, 1.0)
     pro_q.set_parameter(25, _freq_to_val(5000.0))
     pro_q.set_parameter(26, _gain_to_val(1.0))
     pro_q.set_parameter(27, _q_to_val(1.0))
-    pro_q.set_parameter(28, 0.0)   # Bell
-    pro_q.set_parameter(30, 0.5)   # Stereo
+    pro_q.set_parameter(28, 0.0)  # Bell
+    pro_q.set_parameter(30, 0.5)  # Stereo
     # Band 3: Bell @ 3 kHz +0.8 dB on SIDE — presence width without imbalance
-    pro_q.set_parameter(46, 1.0); pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(46, 1.0)
+    pro_q.set_parameter(47, 1.0)
     pro_q.set_parameter(48, _freq_to_val(3000.0))
     pro_q.set_parameter(49, _gain_to_val(0.8))
     pro_q.set_parameter(50, _q_to_val(1.1))
-    pro_q.set_parameter(51, 0.0)   # Bell
-    pro_q.set_parameter(53, 1.0)   # Side (widen presence band)
+    pro_q.set_parameter(51, 0.0)  # Bell
+    pro_q.set_parameter(53, 1.0)  # Side (widen presence band)
     # Band 4: High Shelf @ 8 kHz +1.5 dB on SIDE — widen air/top end
-    pro_q.set_parameter(69, 1.0); pro_q.set_parameter(70, 1.0)
+    pro_q.set_parameter(69, 1.0)
+    pro_q.set_parameter(70, 1.0)
     pro_q.set_parameter(71, _freq_to_val(8000.0))
     pro_q.set_parameter(72, _gain_to_val(1.5))
     pro_q.set_parameter(74, 0.30)  # High Shelf
-    pro_q.set_parameter(76, 1.0)   # Side (wide top)
+    pro_q.set_parameter(76, 1.0)  # Side (wide top)
 
 
 def _configure_pro_mb_sonic(pro_mb):
@@ -952,35 +1025,35 @@ def _configure_pro_mb_sonic(pro_mb):
     # bypass; params mirror the neutral Pro-MB preset layout (verified).
     pro_mb.set_parameter(138, 0.0)  # Bypass off
     # Band 1: bass below 120 Hz, Mid only — gentle anchor, preserves transients
-    pro_mb.set_parameter(0, 0.5)    # State = Enabled
-    pro_mb.set_parameter(1, 0.0)    # Low Crossover 30 Hz
-    pro_mb.set_parameter(3, 0.2007) # High Crossover 120 Hz
-    pro_mb.set_parameter(6, 0.70)   # Threshold -18 dB
-    pro_mb.set_parameter(7, 0.40)   # Range -6 dB max GR
-    pro_mb.set_parameter(8, 0.30)   # Ratio 1.5:1 (log-mapped)
-    pro_mb.set_parameter(9, 0.15)   # Attack 15%
+    pro_mb.set_parameter(0, 0.5)  # State = Enabled
+    pro_mb.set_parameter(1, 0.0)  # Low Crossover 30 Hz
+    pro_mb.set_parameter(3, 0.2007)  # High Crossover 120 Hz
+    pro_mb.set_parameter(6, 0.70)  # Threshold -18 dB
+    pro_mb.set_parameter(7, 0.40)  # Range -6 dB max GR
+    pro_mb.set_parameter(8, 0.30)  # Ratio 1.5:1 (log-mapped)
+    pro_mb.set_parameter(9, 0.15)  # Attack 15%
     pro_mb.set_parameter(10, 0.30)  # Release 30%
-    pro_mb.set_parameter(11, 0.125) # Knee 6 dB
+    pro_mb.set_parameter(11, 0.125)  # Knee 6 dB
     # Band 2: dynamic cut 2.5-4 kHz harshness — only reacts above threshold, so
     # the master stays open at low levels and controlled when energy builds.
     # Pro-MB crossover norm mapping (verified live, log base 30..30k):
     # 2.5 kHz -> 0.6403, 4 kHz -> 0.7083.
-    pro_mb.set_parameter(22, 0.5)   # State = Enabled
+    pro_mb.set_parameter(22, 0.5)  # State = Enabled
     pro_mb.set_parameter(23, 0.6403)  # Low Crossover 2.5 kHz
     pro_mb.set_parameter(25, 0.7083)  # High Crossover 4 kHz
-    pro_mb.set_parameter(28, 0.833)   # Threshold -10 dB
-    pro_mb.set_parameter(29, 0.45)    # Range -3 dB max GR
-    pro_mb.set_parameter(30, 0.40)    # Ratio 2:1
-    pro_mb.set_parameter(31, 0.2)     # Attack 20%
-    pro_mb.set_parameter(32, 0.4)     # Release 40%
+    pro_mb.set_parameter(28, 0.833)  # Threshold -10 dB
+    pro_mb.set_parameter(29, 0.45)  # Range -3 dB max GR
+    pro_mb.set_parameter(30, 0.40)  # Ratio 2:1
+    pro_mb.set_parameter(31, 0.2)  # Attack 20%
+    pro_mb.set_parameter(32, 0.4)  # Release 40%
 
 
 def _configure_kotelnikov_fast(kot):
     # Light, cheap glue: ~1.5:1 at a gentle threshold, 100% wet, unity out. No
     # parallel dry blend or deep GR — just cohesion for the draft master.
-    kot.set_parameter(0, 0.45)   # Threshold ~ -17 dB
-    kot.set_parameter(5, 0.30)   # Ratio ~1.5:1
-    kot.set_parameter(12, 0.0)   # Dry/Wet = 100% wet
+    kot.set_parameter(0, 0.45)  # Threshold ~ -17 dB
+    kot.set_parameter(5, 0.30)  # Ratio ~1.5:1
+    kot.set_parameter(12, 0.0)  # Dry/Wet = 100% wet
     kot.set_parameter(14, 0.55)  # Out gain ~0 dB
 
 
@@ -989,13 +1062,13 @@ def _configure_tape_analog(tape):
     # bias slightly up, wow/flutter negligible (CHOWTape defaults are subtle),
     # full wet. Values mirror the proven neutral preset tape block.
     tape.set_parameter(0, 0.889)  # Input Gain
-    tape.set_parameter(1, 0.68)   # Output Gain
-    tape.set_parameter(2, 1.0)    # Dry/Wet = full
+    tape.set_parameter(1, 0.68)  # Output Gain
+    tape.set_parameter(2, 1.0)  # Dry/Wet = full
     tape.set_parameter(16, 0.16)  # Tape Drive (low, ~7%)
     tape.set_parameter(17, 0.22)  # Tape Saturation
     tape.set_parameter(18, 0.48)  # Tape Bias (slightly up)
-    tape.set_parameter(8, 0.52)   # Tone Bass
-    tape.set_parameter(9, 0.48)   # Tone Treble
+    tape.set_parameter(8, 0.52)  # Tone Bass
+    tape.set_parameter(9, 0.48)  # Tone Treble
 
 
 def _configure_sdrr_analog(sdrr):
@@ -1003,23 +1076,23 @@ def _configure_sdrr_analog(sdrr):
     # the neutral preset sdrr block: low drive, light compression, gentle tone,
     # low mix. group-4 (DESK) params: 37 Drive, 40 Comp, 41 Bass, 42 Treble,
     # 49 Mix. idx 56 = bypass, idx 0 = mode (1.0 = DESK).
-    sdrr.set_parameter(56, 0.0)    # Bypass off
-    sdrr.set_parameter(0, 1.0)     # Mode = DESK
-    sdrr.set_parameter(37, 0.16)   # Drive 1.6
-    sdrr.set_parameter(40, 0.22)   # Compression 2.2
-    sdrr.set_parameter(41, 0.5167) # Bass +0.4 dB
-    sdrr.set_parameter(42, 0.4667) # Treble -0.8 dB
-    sdrr.set_parameter(49, 0.20)   # Mix 20%
+    sdrr.set_parameter(56, 0.0)  # Bypass off
+    sdrr.set_parameter(0, 1.0)  # Mode = DESK
+    sdrr.set_parameter(37, 0.16)  # Drive 1.6
+    sdrr.set_parameter(40, 0.22)  # Compression 2.2
+    sdrr.set_parameter(41, 0.5167)  # Bass +0.4 dB
+    sdrr.set_parameter(42, 0.4667)  # Treble -0.8 dB
+    sdrr.set_parameter(49, 0.20)  # Mix 20%
 
 
 def _configure_sdrr_tube(sdrr):
     # SDRR2 in TUBE mode (mode 0.0 -> group 1): warm valve saturation, fatter
     # mids. Low drive + moderate mix for "record-like" body without dirt.
     # group-1 params: 2 Drive, 10 Mix. idx 56 = bypass, idx 0 = mode (0.0=TUBE).
-    sdrr.set_parameter(56, 0.0)    # Bypass off
-    sdrr.set_parameter(0, 0.0)     # Mode = TUBE
-    sdrr.set_parameter(2, 0.22)    # Drive (light valve warmth)
-    sdrr.set_parameter(10, 0.35)   # Mix 35% (more colour than the DESK glue)
+    sdrr.set_parameter(56, 0.0)  # Bypass off
+    sdrr.set_parameter(0, 0.0)  # Mode = TUBE
+    sdrr.set_parameter(2, 0.22)  # Drive (light valve warmth)
+    sdrr.set_parameter(10, 0.35)  # Mix 35% (more colour than the DESK glue)
 
 
 def _configure_spiff_fast(spiff):
@@ -1028,10 +1101,10 @@ def _configure_spiff_fast(spiff):
     # bypass off, idx0 mode, idx1 cut depth, idx3 sensitivity, idx35 mix.
     spiff.set_parameter(38, 0.0)
     spiff.set_parameter(41, 0.0)
-    spiff.set_parameter(0, 0.0)    # mode (cut/transient path)
-    spiff.set_parameter(1, 0.18)   # depth — light punch
-    spiff.set_parameter(3, 0.35)   # sensitivity
-    spiff.set_parameter(35, 1.0)   # mix full
+    spiff.set_parameter(0, 0.0)  # mode (cut/transient path)
+    spiff.set_parameter(1, 0.18)  # depth — light punch
+    spiff.set_parameter(3, 0.35)  # sensitivity
+    spiff.set_parameter(35, 1.0)  # mix full
 
 
 def _configure_soothe_fast(soothe):
@@ -1040,9 +1113,9 @@ def _configure_soothe_fast(soothe):
     # 5 sharpness, 6 selectivity, 7 attack, 8 release, 50 mix, 16 band1 sens.
     soothe.set_parameter(53, 0.0)
     soothe.set_parameter(3, 0.40)
-    soothe.set_parameter(4, 0.18)   # depth
-    soothe.set_parameter(5, 0.43)   # sharpness
-    soothe.set_parameter(6, 0.22)   # selectivity
+    soothe.set_parameter(4, 0.18)  # depth
+    soothe.set_parameter(5, 0.43)  # sharpness
+    soothe.set_parameter(6, 0.22)  # selectivity
     soothe.set_parameter(7, 0.25)
     soothe.set_parameter(8, 0.20)
     soothe.set_parameter(50, 1.0)
@@ -1052,10 +1125,10 @@ def _configure_soothe_fast(soothe):
 def _configure_fresh_fast(fresh):
     # Fresh Air spectral high-shelf "air". Light settings (mirror neutral preset)
     # for an open, expensive top. idx2 bypass, idx0 mid air, idx1 high air, idx3 trim.
-    fresh.set_parameter(2, 0.0)     # bypass off
-    fresh.set_parameter(0, 0.04)    # mid air (a touch more than neutral's 0.02)
-    fresh.set_parameter(1, 0.16)    # high air
-    fresh.set_parameter(3, 1.0)     # trim
+    fresh.set_parameter(2, 0.0)  # bypass off
+    fresh.set_parameter(0, 0.04)  # mid air (a touch more than neutral's 0.02)
+    fresh.set_parameter(1, 0.16)  # high air
+    fresh.set_parameter(3, 1.0)  # trim
 
 
 def _configure_pro_mb_fast(pro_mb):
@@ -1071,17 +1144,17 @@ def _configure_tape_track(tape):
     # (idx26=0.5) with Loss on gives the low-end head bump of a tracking machine.
     # Light drive for body without obvious saturation.
     tape.set_parameter(0, 0.889)  # Input Gain
-    tape.set_parameter(1, 0.68)   # Output Gain
-    tape.set_parameter(2, 1.0)    # Dry/Wet full
+    tape.set_parameter(1, 0.68)  # Output Gain
+    tape.set_parameter(2, 1.0)  # Dry/Wet full
     tape.set_parameter(16, 0.14)  # Tape Drive (low)
     tape.set_parameter(17, 0.20)  # Saturation
     tape.set_parameter(18, 0.50)  # Bias neutral
-    tape.set_parameter(25, 1.0)   # Loss On (enables head-bump/HF modelling)
-    tape.set_parameter(26, 0.5)   # Tape Speed 15 ips -> pronounced head bump
-    tape.set_parameter(27, 0.2)   # Spacing low (keep highs at tracking stage)
-    tape.set_parameter(28, 0.5)   # Thickness moderate
-    tape.set_parameter(8, 0.54)   # Tone Bass slight + (body)
-    tape.set_parameter(9, 0.50)   # Tone Treble neutral
+    tape.set_parameter(25, 1.0)  # Loss On (enables head-bump/HF modelling)
+    tape.set_parameter(26, 0.5)  # Tape Speed 15 ips -> pronounced head bump
+    tape.set_parameter(27, 0.2)  # Spacing low (keep highs at tracking stage)
+    tape.set_parameter(28, 0.5)  # Thickness moderate
+    tape.set_parameter(8, 0.54)  # Tone Bass slight + (body)
+    tape.set_parameter(9, 0.50)  # Tone Treble neutral
 
 
 def _configure_tape_mix(tape):
@@ -1094,12 +1167,12 @@ def _configure_tape_mix(tape):
     tape.set_parameter(16, 0.08)  # Drive lighter than stage 1
     tape.set_parameter(17, 0.16)  # Saturation lighter
     tape.set_parameter(18, 0.50)
-    tape.set_parameter(25, 1.0)   # Loss On
+    tape.set_parameter(25, 1.0)  # Loss On
     tape.set_parameter(26, 0.75)  # Tape Speed 30 ips -> flatter lows
-    tape.set_parameter(27, 0.6)   # Spacing higher -> more HF loss
-    tape.set_parameter(28, 0.7)   # Thickness higher -> more HF rolloff
-    tape.set_parameter(8, 0.50)   # Bass neutral
-    tape.set_parameter(9, 0.46)   # Treble slight - (soft top)
+    tape.set_parameter(27, 0.6)  # Spacing higher -> more HF loss
+    tape.set_parameter(28, 0.7)  # Thickness higher -> more HF rolloff
+    tape.set_parameter(8, 0.50)  # Bass neutral
+    tape.set_parameter(9, 0.46)  # Treble slight - (soft top)
 
 
 def _configure_limiter_fast(limiter):
@@ -1109,7 +1182,7 @@ def _configure_limiter_fast(limiter):
     # the export path uses the full _configure_limiter (4x + true-peak).
     _configure_limiter(limiter)
     limiter.set_parameter(9, 0.166)  # Oversampling = 2x
-    limiter.set_parameter(10, 0.0)   # True Peak Limiting = Off
+    limiter.set_parameter(10, 0.0)  # True Peak Limiting = Off
 
 
 # Per-plugin fast configurators, keyed by graph-node name. Limiter/EQ vary by
@@ -1154,13 +1227,23 @@ def _configure_fast_node(name, proc, analog):
 
 # Graph-node name -> plugin path key in _VST_PLUGIN_PATHS.
 _FAST_NODE_PLUGIN = {
-    "tape": "chow", "tape_track": "chow", "tape_mix": "chow",
-    "sdrr": "sdrr", "sdrr_tube": "sdrr", "kot": "kot",
-    "pro_q": "pro_q", "pro_q_balance": "pro_q", "pro_q_tone": "pro_q",
-    "pro_q_cut": "pro_q", "pro_q_widen": "pro_q",
-    "soothe": "soothe", "fresh": "fresh", "pro_mb": "pro_mb",
+    "tape": "chow",
+    "tape_track": "chow",
+    "tape_mix": "chow",
+    "sdrr": "sdrr",
+    "sdrr_tube": "sdrr",
+    "kot": "kot",
+    "pro_q": "pro_q",
+    "pro_q_balance": "pro_q",
+    "pro_q_tone": "pro_q",
+    "pro_q_cut": "pro_q",
+    "pro_q_widen": "pro_q",
+    "soothe": "soothe",
+    "fresh": "fresh",
+    "pro_mb": "pro_mb",
     "pro_mb_sonic": "pro_mb",
-    "spiff": "spiff", "limiter": "limiter",
+    "spiff": "spiff",
+    "limiter": "limiter",
 }
 
 
@@ -1305,7 +1388,12 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
 
     with _VST_LOCK:
         try:
-            global _VST_ENGINE, _VST_GRAPH, _VST_FAST_ENGINE, _VST_FAST_GRAPH, _VST_FAST_MODE
+            global \
+                _VST_ENGINE, \
+                _VST_GRAPH, \
+                _VST_FAST_ENGINE, \
+                _VST_FAST_GRAPH, \
+                _VST_FAST_MODE
 
             # Fast-master path: lightweight single-pass chain. Dispatched here so
             # it shares the same resampling + stderr-redirect + lock as the full
@@ -1316,7 +1404,9 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
                     out = _render_fast_vst_chain(dry_audio, np, daw, mode=mode)
                     if out is not None:
                         return _write_float_wav(
-                            out.T.flatten(), output_path, _VST_SAMPLE_RATE,
+                            out.T.flatten(),
+                            output_path,
+                            _VST_SAMPLE_RATE,
                             soft_clip=False,
                         )
                 except Exception:
@@ -1473,12 +1563,25 @@ def _selected_backend() -> str:
     whose dependency is not available (so callers can fall back).
     """
     choice = os.environ.get("BIRKA_BACKEND", "auto").strip().lower()
+    logger.debug(
+        "BIRKA_BACKEND env=%r (requested=%r)", os.environ.get("BIRKA_BACKEND"), choice
+    )
     if choice == "sfizz":
-        return "sfizz" if _SFIZZ_AVAILABLE else "auto"
+        if _SFIZZ_AVAILABLE:
+            logger.info("Backend selected: sfizz (requested + available)")
+            return "sfizz"
+        logger.info("Backend 'sfizz' requested but unavailable -> falling back to auto")
+        return "auto"
     if choice == "tsf":
-        return "tsf" if _TSF_AVAILABLE else "auto"
+        if _TSF_AVAILABLE:
+            logger.info("Backend selected: tsf (requested + available)")
+            return "tsf"
+        logger.info("Backend 'tsf' requested but unavailable -> falling back to auto")
+        return "auto"
     if choice == "fluidsynth":
+        logger.info("Backend selected: fluidsynth (requested)")
         return "fluidsynth"
+    logger.debug("No explicit backend requested or unknown value -> auto")
     return "auto"
 
 
@@ -1493,9 +1596,12 @@ def _resolve_backend() -> str:
     if requested != "auto":
         return requested
     if _TSF_AVAILABLE:
+        logger.info("Auto-resolved backend: tsf (first available)")
         return "tsf"
     if shutil.which("fluidsynth") is not None:
+        logger.info("Auto-resolved backend: fluidsynth (fallback, tsf unavailable)")
         return "fluidsynth"
+    logger.warning("No audio backend available (tsf=unavailable, fluidsynth=not found)")
     return "none"
 
 

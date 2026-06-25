@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import faulthandler
+import logging
 import os
 import signal
 import sys
@@ -10,9 +11,20 @@ from PyQt6 import QtWidgets
 
 from birka.presentation.audio_browser import AudioBrowserWindow
 
+LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+LOG_DATE_FORMAT = "%H:%M:%S"
+
 
 def main() -> int:
     faulthandler.enable()
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format=LOG_FORMAT,
+        datefmt=LOG_DATE_FORMAT,
+        handlers=[logging.StreamHandler(sys.stderr)],
+    )
+    logging.getLogger("PyQt6").setLevel(logging.WARNING)
+    logging.getLogger("ffmpeg").setLevel(logging.WARNING)
     # SIGUSR1 dumps all thread stacks to stderr — send it when GUI freezes:
     # kill -USR1 <pid>
     faulthandler.register(signal.SIGUSR1, all_threads=True, chain=False)
@@ -22,7 +34,10 @@ def main() -> int:
     app.aboutToQuit.connect(_dispose_audio_backends)
     window = AudioBrowserWindow([project_root / "data" / "library"])
     window.show()
-    print(f"[birka] PID={os.getpid()} — send 'kill -USR1 {os.getpid()}' to dump stacks", flush=True)
+    print(
+        f"[birka] PID={os.getpid()} — send 'kill -USR1 {os.getpid()}' to dump stacks",
+        flush=True,
+    )
     exit_code = app.exec()
     # Native VST3 plugins (e.g. SlateCore / Fresh Air) spawn C++ threads that
     # are invisible to Python's threading module. These non-daemon threads keep
