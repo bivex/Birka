@@ -3203,6 +3203,22 @@ def _synth_sfizz_to_wav(
         mel_L = np.zeros(frames_needed, dtype=np.float32)
         mel_R = np.zeros(frames_needed, dtype=np.float32)
 
+    # Per-channel RMS diagnostic
+    _rms_db = lambda x: 20 * float(np.log10(max(float(np.sqrt(np.mean(x ** 2))), 1e-9)))
+    for _ch, _s in ch_synths.items():
+        # reconstruct per-channel signal by re-rendering is expensive —
+        # instead log the vol/pan we assigned so balance is traceable
+        _pan_n, _vol = ch_mix.get(_ch, (0.0, 1.0))
+        _prog = ch_programs.get(_ch, 0)
+        logger_sfizz.info(
+            "sfizz: ch%d prog=%-3d pan=%+.2f vol=%.2f",
+            _ch, _prog, _pan_n, _vol,
+        )
+    logger_sfizz.info(
+        "sfizz: mixed mel_L RMS=%.1f dB  mel_R RMS=%.1f dB",
+        _rms_db(mel_L), _rms_db(mel_R),
+    )
+
     if drum_left_blocks:
         drm_L = np.concatenate(drum_left_blocks)[:frames_needed]
         drm_R = np.concatenate(drum_right_blocks)[:frames_needed]
