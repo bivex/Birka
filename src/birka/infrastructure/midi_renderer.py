@@ -2782,6 +2782,14 @@ def _synth_sfizz_to_wav(
     total_seconds = max(1.0, mid.length + 2.0)
     frames_needed = int(total_seconds * sample_rate)
 
+    logger_sfizz.info(
+        "sfizz: render start — midi=%s sfz=%s duration=%.1fs sr=%d",
+        midi_path.name,
+        sfz_path.name,
+        total_seconds,
+        sample_rate,
+    )
+
     use_vst_chain = False
     try:
         use_vst_chain = os.environ.get("USE_VST_CHAIN", "").lower() in (
@@ -2809,14 +2817,21 @@ def _synth_sfizz_to_wav(
         cache_key = (str(sfz_path), sample_rate, polyphony, quality)
         if cache_key in _SFIZZ_SYNTH_CACHE:
             synth = _SFIZZ_SYNTH_CACHE[cache_key]
+            logger_sfizz.debug("sfizz: reusing cached synth for %s", sfz_path)
             synth.all_sound_off()
         else:
+            logger_sfizz.info("sfizz: loading SFZ bank: %s", sfz_path)
             synth = _sfizz.Synth(sample_rate, _SFIZZ_BLOCK_FRAMES)
             synth.enable_freewheeling()
             synth.set_num_voices(max(1, min(polyphony, 512)))
             synth.set_sample_quality(quality)
             if not synth.load_sfz_file(str(sfz_path)):
+                logger_sfizz.error(
+                    "sfizz: failed to load SFZ file (bad path, parse error, or missing samples): %s",
+                    sfz_path,
+                )
                 return False
+            logger_sfizz.info("sfizz: SFZ loaded OK: %s", sfz_path)
             _SFIZZ_SYNTH_CACHE[cache_key] = synth
 
         # Drum synth: load drum-only SFZ that sits next to the main bank.
@@ -2824,6 +2839,7 @@ def _synth_sfizz_to_wav(
         drum_sfz = Path(sfz_path).parent / "General_MIDI_sfizz_drums.sfz"
         drum_synth = None
         if drum_sfz.exists():
+            logger_sfizz.debug("sfizz: drum SFZ found: %s", drum_sfz)
             drum_cache_key = (str(drum_sfz), sample_rate, polyphony, quality)
             if drum_cache_key in _SFIZZ_SYNTH_CACHE:
                 drum_synth = _SFIZZ_SYNTH_CACHE[drum_cache_key]
@@ -2883,17 +2899,27 @@ def _synth_sfizz_to_wav(
             block = np.column_stack((left_arr, right_arr)).flatten()
             interleaved_blocks.append(block)
             rendered += len(left_arr)
-    except Exception:
+    except Exception as exc:
+        logger_sfizz.error("sfizz: render exception: %s", exc, exc_info=True)
         return False
 
     if interleaved_blocks:
         buf_arr = np.concatenate(interleaved_blocks)[: frames_needed * 2]
+        logger_sfizz.info(
+            "sfizz: rendered %d frames (%.1fs) → %s",
+            frames_needed,
+            frames_needed / sample_rate,
+            output_path.name,
+        )
     else:
         buf_arr = np.zeros(0, dtype=np.float32)
+        logger_sfizz.warning("sfizz: render produced no audio blocks — silent output")
 
     if use_vst_chain:
         if _render_sfizz_vst_chain(buf_arr, sample_rate, output_path):
+            logger_sfizz.info("sfizz: VST chain OK → %s", output_path)
             return True
+        logger_sfizz.warning("sfizz: VST chain failed, falling back to pedalboard")
         use_vst_chain = False
         logger_sfizz.warning("VST chain failed; falling back to pedalboard mastering")
 
