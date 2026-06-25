@@ -3207,19 +3207,23 @@ def _synth_sfizz_to_wav(
         drm_L = np.concatenate(drum_left_blocks)[:frames_needed]
         drm_R = np.concatenate(drum_right_blocks)[:frames_needed]
 
-        # 1. GAIN STAGING: fixed -4.4 dB on drums (0.60).
-        #    Melodic is attenuated ~0.80 avg by pan matrix; drums need to sit
-        #    clearly below melodic so instruments are heard.
-        drum_gain = 0.60  # -4.4 dB
+        # 1. GAIN STAGING: adaptive — match drum RMS to melodic RMS.
+        #    diff was +10.7 dB (drums dominated) because melodic pan matrix
+        #    attenuates channels (strings 0.72, piano 0.68). We measure actual
+        #    mel RMS and scale drums to sit -3 dB under it.
+        _mel_rms = float(np.sqrt(np.mean(mel_L ** 2))) + 1e-9
+        _drm_rms = float(np.sqrt(np.mean(drm_L ** 2))) + 1e-9
+        # target: drums at mel_rms * 0.71 (-3 dB under melodic)
+        drum_gain = float(np.clip((_mel_rms * 0.71) / _drm_rms, 0.1, 4.0))
         drm_L = drm_L * drum_gain
         drm_R = drm_R * drum_gain
 
         # Diagnostic: log RMS levels before sum so we can tune gain
-        _mel_rms_db = 20 * float(np.log10(max(float(np.sqrt(np.mean(mel_L ** 2))), 1e-9)))
-        _drm_rms_db = 20 * float(np.log10(max(float(np.sqrt(np.mean(drm_L ** 2))), 1e-9)))
+        _mel_rms_db = 20 * float(np.log10(_mel_rms))
+        _drm_rms_db = 20 * float(np.log10(max(_drm_rms * drum_gain, 1e-9)))
         logger_sfizz.info(
-            "sfizz: levels before sum — mel_RMS=%.1f dB  drm_RMS=%.1f dB  diff=%.1f dB",
-            _mel_rms_db, _drm_rms_db, _drm_rms_db - _mel_rms_db,
+            "sfizz: levels before sum — mel_RMS=%.1f dB  drm_RMS=%.1f dB  diff=%.1f dB  drum_gain=%.3f",
+            _mel_rms_db, _drm_rms_db, _drm_rms_db - _mel_rms_db, drum_gain,
         )
 
         try:
