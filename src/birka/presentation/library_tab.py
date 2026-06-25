@@ -749,7 +749,11 @@ class LibraryTab(QtWidgets.QWidget):
             "🥁 Punch — ударный, транзиентный. Tape→Spiff→Kotelnikov→лимитер.\n"
             "    Под drill / techno / перкуссию.\n"
             "🎞 Reel-to-reel — плёночная философия. Tape→Tape→лимитер (два стейджа:\n"
-            "    tracking-плёнка с head bump → mixdown-плёнка с мягким верхом)."
+            "    tracking-плёнка с head bump → mixdown-плёнка с мягким верхом).\n"
+            "🎯 Reference — классический мастеринг-гайд. Балансирующий M/S EQ\n"
+            "    (HPF на side, дип 250/2.8k) → RMS-клей Kotelnikov → ламповый\n"
+            "    сатуратор SDRR(TUBE) → tone-shaping M/S EQ (тело, presence, air на\n"
+            "    side) → лимитер. Линейная фаза, EQ до и после динамики."
         )
         self._master_combo.addItem("💎 Full — кристальный, эталонный (экспорт)", "")
         self._master_combo.addItem("⚡ Digital fast — быстрый, чистый", "digital")
@@ -762,6 +766,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._master_combo.addItem("☁️ Airy — воздушный, открытый", "airy")
         self._master_combo.addItem("🥁 Punch — ударный, транзиентный", "punch")
         self._master_combo.addItem("🎞 Reel-to-reel — двойная плёнка (tracking→mixdown)", "reel")
+        self._master_combo.addItem("🎯 Reference — классический M/S мастеринг-гайд", "reference")
         _env_mode = os.environ.get("BIRKA_FAST_MASTER", "").strip().lower()
         _alias = {
             "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
@@ -773,6 +778,7 @@ class LibraryTab(QtWidgets.QWidget):
             "loud": "modern_loud", "modern": "modern_loud",
             "air": "airy", "punchy": "punch",
             "reel": "reel", "reel2reel": "reel", "double_tape": "reel", "tape2": "reel",
+            "reference": "reference", "mastering": "reference", "classic": "reference",
         }
         _resolved = _alias.get(_env_mode, _env_mode)
         _idx = self._master_combo.findData(_resolved)

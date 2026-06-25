@@ -715,6 +715,14 @@ _FAST_MASTER_CHAINS = {
     "airy":         ["tape", "fresh", "kot", "limiter"],         # warm bottom + air (R&B)
     "punch":        ["tape", "spiff", "kot", "limiter"],         # tight transients (drill/techno)
     "reel":         ["tape_track", "tape_mix", "limiter"],       # 2x tape: tracking->mixdown
+    # Practical mastering guide (M/S, two-stage EQ) -------------------------
+    # Reference chain after the classic signal-flow guide: a balancing M/S EQ
+    # (HPF on sides + low/high-mid cleanups) feeds a gentle RMS bus glue, then
+    # a valve saturation stage adds harmonic character before a tone-shaping
+    # M/S EQ (body + side-image width + air) and the limiter. Two Pro-Q nodes
+    # keep the balance/tone split the guide prescribes (EQ before AND after the
+    # dynamics), each routed per-band to Mid/Side instead of a passive EQ.
+    "reference":    ["pro_q_balance", "kot", "sdrr_tube", "pro_q_tone", "limiter"],
 }
 _FAST_MASTER_ALIASES = {
     "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
@@ -728,6 +736,7 @@ _FAST_MASTER_ALIASES = {
     "airy": "airy", "air": "airy",
     "punch": "punch", "punchy": "punch",
     "reel": "reel", "reel2reel": "reel", "double_tape": "reel", "tape2": "reel",
+    "reference": "reference", "mastering": "reference", "classic": "reference",
 }
 
 
@@ -777,6 +786,79 @@ def _configure_proq_analog(pro_q):
     pro_q.set_parameter(69, 1.0); pro_q.set_parameter(70, 1.0)
     pro_q.set_parameter(71, _freq_to_val(14000.0))
     pro_q.set_parameter(72, _gain_to_val(0.8)); pro_q.set_parameter(74, 0.30)  # High Shelf
+
+
+def _configure_proq_linear_phase(pro_q):
+    # Switch Pro-Q 4 to Linear Phase processing (idx 552) for mastering — the
+    # practical guide recommends linear phase EQ for both the balancing and the
+    # tone-shaping stages so each band cuts/boosts without phase rotation
+    # smearing the work of the compressor/saturator around it. Offline render,
+    # so the added latency is irrelevant. Resolution stays Medium (idx 553).
+    pro_q.set_parameter(552, 0.25)  # Processing Mode = Linear Phase
+
+
+def _configure_proq_balance(pro_q):
+    # BALANCING EQ — first in the reference chain, before any dynamics. Per the
+    # practical mastering guide: high-pass the SIDES (remove low-end from the
+    # stereo image so bass stays mono/centered), then dip the low mids (~250 Hz
+    # mudiness/masking) and the high mids (~2.8 kHz nasal/harsh build-up).
+    # Linear phase so the cuts don't rotate phase into the compressor below.
+    # Band layout: base+0 Used, +1 Enabled, +2 Freq, +3 Gain, +4 Q, +5 Shape,
+    # +7 Stereo Placement (Stereo 0.5, Mid 0.7, Side 1.0).
+    _configure_proq_linear_phase(pro_q)
+    # Band 1: Low Cut on SIDES @ 100 Hz — strips bass from the stereo image only
+    pro_q.set_parameter(0, 1.0); pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(2, _freq_to_val(100.0))
+    pro_q.set_parameter(5, 0.20)   # Low Cut
+    pro_q.set_parameter(7, 1.0)    # Side (mono bass stays in center)
+    # Band 2: low-mid dip @ 250 Hz — mudiness / masking, full stereo
+    pro_q.set_parameter(23, 1.0); pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(25, _freq_to_val(250.0))
+    pro_q.set_parameter(26, _gain_to_val(-1.5))
+    pro_q.set_parameter(27, _q_to_val(1.0))
+    pro_q.set_parameter(28, 0.0)   # Bell
+    pro_q.set_parameter(30, 0.5)   # Stereo
+    # Band 3: high-mid dip @ 2.8 kHz — nasal / overloaded mid range, full stereo
+    pro_q.set_parameter(46, 1.0); pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(48, _freq_to_val(2800.0))
+    pro_q.set_parameter(49, _gain_to_val(-1.0))
+    pro_q.set_parameter(50, _q_to_val(1.4))
+    pro_q.set_parameter(51, 0.0)   # Bell
+    pro_q.set_parameter(53, 0.5)   # Stereo
+
+
+def _configure_proq_tone(pro_q):
+    # TONE-SHAPING EQ — after the compressor and saturator. The creative stage:
+    # add body (low shelf), presence (high-mid bell), a side-only mid bell for a
+    # wider stereo image without rebalancing frequencies, and an air shelf on
+    # the sides (boost on sides = widening, per the guide). Linear phase.
+    _configure_proq_linear_phase(pro_q)
+    # Band 1: Low Shelf @ 100 Hz +1.0 dB — body / mono bass (Mid only)
+    pro_q.set_parameter(0, 1.0); pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(2, _freq_to_val(100.0))
+    pro_q.set_parameter(3, _gain_to_val(1.0))
+    pro_q.set_parameter(5, 0.10)   # Low Shelf
+    pro_q.set_parameter(7, 0.7)    # Mid (phase-stable mono bass)
+    # Band 2: Bell @ 3 kHz +0.8 dB — presence / high-mid focus, full stereo
+    pro_q.set_parameter(23, 1.0); pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(25, _freq_to_val(3000.0))
+    pro_q.set_parameter(26, _gain_to_val(0.8))
+    pro_q.set_parameter(27, _q_to_val(1.1))
+    pro_q.set_parameter(28, 0.0)   # Bell
+    pro_q.set_parameter(30, 0.5)   # Stereo
+    # Band 3: Bell @ 2 kHz +0.8 dB on SIDES — wider mid-range stereo image
+    pro_q.set_parameter(46, 1.0); pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(48, _freq_to_val(2000.0))
+    pro_q.set_parameter(49, _gain_to_val(0.8))
+    pro_q.set_parameter(50, _q_to_val(1.2))
+    pro_q.set_parameter(51, 0.0)   # Bell
+    pro_q.set_parameter(53, 1.0)   # Side (width without freq imbalance)
+    # Band 4: High Shelf @ 10 kHz +1.0 dB on SIDES — air / top-end widening
+    pro_q.set_parameter(69, 1.0); pro_q.set_parameter(70, 1.0)
+    pro_q.set_parameter(71, _freq_to_val(10000.0))
+    pro_q.set_parameter(72, _gain_to_val(1.0))
+    pro_q.set_parameter(74, 0.30)  # High Shelf
+    pro_q.set_parameter(76, 1.0)   # Side (air widening)
 
 
 def _configure_kotelnikov_fast(kot):
@@ -934,6 +1016,10 @@ def _configure_fast_node(name, proc, analog):
         _configure_kotelnikov_fast(proc)
     elif name == "pro_q":
         (_configure_proq_analog if analog else _configure_proq_fast)(proc)
+    elif name == "pro_q_balance":
+        _configure_proq_balance(proc)
+    elif name == "pro_q_tone":
+        _configure_proq_tone(proc)
     elif name == "soothe":
         _configure_soothe_fast(proc)
     elif name == "fresh":
@@ -950,7 +1036,8 @@ def _configure_fast_node(name, proc, analog):
 _FAST_NODE_PLUGIN = {
     "tape": "chow", "tape_track": "chow", "tape_mix": "chow",
     "sdrr": "sdrr", "sdrr_tube": "sdrr", "kot": "kot",
-    "pro_q": "pro_q", "soothe": "soothe", "fresh": "fresh", "pro_mb": "pro_mb",
+    "pro_q": "pro_q", "pro_q_balance": "pro_q", "pro_q_tone": "pro_q",
+    "soothe": "soothe", "fresh": "fresh", "pro_mb": "pro_mb",
     "spiff": "spiff", "limiter": "limiter",
 }
 
@@ -963,6 +1050,8 @@ def _render_fast_vst_chain(dry_audio, np, daw, mode="digital"):
       analog_clean : Tape -> Kotelnikov -> Pro-Q -> Pro-L
       analog_warm  : Tape -> SDRR2(DESK) -> Kotelnikov -> Pro-L
       analog_ultra : Tape -> Pro-L
+      reference    : Balancing M/S EQ -> Kotelnikov -> SDRR2(TUBE) ->
+                     Tone-shaping M/S EQ -> Pro-L (practical mastering guide)
 
     Caller has already resampled dry_audio to _VST_SAMPLE_RATE and redirected
     stderr. Returns the post-limiter audio (channels, frames) or None on failure.
