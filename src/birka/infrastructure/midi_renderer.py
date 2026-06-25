@@ -717,6 +717,9 @@ def _fast_master_enabled() -> bool:
 # chain. "digital" is the original corrective fast path; the analog modes follow
 # the classic Tape -> [console] -> Bus Comp -> [EQ] -> Limiter signal flow.
 _FAST_MASTER_CHAINS = {
+    "full": [  # Premium 10-node chain (same as original _render_sfizz_vst_chain graph)
+        "tape", "spiff", "soothe", "pro_q", "pro_mb", "kot", "sdrr", "reverb", "fresh", "limiter",
+    ],
     "digital": ["pro_q", "kot", "limiter"],  # corrective, cleanest
     "analog_clean": ["tape", "kot", "pro_q", "limiter"],  # Studer->bus->passive EQ
     "analog_warm": ["tape", "sdrr", "kot", "limiter"],  # +console saturation (DESK)
@@ -872,6 +875,9 @@ _FAST_MASTER_ALIASES = {
     "am": "vintage_radio",
     "transistor": "vintage_radio",
     "mono": "vintage_radio",
+    "full": "full",
+    "crystal": "full",
+    "premium": "full",
 }
 
 
@@ -1537,6 +1543,7 @@ _FAST_NODE_PLUGIN = {
     "pro_mb_sonic": "pro_mb",
     "spiff": "spiff",
     "limiter": "limiter",
+    "reverb": "reverb",
 }
 
 
