@@ -1643,6 +1643,87 @@ def _render_fast_vst_chain(dry_audio, np, daw, mode="digital"):
     return out
 
 
+def _render_vst_chain_subprocess(dry_audio, sample_rate, output_path, mode="digital"):
+    """Run VST mastering in a subprocess to avoid Qt+dawdreamer CoreAudio conflict.
+
+    The Qt GUI process holds CoreAudio resources that prevent dawdreamer from
+    loading VST3 plugins (LV2 URI mapping fails). Running in a clean subprocess
+    without Qt solves this reliably.
+    """
+    import subprocess, json, tempfile, sys
+    import numpy as np
+
+    worker = Path(__file__).parent / "vst_worker.py"
+    if not worker.exists():
+        logger_vst.warning("vst_worker.py not found at %s", worker)
+        return False
+
+    # Write dry audio to a temp WAV for the worker
+    tmp_in_name  = None
+    tmp_out_name = None
+    try:
+        tmp_in  = tempfile.NamedTemporaryFile(suffix="_vst_in.wav",  delete=False)
+        tmp_out = tempfile.NamedTemporaryFile(suffix="_vst_out.wav", delete=False)
+        tmp_in_name  = tmp_in.name
+        tmp_out_name = tmp_out.name
+        tmp_in.close()
+        tmp_out.close()
+
+        # Write float32 WAV
+        arr = np.asarray(dry_audio, dtype=np.float32)
+        channels = 2
+        raw = arr.tobytes()
+        byte_rate = sample_rate * channels * 4
+        with open(tmp_in.name, "wb") as f:
+            f.write(b"RIFF")
+            f.write(struct.pack("<I", 36 + len(raw)))
+            f.write(b"WAVE")
+            f.write(b"fmt ")
+            f.write(struct.pack("<I", 16))
+            f.write(struct.pack("<H", 3))
+            f.write(struct.pack("<H", channels))
+            f.write(struct.pack("<I", sample_rate))
+            f.write(struct.pack("<I", byte_rate))
+            f.write(struct.pack("<H", channels * 4))
+            f.write(struct.pack("<H", 32))
+            f.write(b"data")
+            f.write(struct.pack("<I", len(raw)))
+            f.write(raw)
+
+        plugin_json = json.dumps(_VST_PLUGIN_PATHS)
+        cmd = [
+            sys.executable,
+            str(worker),
+            tmp_in.name,
+            tmp_out.name,
+            str(sample_rate),
+            mode,
+            plugin_json,
+            str(TARGET_LOUDNESS_LUFS),
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        if result.returncode != 0:
+            logger_vst.error("vst_worker failed (rc=%d): %s", result.returncode, result.stderr[-500:])
+            return False
+        logger_vst.info("vst_worker: %s", result.stdout.strip())
+
+        # Copy output to final path
+        import shutil
+        shutil.copy2(tmp_out.name, str(output_path))
+        return True
+
+    except Exception as e:
+        logger_vst.error("vst subprocess error: %s", e)
+        return False
+    finally:
+        for p in (tmp_in_name, tmp_out_name):
+            if p:
+                try:
+                    os.unlink(p)
+                except Exception:
+                    pass
+
+
 def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
     try:
         import dawdreamer as daw
@@ -2601,7 +2682,8 @@ def _synth_tsf_to_wav(
         import numpy as np
 
         buf_arr = np.asarray(buf, dtype=np.float32)
-        if _render_sfizz_vst_chain(buf_arr, sample_rate, output_path):
+        _vst_mode = _fast_master_mode() or "digital"
+        if _render_vst_chain_subprocess(buf_arr, sample_rate, output_path, mode=_vst_mode):
             return True
     except Exception:
         pass
@@ -3340,7 +3422,8 @@ def _synth_sfizz_to_wav(
         logger_sfizz.warning("sfizz: render produced no audio blocks — silent output")
 
     if use_vst_chain:
-        if _render_sfizz_vst_chain(buf_arr, sample_rate, output_path):
+        _vst_mode = _fast_master_mode() or "digital"
+        if _render_vst_chain_subprocess(buf_arr, sample_rate, output_path, mode=_vst_mode):
             logger_sfizz.info("sfizz: VST chain OK → %s", output_path)
             return True
         logger_sfizz.warning("sfizz: VST chain failed, falling back to pedalboard")
