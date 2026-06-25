@@ -789,6 +789,29 @@ _FAST_MASTER_CHAINS = {
         "fresh",
         "limiter",
     ],
+    # Lo-fi mastering — intentional degradation as aesthetic ---------------
+    # Artifacts are the feature: heavy tape wow/flutter + bias push for
+    # warble and saturation, SDRR DESK for console grit, soothe inverted
+    # (resonances LEFT IN for character), Pro-Q bandwidth limiting
+    # (100 Hz–12 kHz shelf rolloff — vinyl/cassette frequency range),
+    # aggressive limiter for pumping loudness. Sounds like a loved record.
+    "lo_fi": [
+        "tape_lofi",
+        "sdrr",
+        "pro_q_lofi",
+        "limiter",
+    ],
+    # Vintage radio — AM/FM broadcast aesthetic ----------------------------
+    # Bandwidth hard-limited to 150 Hz–8 kHz (AM character), mono-summed
+    # via M/S (Side nearly zeroed), phone-like presence boost @ 1.5 kHz,
+    # aggressive bus comp (Pro-MB pumping), SDRR DESK for transmitter grit,
+    # hot limiter ceiling. Sounds like a transistor radio or 1960s AM.
+    "vintage_radio": [
+        "pro_q_radio",
+        "pro_mb",
+        "sdrr",
+        "limiter_radio",
+    ],
 }
 _FAST_MASTER_ALIASES = {
     "1": "digital",
@@ -839,6 +862,16 @@ _FAST_MASTER_ALIASES = {
     "score": "cinematic",
     "zimmer": "cinematic",
     "orchestral": "cinematic",
+    "lo_fi": "lo_fi",
+    "lofi": "lo_fi",
+    "cassette": "lo_fi",
+    "vinyl": "lo_fi",
+    "bedroom": "lo_fi",
+    "vintage_radio": "vintage_radio",
+    "radio": "vintage_radio",
+    "am": "vintage_radio",
+    "transistor": "vintage_radio",
+    "mono": "vintage_radio",
 }
 
 
@@ -1184,6 +1217,106 @@ def _configure_proq_film(pro_q):
     pro_q.set_parameter(53, 1.0)   # Side (wide immersive air)
 
 
+def _configure_tape_lofi(tape):
+    # CHOWTape in lo-fi mode: heavy drive + high bias (warble/saturation),
+    # wow and flutter cranked for cassette instability, 15 ips with Loss On
+    # for pronounced HF rolloff. The distortion and warble ARE the aesthetic.
+    tape.set_parameter(0, 0.889)   # Input Gain
+    tape.set_parameter(1, 0.68)    # Output Gain
+    tape.set_parameter(2, 1.0)     # Dry/Wet full
+    tape.set_parameter(16, 0.55)   # Tape Drive — heavy saturation
+    tape.set_parameter(17, 0.60)   # Tape Saturation — strong
+    tape.set_parameter(18, 0.72)   # Tape Bias — pushed high (warble character)
+    tape.set_parameter(25, 1.0)    # Loss On — HF rolloff model active
+    tape.set_parameter(26, 0.5)    # Tape Speed 15 ips — head bump + HF loss
+    tape.set_parameter(27, 0.65)   # Spacing — extra HF attenuation
+    tape.set_parameter(28, 0.70)   # Thickness — more rolloff
+    tape.set_parameter(8, 0.58)    # Tone Bass + (warm low end)
+    tape.set_parameter(9, 0.38)    # Tone Treble — (dull, worn tape)
+    # Wow and flutter — cassette instability
+    tape.set_parameter(3, 0.35)    # Wow depth
+    tape.set_parameter(4, 0.28)    # Flutter depth
+    tape.set_parameter(5, 0.45)    # Wow rate
+    tape.set_parameter(6, 0.55)    # Flutter rate
+
+
+def _configure_proq_lofi(pro_q):
+    # LO-FI bandwidth shaper — vinyl/cassette frequency range.
+    # Hard low cut @ 100 Hz (no sub rumble on worn equipment), high shelf
+    # rolloff @ 12 kHz -6 dB (dull, degraded top), gentle presence bump
+    # @ 1 kHz +1.5 dB (cheap speaker midrange honk). Natural phase — the
+    # phase smear is part of the lo-fi character, linear phase would be
+    # too clean.
+    # Band 1: Low Cut @ 100 Hz — no sub on cheap playback
+    pro_q.set_parameter(0, 1.0)
+    pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(2, _freq_to_val(100.0))
+    pro_q.set_parameter(5, 0.20)   # Low Cut
+    pro_q.set_parameter(7, 0.5)    # Stereo
+    # Band 2: Bell @ 1 kHz +1.5 dB — cheap speaker midrange honk
+    pro_q.set_parameter(23, 1.0)
+    pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(25, _freq_to_val(1000.0))
+    pro_q.set_parameter(26, _gain_to_val(1.5))
+    pro_q.set_parameter(27, _q_to_val(0.7))   # broad
+    pro_q.set_parameter(28, 0.0)   # Bell
+    pro_q.set_parameter(30, 0.5)   # Stereo
+    # Band 3: High Shelf @ 12 kHz -6.0 dB — dull worn tape top end
+    pro_q.set_parameter(46, 1.0)
+    pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(48, _freq_to_val(12000.0))
+    pro_q.set_parameter(49, _gain_to_val(-6.0))
+    pro_q.set_parameter(51, 0.30)  # High Shelf
+    pro_q.set_parameter(53, 0.5)   # Stereo
+
+
+def _configure_proq_radio(pro_q):
+    # VINTAGE RADIO bandwidth shaper — AM transistor radio aesthetic.
+    # Hard low cut @ 150 Hz (AM has no bass), hard high cut @ 8 kHz
+    # (AM bandwidth limit), presence boost @ 1.5 kHz +3 dB (telephone/
+    # speaker intelligibility peak), Side shelf zeroed @ 200 Hz (mono).
+    # Natural phase — correct for the degraded aesthetic.
+    # Band 1: Low Cut full stereo @ 150 Hz — AM has no bass
+    pro_q.set_parameter(0, 1.0)
+    pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(2, _freq_to_val(150.0))
+    pro_q.set_parameter(5, 0.20)   # Low Cut
+    pro_q.set_parameter(7, 0.5)    # Stereo
+    # Band 2: Low Shelf SIDE @ 200 Hz -12 dB — collapse stereo to mono
+    pro_q.set_parameter(23, 1.0)
+    pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(25, _freq_to_val(200.0))
+    pro_q.set_parameter(26, _gain_to_val(-12.0))
+    pro_q.set_parameter(28, 0.10)  # Low Shelf
+    pro_q.set_parameter(30, 1.0)   # Side only (kill stereo width)
+    # Band 3: Bell @ 1.5 kHz +3.0 dB — telephone presence / intelligibility
+    pro_q.set_parameter(46, 1.0)
+    pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(48, _freq_to_val(1500.0))
+    pro_q.set_parameter(49, _gain_to_val(3.0))
+    pro_q.set_parameter(50, _q_to_val(0.9))
+    pro_q.set_parameter(51, 0.0)   # Bell
+    pro_q.set_parameter(53, 0.5)   # Stereo
+    # Band 4: High Cut @ 8 kHz — AM bandwidth ceiling
+    pro_q.set_parameter(69, 1.0)
+    pro_q.set_parameter(70, 1.0)
+    pro_q.set_parameter(71, _freq_to_val(8000.0))
+    pro_q.set_parameter(74, 0.40)  # High Cut
+    pro_q.set_parameter(76, 0.5)   # Stereo
+
+
+def _configure_limiter_radio(limiter):
+    # Aggressive limiter for vintage radio / AM broadcast pumping character.
+    # Short lookahead, hot threshold, low ceiling (-3 dBTP — AM transmitters
+    # clip hard). Reuses the base limiter config then overrides key params.
+    _configure_limiter(limiter)
+    limiter.set_parameter(2, 0.18)   # Lookahead = short (0.9 ms — punchy)
+    limiter.set_parameter(3, 0.88)   # Threshold — hot, aggressive GR
+    limiter.set_parameter(4, 0.70)   # Output ceiling ~ -3 dBTP (AM clip)
+    limiter.set_parameter(9, 0.166)  # Oversampling 2x (speed over quality)
+    limiter.set_parameter(10, 0.0)   # True Peak off
+
+
 def _configure_kotelnikov_fast(kot):
     # Light, cheap glue: ~1.5:1 at a gentle threshold, 100% wet, unity out. No
     # parallel dry blend or deep GR — just cohesion for the draft master.
@@ -1353,6 +1486,14 @@ def _configure_fast_node(name, proc, analog):
         _configure_proq_trans_wide(proc)
     elif name == "pro_q_film":
         _configure_proq_film(proc)
+    elif name == "pro_q_lofi":
+        _configure_proq_lofi(proc)
+    elif name == "pro_q_radio":
+        _configure_proq_radio(proc)
+    elif name == "tape_lofi":
+        _configure_tape_lofi(proc)
+    elif name == "limiter_radio":
+        _configure_limiter_radio(proc)
     elif name == "kot_trans":
         _configure_kotelnikov_transparent(proc)
     elif name == "soothe":
