@@ -2488,45 +2488,55 @@ def _synth_tsf_to_wav(
             })
 
             # Assign pan positions: guitars spread L/R, bass centre, rest spread gently
-            guitar_channels = [ch for ch in active_mel_channels if 24 <= ch_programs.get(ch, 0) <= 31]
-            bass_channels   = [ch for ch in active_mel_channels if 32 <= ch_programs.get(ch, 0) <= 39]
-            pad_channels    = [ch for ch in active_mel_channels if ch_programs.get(ch, 0) in range(88, 104)]
+            guitar_channels  = [ch for ch in active_mel_channels if 24 <= ch_programs.get(ch, 0) <= 31]
+            bass_channels    = [ch for ch in active_mel_channels if 32 <= ch_programs.get(ch, 0) <= 39]
+            pad_channels     = [ch for ch in active_mel_channels if ch_programs.get(ch, 0) in range(88, 104)]
+            strings_channels = [ch for ch in active_mel_channels if 40 <= ch_programs.get(ch, 0) <= 55]
+            piano_channels   = [ch for ch in active_mel_channels if ch_programs.get(ch, 0) <= 7]
+            other_channels   = [ch for ch in active_mel_channels
+                                if ch not in guitar_channels and ch not in bass_channels
+                                and ch not in strings_channels and ch not in piano_channels]
 
             # Guitar spread: first guitar L, second guitar R (classic double-track)
             _guitar_pans = [38, 90] if len(guitar_channels) >= 2 else [64]
 
-            # Gentle spread for remaining melodic channels (not bass/guitar)
-            _other_mel = [ch for ch in active_mel_channels if ch not in guitar_channels and ch not in bass_channels]
-            _other_pans: list = []
-            if len(_other_mel) == 1:
-                _other_pans = [64]
-            elif len(_other_mel) == 2:
-                _other_pans = [54, 74]   # slight L/R
-            elif len(_other_mel) >= 3:
-                _other_pans = [44, 64, 84]
-            else:
-                _other_pans = []
+            # Background channels pan spread
+            _back_chs = strings_channels + piano_channels + other_channels
+            _back_pans: list = {1: [64], 2: [54, 74], 3: [44, 64, 84], 4: [38, 54, 74, 90]}.get(
+                len(_back_chs), [64] * len(_back_chs)
+            )
 
             for i, ch in enumerate(guitar_channels):
                 pan = _guitar_pans[i] if i < len(_guitar_pans) else 64
                 synth.channel_midi_control(ch, 10, pan)   # CC10 = pan
-                synth.channel_midi_control(ch, 7, 95)     # CC7  = volume (slightly under lead)
-                logger.debug("tsf mix: ch%d Guitar pan=%d vol=95", ch, pan)
+                synth.channel_midi_control(ch, 7, 100)    # guitars = lead, full vol
+                logger.debug("tsf mix: ch%d Guitar pan=%d vol=100", ch, pan)
 
             for ch in bass_channels:
-                synth.channel_midi_control(ch, 10, 64)    # centre
-                synth.channel_midi_control(ch, 7, 90)     # -2 dB vs default
-                logger.debug("tsf mix: ch%d Bass pan=64 vol=90", ch)
+                synth.channel_midi_control(ch, 10, 64)
+                synth.channel_midi_control(ch, 7, 85)     # slightly under guitars
+                logger.debug("tsf mix: ch%d Bass pan=64 vol=85", ch)
 
-            for i, ch in enumerate(_other_mel):
-                pan = _other_pans[i] if i < len(_other_pans) else 64
-                vol = 100
-                # Pads slightly lower so lead cuts through
-                if ch in pad_channels:
-                    vol = 88
+            for i, ch in enumerate(strings_channels):
+                pan = _back_pans[i] if i < len(_back_pans) else 64
+                synth.channel_midi_control(ch, 10, pan)
+                synth.channel_midi_control(ch, 7, 72)     # background layer
+                logger.debug("tsf mix: ch%d Strings pan=%d vol=72", ch, pan)
+
+            for i, ch in enumerate(piano_channels):
+                idx = len(strings_channels) + i
+                pan = _back_pans[idx] if idx < len(_back_pans) else 64
+                synth.channel_midi_control(ch, 10, pan)
+                synth.channel_midi_control(ch, 7, 68)     # support texture
+                logger.debug("tsf mix: ch%d Piano pan=%d vol=68", ch, pan)
+
+            for i, ch in enumerate(other_channels):
+                idx = len(strings_channels) + len(piano_channels) + i
+                pan = _back_pans[idx] if idx < len(_back_pans) else 64
+                vol = 60 if ch in pad_channels else 75
                 synth.channel_midi_control(ch, 10, pan)
                 synth.channel_midi_control(ch, 7, vol)
-                logger.debug("tsf mix: ch%d prog=%d pan=%d vol=%d", ch, ch_programs.get(ch, 0), pan, vol)
+                logger.debug("tsf mix: ch%d Other prog=%d pan=%d vol=%d", ch, ch_programs.get(ch, 0), pan, vol)
 
             samples: List[float] = []
             event_index = 0
@@ -3013,26 +3023,49 @@ def _synth_sfizz_to_wav(
                 if ch not in ch_programs:
                     ch_programs[ch] = getattr(m, "program", 0)
 
-        guitar_chs = [ch for ch in active_mel_channels if 24 <= ch_programs.get(ch, 0) <= 31]
-        bass_chs   = [ch for ch in active_mel_channels if 32 <= ch_programs.get(ch, 0) <= 39]
-        pad_chs    = [ch for ch in active_mel_channels if ch_programs.get(ch, 0) in range(88, 104)]
-        other_chs  = [ch for ch in active_mel_channels if ch not in guitar_chs and ch not in bass_chs]
+        guitar_chs   = [ch for ch in active_mel_channels if 24 <= ch_programs.get(ch, 0) <= 31]
+        bass_chs     = [ch for ch in active_mel_channels if 32 <= ch_programs.get(ch, 0) <= 39]
+        pad_chs      = [ch for ch in active_mel_channels if ch_programs.get(ch, 0) in range(88, 104)]
+        strings_chs  = [ch for ch in active_mel_channels if 40 <= ch_programs.get(ch, 0) <= 55]  # strings+ensemble
+        piano_chs    = [ch for ch in active_mel_channels if ch_programs.get(ch, 0) <= 7]
+        other_chs    = [ch for ch in active_mel_channels
+                        if ch not in guitar_chs and ch not in bass_chs
+                        and ch not in strings_chs and ch not in piano_chs]
 
         _gpans = [38, 90] if len(guitar_chs) >= 2 else ([44] if len(guitar_chs) == 1 else [])
-        _opans: list = {1: [64], 2: [54, 74], 3: [44, 64, 84]}.get(len(other_chs), [64] * len(other_chs))
+
+        # pan positions for non-guitar/bass channels
+        _back_chs = strings_chs + piano_chs + other_chs
+        _opans: list = {1: [64], 2: [54, 74], 3: [44, 64, 84], 4: [38, 54, 74, 90]}.get(
+            len(_back_chs), [64] * len(_back_chs)
+        )
 
         # pan 0..127 → -1..1
         def _pan_norm(p: int) -> float:
             return (p - 64) / 63.0
 
         ch_mix: dict = {}  # ch → (pan_norm, vol_lin)
+
+        # Guitars are lead — loudest
         for i, ch in enumerate(guitar_chs):
-            ch_mix[ch] = (_pan_norm(_gpans[i] if i < len(_gpans) else 64), 0.95)
+            ch_mix[ch] = (_pan_norm(_gpans[i] if i < len(_gpans) else 64), 1.00)
+
+        # Bass — centre, slightly under guitars to avoid mud
         for ch in bass_chs:
-            ch_mix[ch] = (0.0, 0.88)
+            ch_mix[ch] = (0.0, 0.85)
+
+        # Strings/ensemble — background layer, noticeably under guitars
+        for ch in strings_chs:
+            ch_mix[ch] = (0.0, 0.72)
+
+        # Piano — support texture, under strings
+        for ch in piano_chs:
+            ch_mix[ch] = (0.0, 0.68)
+
+        # Pads and other — quietest background
         for i, ch in enumerate(other_chs):
-            pan = _opans[i] if i < len(_opans) else 64
-            vol = 0.85 if ch in pad_chs else 1.0
+            pan = _opans[len(strings_chs) + len(piano_chs) + i] if (len(strings_chs) + len(piano_chs) + i) < len(_opans) else 64
+            vol = 0.60 if ch in pad_chs else 0.75
             ch_mix[ch] = (_pan_norm(pan), vol)
 
         logger_sfizz.info(
