@@ -757,6 +757,20 @@ _FAST_MASTER_CHAINS = {
         "pro_q_widen",
         "limiter",
     ],
+    # Transparent mastering (Ian Shepherd / Bob Katz methodology) -----------
+    # Minimal-colour, maximum dynamic range, wide M/S stereo field.
+    # Signal flow: HPF + Side-HPF + mud-dip (linear phase, cuts only) ->
+    # resonance smoothing (soothe2, surgical) -> very gentle RMS glue
+    # (1.2:1, 30% dry parallel blend keeps transients alive) -> M/S tone +
+    # air-widen (Side air shelf +2 dB, Mid bass anchor, no saturation) ->
+    # limiter. Zero tape, zero SDRR — no added colour by design.
+    "transparent": [
+        "pro_q_hpf",
+        "soothe",
+        "kot_trans",
+        "pro_q_trans_wide",
+        "limiter",
+    ],
 }
 _FAST_MASTER_ALIASES = {
     "1": "digital",
@@ -797,6 +811,11 @@ _FAST_MASTER_ALIASES = {
     "sonic_scoop": "sonic_scoop",
     "kedy": "sonic_scoop",
     "scoop": "sonic_scoop",
+    "transparent": "transparent",
+    "clarity": "transparent",
+    "clean_master": "transparent",
+    "katz": "transparent",
+    "shepherd": "transparent",
 }
 
 
@@ -1048,6 +1067,68 @@ def _configure_pro_mb_sonic(pro_mb):
     pro_mb.set_parameter(32, 0.4)  # Release 40%
 
 
+def _configure_proq_hpf(pro_q):
+    # TRANSPARENT stage 1 — cuts only, linear phase. HPF full stereo @ 30 Hz,
+    # Side-HPF @ 100 Hz (mono bass), mud dip @ 250 Hz full stereo -1.0 dB.
+    # No boosts whatsoever — this stage must be invisible on a clean mix.
+    _configure_proq_linear_phase(pro_q)
+    # Band 1: Low Cut full stereo @ 30 Hz — subsonic rumble
+    pro_q.set_parameter(0, 1.0)
+    pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(2, _freq_to_val(30.0))
+    pro_q.set_parameter(5, 0.20)  # Low Cut
+    pro_q.set_parameter(7, 0.5)  # Stereo
+    # Band 2: Low Cut SIDES @ 100 Hz — strip bass from stereo image, keep mono
+    pro_q.set_parameter(23, 1.0)
+    pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(25, _freq_to_val(100.0))
+    pro_q.set_parameter(28, 0.20)  # Low Cut
+    pro_q.set_parameter(30, 1.0)  # Side only
+    # Band 3: Bell @ 250 Hz -1.0 dB — mud/masking, full stereo
+    pro_q.set_parameter(46, 1.0)
+    pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(48, _freq_to_val(250.0))
+    pro_q.set_parameter(49, _gain_to_val(-1.0))
+    pro_q.set_parameter(50, _q_to_val(1.0))
+    pro_q.set_parameter(51, 0.0)  # Bell
+    pro_q.set_parameter(53, 0.5)  # Stereo
+
+
+def _configure_kotelnikov_transparent(kot):
+    # Ultra-gentle transparent glue: 1.2:1, high threshold (only peak moments
+    # compress), 30% dry blend preserves macro-dynamics and transient punch.
+    # This is the Katz "mastering compressor as leveller" approach — you hear
+    # the room breathe, not the compressor working.
+    kot.set_parameter(0, 0.38)  # Threshold ~ -22 dB (high, catches only peaks)
+    kot.set_parameter(5, 0.18)  # Ratio ~1.2:1 (barely above 1:1)
+    kot.set_parameter(6, 0.60)  # Attack ~40 ms (slow, lets transients through)
+    kot.set_parameter(7, 0.45)  # Release ~200 ms (program-dependent feel)
+    kot.set_parameter(12, 0.30)  # Dry/Wet 30% dry — preserves dynamic shape
+    kot.set_parameter(14, 0.55)  # Out gain ~0 dB
+
+
+def _configure_proq_trans_wide(pro_q):
+    # TRANSPARENT stage 4 — tone shaping + M/S stereo widening, linear phase.
+    # Minimal: only a Mid bass anchor (keeps low end centered and defined) and
+    # a Side air shelf (+2 dB @ 12 kHz) for a wide, open top without adding
+    # harmonic colour. No presence boost, no mid-range moves — transparency.
+    _configure_proq_linear_phase(pro_q)
+    # Band 1: Low Shelf @ 80 Hz +0.5 dB on MID — mono bass anchor (subtle)
+    pro_q.set_parameter(0, 1.0)
+    pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(2, _freq_to_val(80.0))
+    pro_q.set_parameter(3, _gain_to_val(0.5))
+    pro_q.set_parameter(5, 0.10)  # Low Shelf
+    pro_q.set_parameter(7, 0.7)  # Mid (focused mono bass)
+    # Band 2: High Shelf @ 12 kHz +2.0 dB on SIDE — wide air, open top end
+    pro_q.set_parameter(23, 1.0)
+    pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(25, _freq_to_val(12000.0))
+    pro_q.set_parameter(26, _gain_to_val(2.0))
+    pro_q.set_parameter(28, 0.30)  # High Shelf
+    pro_q.set_parameter(30, 1.0)  # Side (widen air only)
+
+
 def _configure_kotelnikov_fast(kot):
     # Light, cheap glue: ~1.5:1 at a gentle threshold, 100% wet, unity out. No
     # parallel dry blend or deep GR — just cohesion for the draft master.
@@ -1211,6 +1292,12 @@ def _configure_fast_node(name, proc, analog):
         _configure_proq_cut(proc)
     elif name == "pro_q_widen":
         _configure_proq_widen(proc)
+    elif name == "pro_q_hpf":
+        _configure_proq_hpf(proc)
+    elif name == "pro_q_trans_wide":
+        _configure_proq_trans_wide(proc)
+    elif name == "kot_trans":
+        _configure_kotelnikov_transparent(proc)
     elif name == "soothe":
         _configure_soothe_fast(proc)
     elif name == "fresh":
@@ -1238,6 +1325,9 @@ _FAST_NODE_PLUGIN = {
     "pro_q_tone": "pro_q",
     "pro_q_cut": "pro_q",
     "pro_q_widen": "pro_q",
+    "pro_q_hpf": "pro_q",
+    "pro_q_trans_wide": "pro_q",
+    "kot_trans": "kot",
     "soothe": "soothe",
     "fresh": "fresh",
     "pro_mb": "pro_mb",
@@ -1354,7 +1444,9 @@ def _render_sfizz_vst_chain(dry_audio, sample_rate, output_path):
 
     for path in _VST_PLUGIN_PATHS.values():
         if not Path(path).exists():
+            logger_vst.warning("VST plugin missing: %s", path)
             return False
+    logger_vst.info("All %d VST3 plugins found", len(_VST_PLUGIN_PATHS))
 
     # ── Ресемплинг: sfizz SR → VST SR (96kHz) ──────────────────────
     # buf_arr = interleaved stereo (frames*2,) из sfizz на sample_rate.
@@ -2768,8 +2860,12 @@ def _parse_loudnorm_stats(stderr: str) -> Optional[dict]:
 
 def _find_soundfont() -> Optional[Path]:
     env = os.environ.get("BIRKA_SOUNDFONT")
-    if env and Path(env).exists():
-        return Path(env)
+    if env:
+        p = Path(env)
+        if p.exists():
+            logger.info("Soundfont from env BIRKA_SOUNDFONT: %s", p)
+            return p
+        logger.info("BIRKA_SOUNDFONT set but file missing: %s", env)
     candidates = [
         Path("/Volumes/External/Code/Birka/data/FluidR3 GM.sf2"),
         Path("/Volumes/External/Code/Birka/data/FluidR3_GM.sf2"),
@@ -2780,6 +2876,7 @@ def _find_soundfont() -> Optional[Path]:
     ]
     for path in candidates:
         if path.exists():
+            logger.info("Soundfont found at default path: %s", path)
             return path
     for base in [
         Path("/opt/homebrew/share/soundfonts"),
@@ -2787,7 +2884,9 @@ def _find_soundfont() -> Optional[Path]:
     ]:
         if base.exists():
             for sf2 in base.glob("*.sf2"):
+                logger.info("Soundfont found in %s: %s", base, sf2)
                 return sf2
+    logger.warning("No soundfont (.sf2) found")
     return None
 
 

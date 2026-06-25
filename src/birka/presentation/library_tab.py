@@ -772,6 +772,7 @@ class LibraryTab(QtWidgets.QWidget):
         self._master_combo.addItem("🎞 Reel-to-reel — двойная плёнка (tracking→mixdown)", "reel")
         self._master_combo.addItem("🎯 Reference — классический M/S мастеринг-гайд", "reference")
         self._master_combo.addItem("🎧 Sonic Scoop — 6 стадий (Justin Kedy)", "sonic_scoop")
+        self._master_combo.addItem("💎 Transparent — минимальный цвет, широкая сцена", "transparent")
         _env_mode = os.environ.get("BIRKA_FAST_MASTER", "").strip().lower()
         _alias = {
             "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
@@ -785,6 +786,8 @@ class LibraryTab(QtWidgets.QWidget):
             "reel": "reel", "reel2reel": "reel", "double_tape": "reel", "tape2": "reel",
             "reference": "reference", "mastering": "reference", "classic": "reference",
             "sonic_scoop": "sonic_scoop", "kedy": "sonic_scoop", "scoop": "sonic_scoop",
+            "transparent": "transparent", "clarity": "transparent", "clean_master": "transparent",
+            "katz": "transparent", "shepherd": "transparent",
         }
         _resolved = _alias.get(_env_mode, _env_mode)
         _idx = self._master_combo.findData(_resolved)
