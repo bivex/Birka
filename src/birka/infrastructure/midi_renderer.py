@@ -1603,6 +1603,10 @@ def _render_fast_vst_chain(dry_audio, np, daw, mode="digital"):
     _VST_FAST_ENGINE.render(duration)
     out = _VST_FAST_ENGINE.get_audio(out_node)
     current_lufs = _measure_lufs(out, _VST_SAMPLE_RATE)
+    logger.info("VST fast chain pass1: mode=%s  LUFS=%.1f  target=%.1f  gain_db=%.1f",
+                mode, current_lufs if current_lufs is not None else -99.0,
+                TARGET_LOUDNESS_LUFS,
+                (TARGET_LOUDNESS_LUFS - current_lufs) if current_lufs is not None else 0.0)
 
     if current_lufs is not None:
         gain_db = TARGET_LOUDNESS_LUFS - current_lufs
