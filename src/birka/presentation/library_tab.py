@@ -774,6 +774,8 @@ class LibraryTab(QtWidgets.QWidget):
         self._master_combo.addItem("🎧 Sonic Scoop — 6 стадий (Justin Kedy)", "sonic_scoop")
         self._master_combo.addItem("💎 Transparent — минимальный цвет, широкая сцена", "transparent")
         self._master_combo.addItem("🎬 Cinematic — оркестровый, глубина, пространство", "cinematic")
+        self._master_combo.addItem("📼 Lo-Fi — кассетная деградация, warble, worn tape", "lo_fi")
+        self._master_combo.addItem("📻 Vintage Radio — AM-bandwidth, mono, transistor", "vintage_radio")
         _env_mode = os.environ.get("BIRKA_FAST_MASTER", "").strip().lower()
         _alias = {
             "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
@@ -791,6 +793,10 @@ class LibraryTab(QtWidgets.QWidget):
             "katz": "transparent", "shepherd": "transparent",
             "cinematic": "cinematic", "film": "cinematic", "score": "cinematic",
             "zimmer": "cinematic", "orchestral": "cinematic",
+            "lo_fi": "lo_fi", "lofi": "lo_fi", "cassette": "lo_fi",
+            "vinyl": "lo_fi", "bedroom": "lo_fi",
+            "vintage_radio": "vintage_radio", "radio": "vintage_radio",
+            "am": "vintage_radio", "transistor": "vintage_radio", "mono": "vintage_radio",
         }
         _resolved = _alias.get(_env_mode, _env_mode)
         _idx = self._master_combo.findData(_resolved)
