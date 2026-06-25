@@ -771,6 +771,24 @@ _FAST_MASTER_CHAINS = {
         "pro_q_trans_wide",
         "limiter",
     ],
+    # Cinematic / film score mastering (Hans Zimmer / Remote Control style) -
+    # Designed for orchestral and hybrid scores going to picture. The goal is
+    # a large, three-dimensional stereo field with warmth and depth, not
+    # competitive loudness. Signal flow: M/S balance EQ (Side-HPF + mud
+    # cleanup, same as reference) -> light tape warmth (body for strings/brass)
+    # -> gentle RMS glue -> valve saturation (harmonic richness) -> film-EQ
+    # (wide bass on Mid, soft presence dip for listening comfort, +3 dB air
+    # shelf on Sides for depth/space) -> spectral air (Fresh Air) -> limiter
+    # at a conservative ceiling (-1.5 dBTP, preserves dynamics for mixing).
+    "cinematic": [
+        "pro_q_balance",
+        "tape",
+        "kot",
+        "sdrr_tube",
+        "pro_q_film",
+        "fresh",
+        "limiter",
+    ],
 }
 _FAST_MASTER_ALIASES = {
     "1": "digital",
@@ -816,6 +834,11 @@ _FAST_MASTER_ALIASES = {
     "clean_master": "transparent",
     "katz": "transparent",
     "shepherd": "transparent",
+    "cinematic": "cinematic",
+    "film": "cinematic",
+    "score": "cinematic",
+    "zimmer": "cinematic",
+    "orchestral": "cinematic",
 }
 
 
@@ -1129,6 +1152,38 @@ def _configure_proq_trans_wide(pro_q):
     pro_q.set_parameter(30, 1.0)  # Side (widen air only)
 
 
+def _configure_proq_film(pro_q):
+    # CINEMATIC tone-shaping EQ — after compressor + saturation. Three goals:
+    # (1) wide, powerful low end on MID (foundation for brass/strings/perc),
+    # (2) soft presence dip @ 3 kHz on full stereo (reduces ear fatigue on
+    #     long listening — critical for film/TV where viewers sit for 2+ hours),
+    # (3) extended air shelf on SIDES @ 10 kHz +3 dB (depth, space, immersion).
+    # Linear phase throughout — no phase smear in the orchestral transients.
+    _configure_proq_linear_phase(pro_q)
+    # Band 1: Low Shelf @ 100 Hz +1.5 dB on MID — wide orchestral foundation
+    pro_q.set_parameter(0, 1.0)
+    pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(2, _freq_to_val(100.0))
+    pro_q.set_parameter(3, _gain_to_val(1.5))
+    pro_q.set_parameter(5, 0.10)  # Low Shelf
+    pro_q.set_parameter(7, 0.7)   # Mid (mono bass power)
+    # Band 2: Bell @ 3 kHz -1.0 dB full stereo — presence comfort dip
+    pro_q.set_parameter(23, 1.0)
+    pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(25, _freq_to_val(3000.0))
+    pro_q.set_parameter(26, _gain_to_val(-1.0))
+    pro_q.set_parameter(27, _q_to_val(0.8))  # broad dip
+    pro_q.set_parameter(28, 0.0)   # Bell
+    pro_q.set_parameter(30, 0.5)   # Stereo
+    # Band 3: High Shelf @ 10 kHz +3.0 dB on SIDE — cinematic depth and space
+    pro_q.set_parameter(46, 1.0)
+    pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(48, _freq_to_val(10000.0))
+    pro_q.set_parameter(49, _gain_to_val(3.0))
+    pro_q.set_parameter(51, 0.30)  # High Shelf
+    pro_q.set_parameter(53, 1.0)   # Side (wide immersive air)
+
+
 def _configure_kotelnikov_fast(kot):
     # Light, cheap glue: ~1.5:1 at a gentle threshold, 100% wet, unity out. No
     # parallel dry blend or deep GR — just cohesion for the draft master.
@@ -1296,6 +1351,8 @@ def _configure_fast_node(name, proc, analog):
         _configure_proq_hpf(proc)
     elif name == "pro_q_trans_wide":
         _configure_proq_trans_wide(proc)
+    elif name == "pro_q_film":
+        _configure_proq_film(proc)
     elif name == "kot_trans":
         _configure_kotelnikov_transparent(proc)
     elif name == "soothe":
@@ -1327,6 +1384,7 @@ _FAST_NODE_PLUGIN = {
     "pro_q_widen": "pro_q",
     "pro_q_hpf": "pro_q",
     "pro_q_trans_wide": "pro_q",
+    "pro_q_film": "pro_q",
     "kot_trans": "kot",
     "soothe": "soothe",
     "fresh": "fresh",
@@ -3027,13 +3085,18 @@ def _find_sfz() -> Optional[Path]:
     common SFZ locations.
     """
     env = os.environ.get("BIRKA_SFZ")
-    if env and Path(env).exists() and Path(env).suffix.lower() == ".sfz":
-        return Path(env)
+    if env:
+        p = Path(env)
+        if p.exists() and p.suffix.lower() == ".sfz":
+            logger.info("SFZ from env BIRKA_SFZ: %s", p)
+            return p
+        logger.info("BIRKA_SFZ set but missing or not .sfz: %s", env)
     # Bundled Discord GM bank: generate a combined GM.sfz on first use.
     discord_bank = Path("/Volumes/External/Code/Birka/data/Discord-SFZ-GM-Bank")
     if discord_bank.is_dir():
         combined = _build_discord_gm_sfz(discord_bank)
         if combined is not None:
+            logger.info("SFZ built from Discord-SFZ-GM-Bank: %s", combined)
             return combined
     candidates = [
         Path("/Volumes/External/Code/Birka/data/GeneralUser GS.sfz"),
@@ -3042,6 +3105,7 @@ def _find_sfz() -> Optional[Path]:
     ]
     for path in candidates:
         if path.exists():
+            logger.info("SFZ found at default path: %s", path)
             return path
     for base in [
         Path("/Volumes/External/Code/Birka/data"),
@@ -3049,5 +3113,7 @@ def _find_sfz() -> Optional[Path]:
     ]:
         if base.exists():
             for sfz in base.rglob("*.sfz"):
+                logger.info("SFZ found in %s: %s", base, sfz)
                 return sfz
+    logger.warning("No SFZ bank found")
     return None
