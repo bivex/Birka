@@ -102,6 +102,7 @@ def main():
     }
 
     chain = FAST_CHAINS.get(mode, FAST_CHAINS["digital"])
+    print(f"[vst] mode={mode}  chain={' → '.join(chain)}", flush=True)
 
     # Redirect stderr to suppress LV2/LADSPA URI noise
     devnull = open(os.devnull, "w")
@@ -115,6 +116,7 @@ def main():
         procs = {"pb": pb}
         connections = [(pb, [])]
         prev = "pb"
+        loaded = []
         for name in chain:
             plugin_key = NODE_PLUGIN[name]
             if plugin_key not in plugin_paths:
@@ -125,14 +127,17 @@ def main():
             procs[name] = proc
             connections.append((proc, [prev]))
             prev = name
+            loaded.append(f"{name}({plugin_key})")
         engine.load_graph(connections)
+        os.dup2(old_stderr, 2)
+        print(f"[vst] loaded: {' → '.join(loaded)}", flush=True)
+        os.dup2(devnull.fileno(), 2)
 
         # Configure nodes (minimal — just limiter ceiling)
         lim = procs["limiter"]
-        # Pro-L 2: param 0 = Gain, param 1 = Ceiling, param 2 = mode
         try:
-            lim.set_parameter(1, 0.0)   # ceiling = 0 dBFS (normalized)
-            lim.set_parameter(0, 0.0)   # gain = 0
+            lim.set_parameter(1, 0.0)
+            lim.set_parameter(0, 0.0)
         except Exception:
             pass
 
@@ -155,6 +160,9 @@ def main():
                 return 20 * math.log10(max(rms, 1e-9)) - 0.7
 
         current_lufs = measure_lufs(out, VST_SR)
+        os.dup2(old_stderr, 2)
+        print(f"[vst] pass1: LUFS={current_lufs:.1f}  target={target_lufs:.1f}  diff={target_lufs-current_lufs:+.1f} dB", flush=True)
+        os.dup2(devnull.fileno(), 2)
 
         # Iterative normalize
         cumulative = 1.0
@@ -162,17 +170,16 @@ def main():
             gain_db = target_lufs - current_lufs
             if abs(gain_db) <= 0.5:
                 break
-            if gain_db < -0.5:
-                # overshoot
-                step = max(gain_db, -8.0)
-            else:
-                # undershoot
-                step = min(gain_db, 24.0)
+            step = max(gain_db, -8.0) if gain_db < -0.5 else min(gain_db, 24.0)
             cumulative *= 10.0 ** (step / 20.0)
             pb.set_data((audio_2d * cumulative).astype(np.float32))
             engine.render(duration)
             out = engine.get_audio(out_node)
             current_lufs = measure_lufs(out, VST_SR)
+            cum_db = 20.0 * math.log10(max(cumulative, 1e-9))
+            os.dup2(old_stderr, 2)
+            print(f"[vst] pass{_pass+2}: step={step:+.1f} dB  cumulative={cum_db:+.1f} dB  LUFS={current_lufs:.1f}", flush=True)
+            os.dup2(devnull.fileno(), 2)
 
         os.dup2(old_stderr, 2)
 

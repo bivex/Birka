@@ -1705,7 +1705,10 @@ def _render_vst_chain_subprocess(dry_audio, sample_rate, output_path, mode="digi
         if result.returncode != 0:
             logger_vst.error("vst_worker failed (rc=%d): %s", result.returncode, result.stderr[-500:])
             return False
-        logger_vst.info("vst_worker: %s", result.stdout.strip())
+        for line in result.stdout.splitlines():
+            line = line.strip()
+            if line:
+                logger_vst.info("vst_worker: %s", line)
 
         # Copy output to final path
         import shutil
