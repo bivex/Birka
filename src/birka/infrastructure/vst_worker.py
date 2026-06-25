@@ -74,6 +74,7 @@ def main():
 
     # --- Fast chain node/plugin maps (mirrors _FAST_MASTER_CHAINS / _FAST_NODE_PLUGIN in midi_renderer) ---
     FAST_CHAINS = {
+        "full":          ["tape", "spiff", "soothe", "pro_q", "pro_mb", "kot", "sdrr", "reverb", "fresh", "limiter"],
         "digital":       ["pro_q", "kot", "limiter"],
         "analog_clean":  ["tape", "kot", "pro_q", "limiter"],
         "analog_warm":   ["tape", "sdrr", "kot", "limiter"],

@@ -759,7 +759,7 @@ class LibraryTab(QtWidgets.QWidget):
             "    (до компресора) → Kotelnikov клей → SDRR(TUBE) сатурация →\n"
             "    boost+wide EQ (после компресора, стерео-расширение) → лимитер."
         )
-        self._master_combo.addItem("💎 Full — кристальный, эталонный (экспорт)", "reference")
+        self._master_combo.addItem("💎 Full — кристальный, эталонный (экспорт)", "full")
         self._master_combo.addItem("⚡ Digital fast — быстрый, чистый", "digital")
         self._master_combo.addItem("🌤 Analog clean — лёгкий, прозрачный", "analog_clean")
         self._master_combo.addItem("🔥 Analog warm — тёплый, ламповый", "analog_warm")

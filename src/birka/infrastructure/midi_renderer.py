@@ -2685,7 +2685,7 @@ def _synth_tsf_to_wav(
         import numpy as np
 
         buf_arr = np.asarray(buf, dtype=np.float32)
-        _vst_mode = _fast_master_mode() or "reference"
+        _vst_mode = _fast_master_mode() or "full"
         if _render_vst_chain_subprocess(buf_arr, sample_rate, output_path, mode=_vst_mode):
             return True
     except Exception:
@@ -3425,7 +3425,7 @@ def _synth_sfizz_to_wav(
         logger_sfizz.warning("sfizz: render produced no audio blocks — silent output")
 
     if use_vst_chain:
-        _vst_mode = _fast_master_mode() or "reference"
+        _vst_mode = _fast_master_mode() or "full"
         if _render_vst_chain_subprocess(buf_arr, sample_rate, output_path, mode=_vst_mode):
             logger_sfizz.info("sfizz: VST chain OK → %s", output_path)
             return True
