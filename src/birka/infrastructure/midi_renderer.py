@@ -13,7 +13,7 @@ import wave
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple, Any
 
 import logging
 
@@ -2386,6 +2386,61 @@ def _synth_tsf_to_wav(
     # Add extra 2 seconds for final note decay, with a minimum duration of 1.0s
     total_seconds = max(1.0, mid.length + 2.0)
     frames_needed = int(total_seconds * sample_rate)
+
+    # ── Adaptive velocity scaling ────────────────────────────────────────────
+    # Many MIDI files (especially anime/game rips) have low velocities (20-50)
+    # because they were authored for a specific sampler or exported with gain
+    # baked into the samples. Rendering at face-value gives a weak, thin sound.
+    # We scale velocities so the 95th-percentile note hits velocity 100 (forte),
+    # which is the standard "loud but not maxed" performance level.
+    # Drums (ch9) are scaled separately to avoid over-compressing the kit.
+    try:
+        import numpy as _np_vel
+
+        TARGET_VEL_P95      = 100
+        TARGET_VEL_P95_DRUM = 90
+        _mel_vels = [
+            getattr(m, "velocity", 0)
+            for _, m in events
+            if getattr(m, "type", "") == "note_on"
+            and getattr(m, "velocity", 0) > 0
+            and getattr(m, "channel", 0) != 9
+        ]
+        _drm_vels = [
+            getattr(m, "velocity", 0)
+            for _, m in events
+            if getattr(m, "type", "") == "note_on"
+            and getattr(m, "velocity", 0) > 0
+            and getattr(m, "channel", 0) == 9
+        ]
+
+        def _vel_scale(vels: List[int], target_p95: int) -> float:
+            if not vels:
+                return 1.0
+            p95 = float(_np_vel.percentile(vels, 95))
+            return min(target_p95 / p95, 4.0) if p95 >= 1 else 1.0
+
+        mel_scale = _vel_scale(_mel_vels, TARGET_VEL_P95)
+        drm_scale = _vel_scale(_drm_vels, TARGET_VEL_P95_DRUM)
+
+        if abs(mel_scale - 1.0) > 0.05 or abs(drm_scale - 1.0) > 0.05:
+            logger.info(
+                "velocity scaling: melodic x%.2f  drums x%.2f  (mel_p95=%.0f drm_p95=%.0f)",
+                mel_scale, drm_scale,
+                float(_np_vel.percentile(_mel_vels, 95)) if _mel_vels else 0.0,
+                float(_np_vel.percentile(_drm_vels, 95)) if _drm_vels else 0.0,
+            )
+            scaled: List[Tuple[float, Any]] = []
+            for t, m in events:
+                if getattr(m, "type", "") == "note_on" and getattr(m, "velocity", 0) > 0:
+                    is_drum = getattr(m, "channel", 0) == 9
+                    scale   = drm_scale if is_drum else mel_scale
+                    new_vel = int(min(127, round(getattr(m, "velocity", 0) * scale)))
+                    m = m.copy(velocity=new_vel)
+                scaled.append((t, m))
+            events = scaled
+    except Exception as _e:
+        logger.debug("velocity scaling skipped: %s", _e)
 
     samples: List[float] = []
     samples_needed: int = 0
