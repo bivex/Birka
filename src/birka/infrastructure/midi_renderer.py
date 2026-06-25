@@ -723,6 +723,15 @@ _FAST_MASTER_CHAINS = {
     # keep the balance/tone split the guide prescribes (EQ before AND after the
     # dynamics), each routed per-band to Mid/Side instead of a passive EQ.
     "reference":    ["pro_q_balance", "kot", "sdrr_tube", "pro_q_tone", "limiter"],
+    # Justin Kedy / Sonic Scoop methodology -------------------------------
+    # Six-stage master following the engineer's working chain ORDER (not the
+    # order he builds it in). Dynamic/multiband control goes FIRST in signal
+    # (problem frequencies tamed before the main processing), then subtractive
+    # EQ before the compressor (so cuts don't trigger compression), compressor,
+    # saturation on the now-even signal, a stereo widener, and the limiter
+    # LAST. Boost-EQ lives in the widener/tone stage AFTER the compressor —
+    # per Kedy "boost EQ sometimes better AFTER the compressor".
+    "sonic_scoop":  ["pro_mb", "pro_q_cut", "kot", "sdrr_tube", "pro_q_widen", "limiter"],
 }
 _FAST_MASTER_ALIASES = {
     "1": "digital", "true": "digital", "yes": "digital", "on": "digital",
@@ -737,6 +746,7 @@ _FAST_MASTER_ALIASES = {
     "punch": "punch", "punchy": "punch",
     "reel": "reel", "reel2reel": "reel", "double_tape": "reel", "tape2": "reel",
     "reference": "reference", "mastering": "reference", "classic": "reference",
+    "sonic_scoop": "sonic_scoop", "kedy": "sonic_scoop", "scoop": "sonic_scoop",
 }
 
 
@@ -859,6 +869,107 @@ def _configure_proq_tone(pro_q):
     pro_q.set_parameter(72, _gain_to_val(1.0))
     pro_q.set_parameter(74, 0.30)  # High Shelf
     pro_q.set_parameter(76, 1.0)   # Side (air widening)
+
+
+def _configure_proq_cut(pro_q):
+    # SUBTRACTIVE EQ — Justin Kedy stage 2. Sits before the compressor so the
+    # removed frequencies never trigger gain reduction. Kedy: "most moves are
+    # 0.5-1 dB, occasionally 2-3 dB." This block does surgical cuts only — no
+    # boosts (boosts live in the post-compressor tone stage). Linear phase so
+    # the cuts don't smear phase into the compressor.
+    _configure_proq_linear_phase(pro_q)
+    # Band 1: High-pass rumble @ 30 Hz, full stereo
+    pro_q.set_parameter(0, 1.0); pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(2, _freq_to_val(30.0))
+    pro_q.set_parameter(5, 0.20)   # Low Cut
+    pro_q.set_parameter(7, 0.5)    # Stereo
+    # Band 2: Bell cut @ 400 Hz -1.2 dB — boxiness / low-mid masking
+    pro_q.set_parameter(23, 1.0); pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(25, _freq_to_val(400.0))
+    pro_q.set_parameter(26, _gain_to_val(-1.2))
+    pro_q.set_parameter(27, _q_to_val(1.2))
+    pro_q.set_parameter(28, 0.0)   # Bell
+    pro_q.set_parameter(30, 0.5)   # Stereo
+    # Band 3: Bell cut @ 2.5 kHz -1.0 dB — harshness / ear fatigue band
+    pro_q.set_parameter(46, 1.0); pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(48, _freq_to_val(2500.0))
+    pro_q.set_parameter(49, _gain_to_val(-1.0))
+    pro_q.set_parameter(50, _q_to_val(1.5))
+    pro_q.set_parameter(51, 0.0)   # Bell
+    pro_q.set_parameter(53, 0.5)   # Stereo
+    # Band 4: High Cut @ 19 kHz — tames stray top-end Brilliance / aliasing feel
+    pro_q.set_parameter(69, 1.0); pro_q.set_parameter(70, 1.0)
+    pro_q.set_parameter(71, _freq_to_val(19000.0))
+    pro_q.set_parameter(74, 0.40)  # High Cut
+    pro_q.set_parameter(76, 0.5)   # Stereo
+
+
+def _configure_proq_widen(pro_q):
+    # BOOST + STEREO WIDENER — Justin Kedy stages 2(boost)/5. Lives AFTER the
+    # compressor: Kedy notes "boost EQ sometimes better after the compressor".
+    # Doubles as the stereo widener (stage 5) via Pro-Q's per-band Stereo
+    # Placement — bass narrowed to Mid, air widened to Side. This is the same
+    # M/S-routing approach the full chain uses (A1StereoControl was removed in
+    # favour of selective per-band routing). Linear phase.
+    _configure_proq_linear_phase(pro_q)
+    # Band 1: Low Shelf @ 80 Hz +1.0 dB on MID — mono bass body (narrow lows)
+    pro_q.set_parameter(0, 1.0); pro_q.set_parameter(1, 1.0)
+    pro_q.set_parameter(2, _freq_to_val(80.0))
+    pro_q.set_parameter(3, _gain_to_val(1.0))
+    pro_q.set_parameter(5, 0.10)   # Low Shelf
+    pro_q.set_parameter(7, 0.7)    # Mid (keep bass centered/narrow)
+    # Band 2: Bell @ 5 kHz +1.0 dB on STEREO — presence focus
+    pro_q.set_parameter(23, 1.0); pro_q.set_parameter(24, 1.0)
+    pro_q.set_parameter(25, _freq_to_val(5000.0))
+    pro_q.set_parameter(26, _gain_to_val(1.0))
+    pro_q.set_parameter(27, _q_to_val(1.0))
+    pro_q.set_parameter(28, 0.0)   # Bell
+    pro_q.set_parameter(30, 0.5)   # Stereo
+    # Band 3: Bell @ 3 kHz +0.8 dB on SIDE — presence width without imbalance
+    pro_q.set_parameter(46, 1.0); pro_q.set_parameter(47, 1.0)
+    pro_q.set_parameter(48, _freq_to_val(3000.0))
+    pro_q.set_parameter(49, _gain_to_val(0.8))
+    pro_q.set_parameter(50, _q_to_val(1.1))
+    pro_q.set_parameter(51, 0.0)   # Bell
+    pro_q.set_parameter(53, 1.0)   # Side (widen presence band)
+    # Band 4: High Shelf @ 8 kHz +1.5 dB on SIDE — widen air/top end
+    pro_q.set_parameter(69, 1.0); pro_q.set_parameter(70, 1.0)
+    pro_q.set_parameter(71, _freq_to_val(8000.0))
+    pro_q.set_parameter(72, _gain_to_val(1.5))
+    pro_q.set_parameter(74, 0.30)  # High Shelf
+    pro_q.set_parameter(76, 1.0)   # Side (wide top)
+
+
+def _configure_pro_mb_sonic(pro_mb):
+    # Justin Kedy stage 1 — dynamic/multiband control of problem frequencies,
+    # placed FIRST in the signal chain (built last, but processes first).
+    # Two bands: bass anchor below 120 Hz on Mid, and a dynamic dip on the
+    # harsh 2.5-4 kHz band that only engages when energy builds up. Per Kedy's
+    # example: tame a resonant frequency without affecting the rest. idx138 =
+    # bypass; params mirror the neutral Pro-MB preset layout (verified).
+    pro_mb.set_parameter(138, 0.0)  # Bypass off
+    # Band 1: bass below 120 Hz, Mid only — gentle anchor, preserves transients
+    pro_mb.set_parameter(0, 0.5)    # State = Enabled
+    pro_mb.set_parameter(1, 0.0)    # Low Crossover 30 Hz
+    pro_mb.set_parameter(3, 0.2007) # High Crossover 120 Hz
+    pro_mb.set_parameter(6, 0.70)   # Threshold -18 dB
+    pro_mb.set_parameter(7, 0.40)   # Range -6 dB max GR
+    pro_mb.set_parameter(8, 0.30)   # Ratio 1.5:1 (log-mapped)
+    pro_mb.set_parameter(9, 0.15)   # Attack 15%
+    pro_mb.set_parameter(10, 0.30)  # Release 30%
+    pro_mb.set_parameter(11, 0.125) # Knee 6 dB
+    # Band 2: dynamic cut 2.5-4 kHz harshness — only reacts above threshold, so
+    # the master stays open at low levels and controlled when energy builds.
+    # Pro-MB crossover norm mapping (verified live, log base 30..30k):
+    # 2.5 kHz -> 0.6403, 4 kHz -> 0.7083.
+    pro_mb.set_parameter(22, 0.5)   # State = Enabled
+    pro_mb.set_parameter(23, 0.6403)  # Low Crossover 2.5 kHz
+    pro_mb.set_parameter(25, 0.7083)  # High Crossover 4 kHz
+    pro_mb.set_parameter(28, 0.833)   # Threshold -10 dB
+    pro_mb.set_parameter(29, 0.45)    # Range -3 dB max GR
+    pro_mb.set_parameter(30, 0.40)    # Ratio 2:1
+    pro_mb.set_parameter(31, 0.2)     # Attack 20%
+    pro_mb.set_parameter(32, 0.4)     # Release 40%
 
 
 def _configure_kotelnikov_fast(kot):
@@ -1020,12 +1131,18 @@ def _configure_fast_node(name, proc, analog):
         _configure_proq_balance(proc)
     elif name == "pro_q_tone":
         _configure_proq_tone(proc)
+    elif name == "pro_q_cut":
+        _configure_proq_cut(proc)
+    elif name == "pro_q_widen":
+        _configure_proq_widen(proc)
     elif name == "soothe":
         _configure_soothe_fast(proc)
     elif name == "fresh":
         _configure_fresh_fast(proc)
     elif name == "pro_mb":
         _configure_pro_mb_fast(proc)
+    elif name == "pro_mb_sonic":
+        _configure_pro_mb_sonic(proc)
     elif name == "spiff":
         _configure_spiff_fast(proc)
     elif name == "limiter":
@@ -1037,7 +1154,9 @@ _FAST_NODE_PLUGIN = {
     "tape": "chow", "tape_track": "chow", "tape_mix": "chow",
     "sdrr": "sdrr", "sdrr_tube": "sdrr", "kot": "kot",
     "pro_q": "pro_q", "pro_q_balance": "pro_q", "pro_q_tone": "pro_q",
+    "pro_q_cut": "pro_q", "pro_q_widen": "pro_q",
     "soothe": "soothe", "fresh": "fresh", "pro_mb": "pro_mb",
+    "pro_mb_sonic": "pro_mb",
     "spiff": "spiff", "limiter": "limiter",
 }
 
