@@ -1627,7 +1627,15 @@ def _render_fast_vst_chain(dry_audio, np, daw, mode="digital"):
                 tp = float(np.max(np.abs(out))) if out.size else 1.0
             want = 10.0 ** (gain_db / 20.0)
             headroom = (ceiling / tp) if tp > 1e-9 else want
-            out = out * min(want, headroom)
+            actual_gain = min(want, headroom)
+            out = out * actual_gain
+            actual_lufs = _measure_lufs(out, _VST_SAMPLE_RATE)
+            logger.info(
+                "VST normalize: target=%.1f  pre=%.1f  gain=%.1f dB  headroom=%.1f dB  post=%.1f LUFS",
+                TARGET_LOUDNESS_LUFS, current_lufs, 20*float(np.log10(max(actual_gain,1e-9))),
+                20*float(np.log10(max(headroom,1e-9))),
+                actual_lufs if actual_lufs is not None else -99.0,
+            )
         elif gain_db < -0.5:
             # OVERSHOOT: too loud. Scale the dry input down and re-render so the
             # limiter re-clamps cleanly (cheaper/cleaner than pulling the master).
