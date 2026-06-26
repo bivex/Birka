@@ -9,6 +9,7 @@ import shutil
 import struct
 import subprocess
 import tempfile
+import time
 import wave
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -1732,13 +1733,15 @@ def _render_vst_chain_subprocess(dry_audio, sample_rate, output_path, mode="digi
             plugin_json,
             str(TARGET_LOUDNESS_LUFS),
         ]
+        _t0 = time.monotonic()
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        _elapsed = time.monotonic() - _t0
         if result.returncode != 0:
-            logger_vst.error("vst_subprocess: FAILED rc=%d: %s",
-                             result.returncode, result.stderr[-500:])
+            logger_vst.error("vst_subprocess: FAILED rc=%d (%.1fs): %s",
+                             result.returncode, _elapsed, result.stderr[-500:])
             return False
         logger_vst.info("vst_subprocess: OK rc=0 (%.1fs)  -> %s",
-                        result.returncode, Path(output_path).name)
+                        _elapsed, Path(output_path).name)
         for line in result.stdout.splitlines():
             line = line.strip()
             if line:
@@ -2281,7 +2284,8 @@ def render_midi_to_mp3_batch(
         if soundfont is None:
             return [], list(midi_paths)
         return _render_tsf_to_mp3_batch(
-            midi_paths, output_dir, soundfont, on_progress=on_progress
+            midi_paths, output_dir, soundfont, on_progress=on_progress,
+            sample_rate=sample_rate,
         )
     output_dir.mkdir(parents=True, exist_ok=True)
     # The VST mastering chain (_render_sfizz_vst_chain) is guarded by a global
@@ -2449,18 +2453,23 @@ def _render_tsf_to_mp3_batch(
     output_dir: Path,
     soundfont: Path,
     on_progress: Optional[Callable[[int, int, Path, bool], None]] = None,
+    sample_rate: int = 96000,
 ) -> Tuple[List[Path], List[Path]]:
     if not midi_paths:
         return [], []
     output_dir.mkdir(parents=True, exist_ok=True)
     max_workers = min(len(midi_paths), os.cpu_count() or 4)
+    logger.info("tsf_mp3_batch: %d files  sample_rate=%d  workers=%d",
+                len(midi_paths), sample_rate, max_workers)
     results: List[Tuple[Path, Optional[Path]]] = []
 
     def _render_one(midi_path: Path) -> Tuple[Path, Optional[Path]]:
         mp3_path = output_dir / (midi_path.stem + ".mp3")
         tmp_wav = _make_temp_wav()
         try:
-            if not _synth_tsf_to_wav(soundfont, midi_path, tmp_wav):
+            if not _synth_tsf_to_wav(
+                soundfont, midi_path, tmp_wav, sample_rate=sample_rate
+            ):
                 return midi_path, None
             stats = _measure_stats(tmp_wav)
             af = _build_loudnorm_filter(stats)

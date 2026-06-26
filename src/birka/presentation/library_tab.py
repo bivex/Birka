@@ -75,11 +75,12 @@ def _normalize_wav_for_playback(
     (inter-sample) peak so nothing clips. Mastering for export is untouched —
     this only affects the throwaway preview file handed to the player.
 
-    Also resamples to target_sr (44.1 kHz): the VST mastering chain hard-codes
-    its render rate to 96 kHz and ignores the preview's requested sample_rate,
-    and QMediaPlayer's FFmpeg backend can play 96 kHz float/PCM silently on some
-    output devices. Forcing 44.1 kHz here makes playback universal regardless of
-    which backend produced the file.
+    Also resamples to target_sr if the render came out at a different rate
+    (the VST mastering chain runs at its own 96 kHz internally even when the
+    synth honors the requested rate). Pass the GUI-selected rate so the preview
+    keeps it instead of being forced to 44.1 kHz. QMediaPlayer's FFmpeg backend
+    is flaky with *float* WAVs at high rates, but we write 16-bit PCM here
+    (subtype="PCM_16"), which plays reliably at any rate.
 
     Best-effort: any failure (missing deps, silent/too-short audio) leaves the
     file as-is.
@@ -150,27 +151,33 @@ def _normalize_wav_for_playback(
         pass
 
 
-def _render_midi_to_tmp_wav(midi_path: Path, quality: int = 2) -> Path | None:
+def _render_midi_to_tmp_wav(
+    midi_path: Path, quality: int = 2, sample_rate: int = 44100
+) -> Path | None:
     """Render MIDI to a temporary WAV file using sfizz, normalised for playback.
 
     quality is the sfizz sample-interpolation quality (2=Hermite3/fast,
     6=Sinc24/standard, 10=Sinc72/studio); it is ignored by the tsf/fluidsynth
     backends, which have no equivalent knob. The rendered preview is loudness-
     normalised to a comfortable listening level (export rendering is unaffected).
+
+    sample_rate honours the GUI export Sample Rate combo (44.1-96 kHz) so the
+    preview reflects the chosen export rate. The file is always written 16-bit
+    PCM regardless of rate: the QMediaPlayer FFmpeg backend is flaky with float
+    WAVs (silent playback on some devices), so CD-standard 16-bit PCM keeps
+    playback reliable at any rate.
     """
     from birka.infrastructure.midi_renderer import render_midi_to_wav
 
     tmp_dir = _preview_dir()
     wav_path = tmp_dir / (midi_path.stem + ".wav")
-    # Playback preview: render at 44.1 kHz / 16-bit. 96 kHz/float32 carries no
-    # audible benefit for listening and the QMediaPlayer FFmpeg backend is
-    # flaky with high-rate float WAVs (silent playback on some output devices).
-    # CD-standard 44.1/16 is universally decodable and renders faster.
+    logger.info("preview_wav: %s (%d Hz / 16-bit PCM, 16-bit kept for QMediaPlayer)",
+                midi_path.name, sample_rate)
     if render_midi_to_wav(
-        midi_path, wav_path, sample_rate=44100, polyphony=64, bit_depth=16,
+        midi_path, wav_path, sample_rate=sample_rate, polyphony=64, bit_depth=16,
         quality=quality,
     ):
-        _normalize_wav_for_playback(wav_path)
+        _normalize_wav_for_playback(wav_path, target_sr=sample_rate)
         return wav_path
     return None
 
@@ -181,6 +188,7 @@ def _render_midi_to_tmp_preview_mp3(midi_path: Path) -> Path | None:
 
     tmp_dir = _preview_dir()
     mp3_path = tmp_dir / (midi_path.stem + ".mp3")
+    logger.info("preview_mp3: %s (22 kHz fixed, fast preview)", midi_path.name)
     if render_midi_preview_mp3(midi_path, mp3_path):
         return mp3_path
     return None
@@ -223,6 +231,8 @@ class _RenderWorker(QtCore.QObject):
         def on_progress(completed: int, total: int, _: Path, __: bool) -> None:
             self.progress.emit(completed, total)
 
+        logger.info("RenderWorker(MP3).run: %d files  q=%d  sample_rate=%d",
+                    len(self._midi_paths), self._quality, self._sample_rate)
         successful, failed = render_midi_to_mp3_batch(
             self._midi_paths,
             self._output_dir,
@@ -230,6 +240,8 @@ class _RenderWorker(QtCore.QObject):
             quality=self._quality,
             sample_rate=self._sample_rate,
         )
+        logger.info("RenderWorker(MP3).done: ok=%d  fail=%d",
+                    len(successful), len(failed))
         self.finished.emit(successful, failed)
 
 
@@ -251,6 +263,8 @@ class _RenderWavWorker(QtCore.QObject):
         def on_progress(completed: int, total: int, _: Path, __: bool) -> None:
             self.progress.emit(completed, total)
 
+        logger.info("RenderWavWorker.run: %d files  q=%d  sample_rate=%d",
+                    len(self._midi_paths), self._quality, self._sample_rate)
         successful, failed = render_midi_to_wav_batch(
             self._midi_paths,
             self._output_dir,
@@ -258,23 +272,34 @@ class _RenderWavWorker(QtCore.QObject):
             quality=self._quality,
             sample_rate=self._sample_rate,
         )
+        logger.info("RenderWavWorker.done: ok=%d  fail=%d",
+                    len(successful), len(failed))
         self.finished.emit(successful, failed)
 
 
 class _MidiPlayRenderWorker(QtCore.QObject):
     finished = QtCore.pyqtSignal(str)
 
-    def __init__(self, midi_path: Path, fast: bool = False, quality: int = 2) -> None:
+    def __init__(
+        self, midi_path: Path, fast: bool = False, quality: int = 2,
+        sample_rate: int = 44100,
+    ) -> None:
         super().__init__()
         self._midi_path = midi_path
         self._fast = fast
         self._quality = quality
+        self._sample_rate = sample_rate
 
     def run(self) -> None:
         if self._fast:
+            # Fast Play always uses the 22 kHz MP3 path for speed; the export
+            # rate combo does not apply here.
             rendered = _render_midi_to_tmp_preview_mp3(self._midi_path)
         else:
-            rendered = _render_midi_to_tmp_wav(self._midi_path, quality=self._quality)
+            rendered = _render_midi_to_tmp_wav(
+                self._midi_path, quality=self._quality,
+                sample_rate=self._sample_rate,
+            )
         self.finished.emit(str(rendered) if rendered is not None else "")
 
 
@@ -1098,7 +1123,12 @@ class LibraryTab(QtWidgets.QWidget):
         # the fixed low-quality preview path and ignores it). currentData() is
         # the sfizz quality int (2/6/10); falls back to 2 if unset.
         quality = self._quality_combo.currentData() or 2
-        self._midi_play_worker = _MidiPlayRenderWorker(path, fast=fast, quality=quality)
+        # Play preview honours the export Sample Rate combo too, so what you
+        # hear matches the chosen export rate (44.1-96 kHz).
+        sample_rate = self._sample_rate_combo.currentData() or 44100
+        self._midi_play_worker = _MidiPlayRenderWorker(
+            path, fast=fast, quality=quality, sample_rate=sample_rate
+        )
         self._midi_play_worker.moveToThread(self._midi_play_thread)
         self._midi_play_thread.started.connect(self._midi_play_worker.run)
         self._midi_play_worker.finished.connect(self._on_midi_render_finished)
@@ -1188,9 +1218,11 @@ class LibraryTab(QtWidgets.QWidget):
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(self.root)))
 
     def _render_midi(self) -> None:
+        logger.info("button: Render MP3 pressed")
         self._start_render("mp3")
 
     def _render_midi_wav(self) -> None:
+        logger.info("button: Render WAV pressed")
         self._start_render("wav")
 
     def _start_render(self, fmt: str) -> None:
@@ -1207,6 +1239,8 @@ class LibraryTab(QtWidgets.QWidget):
         self._render_format = fmt
         quality = self._quality_combo.currentData() or 2
         sample_rate = self._sample_rate_combo.currentData() or 96000
+        logger.info("render_export: fmt=%s  %d files  q=%d  sample_rate=%d",
+                    fmt, len(midi_paths), quality, sample_rate)
 
         self._render_progress = QtWidgets.QProgressDialog(
             "Rendering MIDI files...",

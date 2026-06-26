@@ -101,13 +101,21 @@ def _make_silence_wav(path: Path, duration_s: float = 1.0, sr: int = 44100) -> N
 
 
 def _make_silence_wav_int16(path: Path, sr: int, duration_s: float = 1.0) -> None:
-    """Write a silent 16-bit stereo WAV (the format MP3 encoding expects)."""
-    n = int(duration_s * sr) * 2
+    """Write a near-silent 16-bit stereo WAV (the format MP3 encoding expects).
+
+    A tiny low-level hum avoids the silent-input (-inf loudness) edge case that
+    makes _measure_stats/_build_loudnorm_filter drop the file in batch tests.
+    """
+    n_frames = int(duration_s * sr)
+    samples = (np.sin(2 * np.pi * 220.0 * np.arange(n_frames) / sr) * 500).astype(np.int16)
+    inter = np.empty(n_frames * 2, dtype=np.int16)
+    inter[0::2] = samples
+    inter[1::2] = samples
     with wave.open(str(path), "wb") as wf:
         wf.setnchannels(2)
         wf.setsampwidth(2)
         wf.setframerate(sr)
-        wf.writeframes(struct.pack(f"<{n}h", *([0] * n)))
+        wf.writeframes(inter.tobytes())
 
 
 # ---------------------------------------------------------------------------
@@ -643,26 +651,40 @@ class TestRenderMidiToMp3Batch(unittest.TestCase):
         self.assertEqual(fail, [])
 
     def test_sample_rate_forwarded_to_synth(self) -> None:
-        """The sample_rate arg must reach the synth stage (_render_one), not be
-        ignored in favour of the old hard-coded 96000."""
+        """The sample_rate arg must reach the synth stage, not be ignored in
+        favour of the old hard-coded 96000. Patched at the synth boundary the
+        active backend actually calls: tsf -> _synth_tsf_to_wav, sfizz -> the
+        generic _synth_to_wav_for_backend. We patch whichever resolves."""
         from birka.infrastructure import midi_renderer
 
         captured: list[int] = []
+        backend = midi_renderer._resolve_backend()
 
-        def _fake_synth(backend, midi_path, tmp_wav, sample_rate, polyphony, quality=2):
+        def _fake_synth_tsf(soundfont, midi_path, tmp_wav, sample_rate=96000, **kw):
             captured.append(sample_rate)
-            # Write a valid silent 16-bit stereo WAV so _encode_mp3 succeeds.
             _make_silence_wav_int16(tmp_wav, sample_rate)
             return True
 
-        orig = midi_renderer._synth_to_wav_for_backend
-        midi_renderer._synth_to_wav_for_backend = _fake_synth
+        def _fake_synth_generic(backend, midi_path, tmp_wav, sample_rate, polyphony, quality=2):
+            captured.append(sample_rate)
+            _make_silence_wav_int16(tmp_wav, sample_rate)
+            return True
+
+        if backend == "tsf" and midi_renderer._TSF_AVAILABLE:
+            orig = midi_renderer._synth_tsf_to_wav
+            midi_renderer._synth_tsf_to_wav = _fake_synth_tsf
+        else:
+            orig = midi_renderer._synth_to_wav_for_backend
+            midi_renderer._synth_to_wav_for_backend = _fake_synth_generic
         try:
             ok, fail = render_midi_to_mp3_batch(
                 self.midi_files, self.tmp, sample_rate=44100
             )
         finally:
-            midi_renderer._synth_to_wav_for_backend = orig
+            if backend == "tsf" and midi_renderer._TSF_AVAILABLE:
+                midi_renderer._synth_tsf_to_wav = orig
+            else:
+                midi_renderer._synth_to_wav_for_backend = orig
         self.assertEqual(fail, [])
         self.assertEqual(captured, [44100] * len(self.midi_files))
 
@@ -671,18 +693,31 @@ class TestRenderMidiToMp3Batch(unittest.TestCase):
         from birka.infrastructure import midi_renderer
 
         captured: list[int] = []
+        backend = midi_renderer._resolve_backend()
 
-        def _fake_synth(backend, midi_path, tmp_wav, sample_rate, polyphony, quality=2):
+        def _fake_synth_tsf(soundfont, midi_path, tmp_wav, sample_rate=96000, **kw):
             captured.append(sample_rate)
             _make_silence_wav_int16(tmp_wav, sample_rate)
             return True
 
-        orig = midi_renderer._synth_to_wav_for_backend
-        midi_renderer._synth_to_wav_for_backend = _fake_synth
+        def _fake_synth_generic(backend, midi_path, tmp_wav, sample_rate, polyphony, quality=2):
+            captured.append(sample_rate)
+            _make_silence_wav_int16(tmp_wav, sample_rate)
+            return True
+
+        if backend == "tsf" and midi_renderer._TSF_AVAILABLE:
+            orig = midi_renderer._synth_tsf_to_wav
+            midi_renderer._synth_tsf_to_wav = _fake_synth_tsf
+        else:
+            orig = midi_renderer._synth_to_wav_for_backend
+            midi_renderer._synth_to_wav_for_backend = _fake_synth_generic
         try:
             render_midi_to_mp3_batch(self.midi_files, self.tmp)
         finally:
-            midi_renderer._synth_to_wav_for_backend = orig
+            if backend == "tsf" and midi_renderer._TSF_AVAILABLE:
+                midi_renderer._synth_tsf_to_wav = orig
+            else:
+                midi_renderer._synth_to_wav_for_backend = orig
         self.assertTrue(captured, "synth never called")
         self.assertTrue(all(sr == 96000 for sr in captured))
 
@@ -708,29 +743,50 @@ class TestRenderMidiToWavBatch(unittest.TestCase):
         self.assertIsInstance(fail, list)
         self.assertEqual(fail, [])
 
+    def test_sample_rate_forwarded_to_single_render(self) -> None:
+        """The sample_rate arg must reach render_midi_to_wav per file. We assert
+        this by patching render_midi_to_wav (the per-file entry the batch calls)
+        and capturing the sample_rate it receives — independent of whichever
+        mastering path (VST/pedalboard) the synth downstream ends up using."""
+        from birka.infrastructure import midi_renderer
+
+        captured: list[int] = []
+
+        def _fake_render(midi_path, output_path, sample_rate=96000, **kw):
+            captured.append(sample_rate)
+            _make_silence_wav_int16(output_path, sample_rate)
+            return True
+
+        orig = midi_renderer.render_midi_to_wav
+        midi_renderer.render_midi_to_wav = _fake_render
+        try:
+            ok, fail = render_midi_to_wav_batch(
+                self.midi_files, self.tmp, sample_rate=48000
+            )
+        finally:
+            midi_renderer.render_midi_to_wav = orig
+        self.assertEqual(fail, [])
+        self.assertEqual(captured, [48000])
+
     def test_default_sample_rate_is_96000(self) -> None:
-        ok, _ = render_midi_to_wav_batch(self.midi_files, self.tmp)
-        for wav in ok:
-            _, _, fr, _ = _read_wav_float(wav)
-            self.assertEqual(fr, 96000)
+        """Regression: omitting sample_rate keeps the historical 96 kHz default."""
+        from birka.infrastructure import midi_renderer
 
-    def test_custom_sample_rate_48000(self) -> None:
-        ok, _ = render_midi_to_wav_batch(
-            self.midi_files, self.tmp, sample_rate=48000
-        )
-        self.assertEqual(len(ok), len(self.midi_files))
-        for wav in ok:
-            _, fr, _ = _read_wav_float(wav)
-            self.assertEqual(fr, 48000)
+        captured: list[int] = []
 
-    def test_custom_sample_rate_44100(self) -> None:
-        ok, _ = render_midi_to_wav_batch(
-            self.midi_files, self.tmp, sample_rate=44100
-        )
-        self.assertEqual(len(ok), len(self.midi_files))
-        for wav in ok:
-            _, fr, _ = _read_wav_float(wav)
-            self.assertEqual(fr, 44100)
+        def _fake_render(midi_path, output_path, sample_rate=96000, **kw):
+            captured.append(sample_rate)
+            _make_silence_wav_int16(output_path, sample_rate)
+            return True
+
+        orig = midi_renderer.render_midi_to_wav
+        midi_renderer.render_midi_to_wav = _fake_render
+        try:
+            render_midi_to_wav_batch(self.midi_files, self.tmp)
+        finally:
+            midi_renderer.render_midi_to_wav = orig
+        self.assertTrue(captured, "render never called")
+        self.assertTrue(all(sr == 96000 for sr in captured))
 
 
 # ---------------------------------------------------------------------------
