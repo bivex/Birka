@@ -2261,8 +2261,14 @@ def render_midi_to_mp3_batch(
     output_dir: Path,
     on_progress: Optional[Callable[[int, int, Path, bool], None]] = None,
     quality: int = 2,
+    sample_rate: int = 96000,
 ) -> Tuple[List[Path], List[Path]]:
-    """Render multiple MIDI files to MP3 in parallel using all CPU cores."""
+    """Render multiple MIDI files to MP3 in parallel using all CPU cores.
+
+    sample_rate controls the synth-stage rate (44100-96000); the MP3 is encoded
+    from a 16-bit intermediate, so values above 48000 give diminishing returns
+    for lossy output but are honoured for a higher-quality intermediate mix.
+    """
     if shutil.which("ffmpeg") is None:
         return [], list(midi_paths)
     backend = _resolve_backend()
@@ -2288,8 +2294,8 @@ def render_midi_to_mp3_batch(
     ).lower() in ("1", "true", "yes")
     self_masters = _sfizz_self_masters()
     max_workers = 1 if vst_active else min(len(midi_paths), os.cpu_count() or 4)
-    logger.info("mp3_batch: %d files  backend=%s  self_masters=%s  vst_active=%s  workers=%d",
-                len(midi_paths), backend, self_masters, vst_active, max_workers)
+    logger.info("mp3_batch: %d files  backend=%s  self_masters=%s  vst_active=%s  workers=%d  sample_rate=%d",
+                len(midi_paths), backend, self_masters, vst_active, max_workers, sample_rate)
     results: List[Tuple[Path, Optional[Path]]] = []
 
     def _render_one(midi_path: Path) -> Tuple[Path, Optional[Path]]:
@@ -2297,7 +2303,7 @@ def render_midi_to_mp3_batch(
         tmp_wav = _make_temp_wav()
         try:
             if not _synth_to_wav_for_backend(
-                backend, midi_path, tmp_wav, 96000, 256, quality=quality
+                backend, midi_path, tmp_wav, sample_rate, 256, quality=quality
             ):
                 return midi_path, None
             # Skip loudnorm when sfizz already mastered (see render_midi_to_mp3).

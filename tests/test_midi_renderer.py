@@ -33,6 +33,7 @@ from birka.infrastructure.midi_renderer import (
     render_midi_to_mp3,
     render_midi_to_mp3_batch,
     render_midi_to_wav,
+    render_midi_to_wav_batch,
 )
 
 MIDI_PATH = Path("/Volumes/External/Code/Birka/data/library/test_128_Csm.mid")
@@ -97,6 +98,16 @@ def _make_silence_wav(path: Path, duration_s: float = 1.0, sr: int = 44100) -> N
         wf.setsampwidth(4)
         wf.setframerate(sr)
         wf.writeframes(struct.pack(f"<{n}i", *([0] * n)))
+
+
+def _make_silence_wav_int16(path: Path, sr: int, duration_s: float = 1.0) -> None:
+    """Write a silent 16-bit stereo WAV (the format MP3 encoding expects)."""
+    n = int(duration_s * sr) * 2
+    with wave.open(str(path), "wb") as wf:
+        wf.setnchannels(2)
+        wf.setsampwidth(2)
+        wf.setframerate(sr)
+        wf.writeframes(struct.pack(f"<{n}h", *([0] * n)))
 
 
 # ---------------------------------------------------------------------------
@@ -630,6 +641,96 @@ class TestRenderMidiToMp3Batch(unittest.TestCase):
         ok, fail = render_midi_to_mp3_batch([], self.tmp)
         self.assertEqual(ok, [])
         self.assertEqual(fail, [])
+
+    def test_sample_rate_forwarded_to_synth(self) -> None:
+        """The sample_rate arg must reach the synth stage (_render_one), not be
+        ignored in favour of the old hard-coded 96000."""
+        from birka.infrastructure import midi_renderer
+
+        captured: list[int] = []
+
+        def _fake_synth(backend, midi_path, tmp_wav, sample_rate, polyphony, quality=2):
+            captured.append(sample_rate)
+            # Write a valid silent 16-bit stereo WAV so _encode_mp3 succeeds.
+            _make_silence_wav_int16(tmp_wav, sample_rate)
+            return True
+
+        orig = midi_renderer._synth_to_wav_for_backend
+        midi_renderer._synth_to_wav_for_backend = _fake_synth
+        try:
+            ok, fail = render_midi_to_mp3_batch(
+                self.midi_files, self.tmp, sample_rate=44100
+            )
+        finally:
+            midi_renderer._synth_to_wav_for_backend = orig
+        self.assertEqual(fail, [])
+        self.assertEqual(captured, [44100] * len(self.midi_files))
+
+    def test_default_sample_rate_is_96000(self) -> None:
+        """Regression: omitting sample_rate keeps the historical 96 kHz default."""
+        from birka.infrastructure import midi_renderer
+
+        captured: list[int] = []
+
+        def _fake_synth(backend, midi_path, tmp_wav, sample_rate, polyphony, quality=2):
+            captured.append(sample_rate)
+            _make_silence_wav_int16(tmp_wav, sample_rate)
+            return True
+
+        orig = midi_renderer._synth_to_wav_for_backend
+        midi_renderer._synth_to_wav_for_backend = _fake_synth
+        try:
+            render_midi_to_mp3_batch(self.midi_files, self.tmp)
+        finally:
+            midi_renderer._synth_to_wav_for_backend = orig
+        self.assertTrue(captured, "synth never called")
+        self.assertTrue(all(sr == 96000 for sr in captured))
+
+
+# ---------------------------------------------------------------------------
+# render_midi_to_wav_batch
+# ---------------------------------------------------------------------------
+
+
+class TestRenderMidiToWavBatch(unittest.TestCase):
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.tmp = Path(self._tmp.name)
+        # One file keeps the test fast while still exercising the batch path.
+        self.midi_files = list(MIDI_DIR.rglob("*.mid"))[:1]
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    def test_returns_successful_and_failed_lists(self) -> None:
+        ok, fail = render_midi_to_wav_batch(self.midi_files, self.tmp)
+        self.assertIsInstance(ok, list)
+        self.assertIsInstance(fail, list)
+        self.assertEqual(fail, [])
+
+    def test_default_sample_rate_is_96000(self) -> None:
+        ok, _ = render_midi_to_wav_batch(self.midi_files, self.tmp)
+        for wav in ok:
+            _, _, fr, _ = _read_wav_float(wav)
+            self.assertEqual(fr, 96000)
+
+    def test_custom_sample_rate_48000(self) -> None:
+        ok, _ = render_midi_to_wav_batch(
+            self.midi_files, self.tmp, sample_rate=48000
+        )
+        self.assertEqual(len(ok), len(self.midi_files))
+        for wav in ok:
+            _, fr, _ = _read_wav_float(wav)
+            self.assertEqual(fr, 48000)
+
+    def test_custom_sample_rate_44100(self) -> None:
+        ok, _ = render_midi_to_wav_batch(
+            self.midi_files, self.tmp, sample_rate=44100
+        )
+        self.assertEqual(len(ok), len(self.midi_files))
+        for wav in ok:
+            _, fr, _ = _read_wav_float(wav)
+            self.assertEqual(fr, 44100)
 
 
 # ---------------------------------------------------------------------------

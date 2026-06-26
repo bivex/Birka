@@ -210,12 +210,14 @@ class _RenderWorker(QtCore.QObject):
     finished = QtCore.pyqtSignal(list, list)
 
     def __init__(
-        self, midi_paths: list[Path], output_dir: Path, quality: int = 2
+        self, midi_paths: list[Path], output_dir: Path, quality: int = 2,
+        sample_rate: int = 96000,
     ) -> None:
         super().__init__()
         self._midi_paths = midi_paths
         self._output_dir = output_dir
         self._quality = quality
+        self._sample_rate = sample_rate
 
     def run(self) -> None:
         def on_progress(completed: int, total: int, _: Path, __: bool) -> None:
@@ -226,6 +228,7 @@ class _RenderWorker(QtCore.QObject):
             self._output_dir,
             on_progress=on_progress,
             quality=self._quality,
+            sample_rate=self._sample_rate,
         )
         self.finished.emit(successful, failed)
 
@@ -235,12 +238,14 @@ class _RenderWavWorker(QtCore.QObject):
     finished = QtCore.pyqtSignal(list, list)
 
     def __init__(
-        self, midi_paths: list[Path], output_dir: Path, quality: int = 2
+        self, midi_paths: list[Path], output_dir: Path, quality: int = 2,
+        sample_rate: int = 96000,
     ) -> None:
         super().__init__()
         self._midi_paths = midi_paths
         self._output_dir = output_dir
         self._quality = quality
+        self._sample_rate = sample_rate
 
     def run(self) -> None:
         def on_progress(completed: int, total: int, _: Path, __: bool) -> None:
@@ -251,6 +256,7 @@ class _RenderWavWorker(QtCore.QObject):
             self._output_dir,
             on_progress=on_progress,
             quality=self._quality,
+            sample_rate=self._sample_rate,
         )
         self.finished.emit(successful, failed)
 
@@ -720,6 +726,28 @@ class LibraryTab(QtWidgets.QWidget):
         idx = self._quality_combo.findData(2)
         self._quality_combo.setCurrentIndex(idx if idx >= 0 else 0)
 
+        # Sample rate selector for export rendering. Covers CD-standard 44.1 kHz
+        # up to 96 kHz. Affects the EXPORT (Render -> MP3/WAV) synth stage only;
+        # preview playback (Play/Fast Play) always uses fixed 44.1/22 kHz for
+        # QMediaPlayer compatibility and speed. The VST mastering chain runs at
+        # its own 96 kHz internally and resamples as needed, so this mainly
+        # changes the sfizz/tsf synth rate and the exported file rate.
+        self._sample_rate_label = QtWidgets.QLabel("Rate:", self)
+        self._sample_rate_combo = QtWidgets.QComboBox(self)
+        self._sample_rate_combo.addItem("44.1 kHz", 44100)
+        self._sample_rate_combo.addItem("48 kHz", 48000)
+        self._sample_rate_combo.addItem("88.2 kHz", 88200)
+        self._sample_rate_combo.addItem("96 kHz (default)", 96000)
+        idx = self._sample_rate_combo.findData(96000)
+        self._sample_rate_combo.setCurrentIndex(idx if idx >= 0 else 0)
+        self._sample_rate_combo.setToolTip(
+            "Частота дискретизации экспорта (Render → MP3/WAV).\n"
+            "44.1 — CD-стандарт; 48 — видео/универсальная;\n"
+            "88.2/96 — hi-res.\n"
+            "Влияет только на экспорт, не на превью-воспроизведение.\n"
+            "VST-мастеринг работает на 96 kHz внутренне при любом значении."
+        )
+
         # Master Mode selector: chooses the VST mastering chain. "Full" runs the
         # premium 10-plugin two-pass chain (best for export). The fast modes are
         # single-pass and ~5-20x faster for previews/drafts. The combo's data is
@@ -926,12 +954,14 @@ class LibraryTab(QtWidgets.QWidget):
         grid.addWidget(self._render_button, 2, 3)
         grid.addWidget(self._render_wav_button, 2, 4)
 
-        # Row 3: Quality
+        # Row 3: Quality (left) + Sample Rate (right)
         grid.addWidget(self._quality_label, 3, 0)
         grid.addWidget(self._quality_combo, 3, 1, 1, 2)
-        # Row 3 (right): Master Mode selector
-        grid.addWidget(self._master_label, 3, 3)
-        grid.addWidget(self._master_combo, 3, 4)
+        grid.addWidget(self._sample_rate_label, 3, 3)
+        grid.addWidget(self._sample_rate_combo, 3, 4)
+        # Row 4: Master Mode selector (full width — its items are descriptive)
+        grid.addWidget(self._master_label, 4, 0)
+        grid.addWidget(self._master_combo, 4, 1, 1, 4)
 
         return grid
 
@@ -1176,6 +1206,7 @@ class LibraryTab(QtWidgets.QWidget):
         midi_paths = [item.path for item in midi_items]
         self._render_format = fmt
         quality = self._quality_combo.currentData() or 2
+        sample_rate = self._sample_rate_combo.currentData() or 96000
 
         self._render_progress = QtWidgets.QProgressDialog(
             "Rendering MIDI files...",
@@ -1188,7 +1219,8 @@ class LibraryTab(QtWidgets.QWidget):
         self._render_progress.setMinimumDuration(0)
         self._render_progress.setValue(0)
 
-        worker = worker_cls(midi_paths, output_dir, quality=quality)
+        worker = worker_cls(midi_paths, output_dir, quality=quality,
+                             sample_rate=sample_rate)
         thread = QtCore.QThread()
         worker.moveToThread(thread)
         worker.progress.connect(self._on_render_progress)
