@@ -2753,15 +2753,18 @@ def _synth_tsf_to_wav(
     buf: List[float] = samples[:samples_needed] if samples and samples_needed else []
     if not buf:
         return False
-    try:
-        import numpy as np
 
-        buf_arr = np.asarray(buf, dtype=np.float32)
-        _vst_mode = _fast_master_mode() or "full"
-        if _render_vst_chain_subprocess(buf_arr, sample_rate, output_path, mode=_vst_mode):
-            return True
-    except Exception:
-        pass
+    use_vst_chain = os.environ.get("USE_VST_CHAIN", "").lower() in ("1", "true", "yes")
+    if use_vst_chain:
+        try:
+            import numpy as np
+
+            buf_arr = np.asarray(buf, dtype=np.float32)
+            _vst_mode = _fast_master_mode() or "full"
+            if _render_vst_chain_subprocess(buf_arr, sample_rate, output_path, mode=_vst_mode):
+                return True
+        except Exception:
+            pass
 
     # Fallback: pedalboard mastering (EQ + tape + comp + loudness + limiter)
     try:

@@ -205,11 +205,27 @@ def main():
 
         os.dup2(old_stderr, 2)
 
+        # --- Resample back to target sample rate if needed ---
+        target_sr = sample_rate
+        if target_sr != VST_SR:
+            try:
+                from math import gcd
+                from scipy.signal import resample_poly
+                g = gcd(VST_SR, target_sr)
+                up = target_sr // g
+                dn = VST_SR // g
+                L = resample_poly(out[0], up, dn).astype(np.float32)
+                R = resample_poly(out[1], up, dn).astype(np.float32)
+                out = np.stack([L, R])
+            except Exception as e:
+                print(f"resample back error: {e}", file=sys.stderr)
+                sys.exit(11)
+
         # Write output
         interleaved = out.T.flatten().astype(np.float32)
         raw_out = interleaved.tobytes()
         channels = 2
-        byte_rate = VST_SR * channels * 4
+        byte_rate = target_sr * channels * 4
         with open(output_wav, "wb") as f:
             f.write(b"RIFF")
             f.write(struct.pack("<I", 36 + len(raw_out)))
@@ -218,7 +234,7 @@ def main():
             f.write(struct.pack("<I", 16))
             f.write(struct.pack("<H", 3))       # IEEE_FLOAT
             f.write(struct.pack("<H", channels))
-            f.write(struct.pack("<I", VST_SR))
+            f.write(struct.pack("<I", target_sr))
             f.write(struct.pack("<I", byte_rate))
             f.write(struct.pack("<H", channels * 4))
             f.write(struct.pack("<H", 32))

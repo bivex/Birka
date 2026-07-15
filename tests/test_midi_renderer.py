@@ -341,8 +341,8 @@ class TestWavContent(unittest.TestCase):
 
     def test_duration_reasonable(self) -> None:
         """WAV should be at least 1 s and no more than 60 s for a short MIDI."""
-        with wave.open(str(self.wav), "rb") as wf:
-            duration = wf.getnframes() / wf.getframerate()
+        ch, _, fr, data = _read_wav_samples(self.wav)
+        duration = (len(data) / ch) / fr
         self.assertGreaterEqual(duration, 1.0)
         self.assertLessEqual(duration, 60.0)
 
