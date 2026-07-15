@@ -33,7 +33,7 @@ class MediaTableModelTests(unittest.TestCase):
 
         self.assertEqual(model.data(index_duration, QtCore.Qt.ItemDataRole.DisplayRole), "01:05")
         self.assertEqual(model.data(index_bpm, QtCore.Qt.ItemDataRole.DisplayRole), "120.0")
-        self.assertEqual(model.data(index_rating, QtCore.Qt.ItemDataRole.DisplayRole), "4")
+        self.assertEqual(model.data(index_rating, QtCore.Qt.ItemDataRole.DisplayRole), "★★★★☆")
 
     def test_model_filters_rows(self) -> None:
         rows = [

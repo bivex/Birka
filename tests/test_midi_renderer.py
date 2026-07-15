@@ -48,9 +48,19 @@ MIDI_DIR = Path("/Volumes/External/Code/Birka/data/library/midi")
 def _read_wav_samples(wav_path: Path) -> tuple[int, int, int, np.ndarray]:
     """Return (channels, sampwidth, framerate, int data array).
 
-    Works for int16/int32 PCM. For IEEE_FLOAT (32-bit float) output use
-    _read_wav_float instead -- Python's wave module cannot read format 3.
+    Works for int16/int32 PCM. For IEEE_FLOAT (32-bit float) output,
+    automatically detects and loads it (converting samples to int16 to match
+    PCM expectations).
     """
+    with open(str(wav_path), "rb") as f:
+        header = f.read(44)
+    fmt_tag = struct.unpack_from("<H", header, 20)[0] if len(header) >= 22 else 1
+
+    if fmt_tag == 3:
+        ch, fr, float_data = _read_wav_float(wav_path)
+        int_data = (float_data * 32767.0).astype(np.int16)
+        return ch, 2, fr, int_data
+
     with wave.open(str(wav_path), "rb") as wf:
         ch = wf.getnchannels()
         sw = wf.getsampwidth()
@@ -265,7 +275,11 @@ class TestWavFormat(unittest.TestCase):
 
     def test_wav_is_16bit(self) -> None:
         wav = self.tmp / "out.wav"
-        self.assertTrue(render_midi_to_wav(MIDI_PATH, wav))
+        self.assertTrue(render_midi_to_wav(MIDI_PATH, wav, bit_depth=16))
+        with open(str(wav), "rb") as f:
+            header = f.read(44)
+        fmt_tag = struct.unpack_from("<H", header, 20)[0]
+        self.assertEqual(fmt_tag, 1, "Expected PCM format tag 1")
         _, sw, _, _ = _read_wav_samples(wav)
         self.assertEqual(sw, 2, "Expected 16-bit (2-byte) samples")
 
